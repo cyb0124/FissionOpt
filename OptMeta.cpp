@@ -11,7 +11,8 @@ void OptMeta::restart() {
 OptMeta::OptMeta(const Settings &settings)
   :settings(settings) {
   restart();
-  bestSoFar = population.front();
+  best = population.front();
+  bestNoNetHeat = population.front();
   for (int i{}; i < Tile::Air; ++i)
     if (settings.allowedCoolers[i])
       allTiles.emplace_back(i);
@@ -20,7 +21,8 @@ OptMeta::OptMeta(const Settings &settings)
   allTiles.emplace_back(Tile::Moderator);
 }
 
-bool OptMeta::step() {
+int OptMeta::step() {
+  int whichChanged{};
   int bestIndividual{};
   double bestValue;
   for (int i(1); i < population.size(); ++i) {
@@ -32,17 +34,22 @@ bool OptMeta::step() {
     int tile(std::uniform_int_distribution<>(0, static_cast<int>(allTiles.size() - 1))(rng));
     individual.state(x, y, z) = allTiles[tile];
     individual.value = evaluate(settings, individual.state);
-    if (!bestIndividual || individual.value.effPower() > bestValue) {
+    double value(individual.value.effPower());
+    if (!bestIndividual || value > bestValue) {
       bestIndividual = i;
-      bestValue = individual.value.effPower();
+      bestValue = value;
+    }
+    if (value > best.value.effPower()) {
+      best = individual;
+      whichChanged |= 1;
+    }
+    if (individual.value.netHeat() <= 0.0 && value > bestNoNetHeat.value.effPower()) {
+      bestNoNetHeat = individual;
+      whichChanged |= 2;
     }
   }
   if (bestValue + 0.01 >= population.front().value.effPower()) {
     std::swap(population.front(), population[bestIndividual]);
-    if (bestValue > bestSoFar.value.effPower()) {
-      bestSoFar = population.front();
-      return true;
-    }
   }
-  return false;
+  return whichChanged;
 }

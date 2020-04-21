@@ -12,14 +12,15 @@ struct OptMetaIndividual {
 class OptMeta {
   const Settings &settings;
   std::array<OptMetaIndividual, 5> population;
-  OptMetaIndividual bestSoFar;
+  OptMetaIndividual best, bestNoNetHeat;
   std::vector<int> allTiles;
   std::mt19937 rng;
 public:
   OptMeta(const Settings &settings);
   void restart();
-  bool step();
-  const OptMetaIndividual &getBestSoFar() const { return bestSoFar; }
+  int step();
+  const OptMetaIndividual &getBest() const { return best; }
+  const OptMetaIndividual &getBestNoNetHeat() const { return bestNoNetHeat; }
 };
 
 #endif
