@@ -18,8 +18,9 @@ int main() {
     {20, 80, 80, 120, 120, 100, 120, 120, 140, 140, 60, 140, 60, 80, 100}
   };
   OptMeta opt(settings);
+  int maxStagnation(settings.sizeX * settings.sizeY * settings.sizeZ * 16);
   for (int nRestart{}; ; ++nRestart) {
-    for (int nGeneration{}; nGeneration < 1000; ++nGeneration) {
+    for (int nStagnation{}; nStagnation < maxStagnation; ++nStagnation) {
       int whichChanged(opt.step());
       if (whichChanged & 1) {
         std::cout << "*** Best ***" << std::endl;
@@ -28,6 +29,9 @@ int main() {
       if (whichChanged & 2) {
         std::cout << "*** Best No Net Heat ***" << std::endl;
         printIndividual(opt.getBestNoNetHeat());
+      }
+      if (whichChanged & 4) {
+        nStagnation = 0;
       }
     }
     opt.restart();

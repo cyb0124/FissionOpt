@@ -48,8 +48,10 @@ int OptMeta::step() {
       whichChanged |= 2;
     }
   }
-  if (bestValue + 0.01 >= population.front().value.effPower()) {
+  double oldValue(population.front().value.effPower());
+  if (bestValue > oldValue)
+    whichChanged |= 4;
+  if (bestValue + 0.01 >= oldValue)
     std::swap(population.front(), population[bestIndividual]);
-  }
   return whichChanged;
 }
