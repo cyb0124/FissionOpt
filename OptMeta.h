@@ -6,7 +6,7 @@
 
 struct OptMetaIndividual {
   xt::xtensor<int, 3> state;
-  double value;
+  Evaluation value;
 };
 
 class OptMeta {
@@ -19,8 +19,7 @@ public:
   OptMeta(const Settings &settings);
   void restart();
   bool step();
-  const xt::xtensor<int, 3> &getBestState() const { return bestSoFar.state; };
-  double getBestValue() const { return bestSoFar.value; };
+  const OptMetaIndividual &getBestSoFar() const { return bestSoFar; }
 };
 
 #endif

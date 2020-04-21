@@ -40,8 +40,6 @@ namespace Tile {
         return "[]";
       case Moderator:
         return "##";
-      case Casing:
-        return "--";
       default:
         return "??";
     }
@@ -70,42 +68,34 @@ static int getTileWithCasing(const xt::xtensor<int, 3> &state, int x, int y, int
   return Tile::Casing;
 }
 
-static xt::xtensor<int, 1> getEffWithCasing(const xt::xtensor<int, 4> &effs, int x, int y, int z) {
-  if (effs.in_bounds(x, y, z, 0))
-    return xt::view(effs, x, y, z, xt::all());
-  return {0, 0};
+static int getEffWithCasing(const xt::xtensor<int, 3> &effs, int x, int y, int z) {
+  if (effs.in_bounds(x, y, z))
+    return effs(x, y, z);
+  return 0;
 }
 
-static xt::xtensor<int, 1> hasConnected(const xt::xtensor<int, 3> &state, int x, int y, int z, int dx, int dy, int dz) {
+static int hasConnected(const xt::xtensor<int, 3> &state, int x, int y, int z, int dx, int dy, int dz) {
   for (int n{}; n < 5; ++n) {
     x += dx; y += dy; z += dz;
     int tile(getTileWithCasing(state, x, y, z));
-    if (tile == Tile::Free) {
-      return {0, 1};
-    } else if (tile == Tile::Cell) {
-      return {1, 1};
-    } if (tile != Tile::Moderator) {
-      break;
-    }
+    if (tile == Tile::Cell)
+      return 1;
+    if (tile != Tile::Moderator)
+      return 0;
   }
-  return {0, 0};
+  return 0;
 }
 
-static xt::xtensor<int, 1> countEff(const xt::xtensor<int, 3> &state, int x, int y, int z) {
-  int tile(state(x, y, z));
-  if (tile == Tile::Free || tile == Tile::Cell) {
-    xt::xtensor<int, 1> result{1, 1};
-    result += hasConnected(state, x, y, z, -1, 0, 0);
-    result += hasConnected(state, x, y, z, +1, 0, 0);
-    result += hasConnected(state, x, y, z, 0, -1, 0);
-    result += hasConnected(state, x, y, z, 0, +1, 0);
-    result += hasConnected(state, x, y, z, 0, 0, -1);
-    result += hasConnected(state, x, y, z, 0, 0, +1);
-    if (tile == Tile::Free)
-      result(0) = 0;
-    return result;
-  }
-  return {0, 0};
+static int countEff(const xt::xtensor<int, 3> &state, int x, int y, int z) {
+  if (state(x, y, z) != Tile::Cell)
+    return 0;
+  return 1
+    + hasConnected(state, x, y, z, -1, 0, 0)
+    + hasConnected(state, x, y, z, +1, 0, 0)
+    + hasConnected(state, x, y, z, 0, -1, 0)
+    + hasConnected(state, x, y, z, 0, +1, 0)
+    + hasConnected(state, x, y, z, 0, 0, -1)
+    + hasConnected(state, x, y, z, 0, 0, +1);
 }
 
 static int countNeighbor(const int neighbors[6], int tile) {
@@ -116,16 +106,16 @@ static int countNeighbor(const int neighbors[6], int tile) {
   return result;
 }
 
-double evaluate(const Settings &settings, const xt::xtensor<int, 3> &state) {
-  double power{}, heat{}, cooling{};
-  xt::xtensor<int, 4> effs(xt::empty<int>({settings.sizeX, settings.sizeY, settings.sizeZ, 2}));
+Evaluation evaluate(const Settings &settings, const xt::xtensor<int, 3> &state) {
+  Evaluation result{true};
+  xt::xtensor<int, 3> effs(xt::empty<int>(state.shape()));
   for (int x{}; x < state.shape(0); ++x) {
     for (int y{}; y < state.shape(1); ++y) {
       for (int z{}; z < state.shape(2); ++z) {
-        auto eff(xt::view(effs, x, y, z, xt::all()));
-        eff = countEff(state, x, y, z);
-        power += eff(1);
-        heat += eff(0) * (eff(0) + 1) / 2.0;
+        int eff(countEff(state, x, y, z));
+        effs(x, y, z) = eff;
+        result.power += eff;
+        result.heat += eff * (eff + 1) / 2.0;
       }
     }
   }
@@ -134,22 +124,19 @@ double evaluate(const Settings &settings, const xt::xtensor<int, 3> &state) {
     for (int y{}; y < state.shape(1); ++y) {
       for (int z{}; z < state.shape(2); ++z) {
         int tile(state(x, y, z));
-        if (tile == Tile::Free || tile == Tile::Moderator) {
-          xt::xtensor<int, 1> eff(
+        if (tile == Tile::Moderator) {
+          int eff(
             + getEffWithCasing(effs, x - 1, y, z)
             + getEffWithCasing(effs, x + 1, y, z)
             + getEffWithCasing(effs, x, y - 1, z)
             + getEffWithCasing(effs, x, y + 1, z)
             + getEffWithCasing(effs, x, y, z - 1)
             + getEffWithCasing(effs, x, y, z + 1));
-          if (tile == Tile::Free)
-            eff(0) = 0;
-          else if (!eff(1))
-            return -1.0;
-          power += eff(1) / 6.0;
-          heat += eff(0) / 3.0;
-        }
-        if (tile == Tile::Free || tile < Tile::Air) {
+          if (!eff)
+            return {};
+          result.power += eff / 6.0;
+          result.heat += eff / 3.0;
+        } else if (tile < Tile::Air) {
           int neighbors[] {
             getTileWithCasing(state, x - 1, y, z),
             getTileWithCasing(state, x + 1, y, z),
@@ -158,87 +145,74 @@ double evaluate(const Settings &settings, const xt::xtensor<int, 3> &state) {
             getTileWithCasing(state, x, y, z - 1),
             getTileWithCasing(state, x, y, z + 1)
           };
-          auto isValid([&](int tile) {
-            switch (tile) {
-              case Tile::Water:
-                return countNeighbor(neighbors, Tile::Free)
-                  || countNeighbor(neighbors, Tile::Cell)
-                  || countNeighbor(neighbors, Tile::Moderator);
-              case Tile::Redstone:
-                return countNeighbor(neighbors, Tile::Free)
-                  || countNeighbor(neighbors, Tile::Cell);
-              case Tile::Quartz:
-                return countNeighbor(neighbors, Tile::Free)
-                  || countNeighbor(neighbors, Tile::Moderator);
-              case Tile::Gold:
-                return countNeighbor(neighbors, Tile::Free) >= 2
-                  - !!countNeighbor(neighbors, Tile::Water)
-                  - !! countNeighbor(neighbors, Tile::Redstone);
-              case Tile::Glowstone:
-                return countNeighbor(neighbors, Tile::Free) >= 2
-                  - countNeighbor(neighbors, Tile::Moderator);
-              case Tile::Lapis:
-                return countNeighbor(neighbors, Tile::Casing)
-                  && (countNeighbor(neighbors, Tile::Free) || countNeighbor(neighbors, Tile::Cell));
-              case Tile::Diamond:
-                return countNeighbor(neighbors, Tile::Free) >= 2
-                  - !!countNeighbor(neighbors, Tile::Water)
-                  - !! countNeighbor(neighbors, Tile::Quartz);
-              case Tile::Helium:
-                if (!countNeighbor(neighbors, Tile::Casing)) {
-                  return false;
-                } else {
-                  int nRedstone(countNeighbor(neighbors, Tile::Redstone));
-                  if (nRedstone > 1)
-                    return false;
-                  return nRedstone || countNeighbor(neighbors, Tile::Free);
-                }
-              case Tile::Enderium:
-                return countNeighbor(neighbors, Tile::Casing) == 3;
-              case Tile::Cryotheum:
-                return countNeighbor(neighbors, Tile::Free) >= 2
-                  - countNeighbor(neighbors, Tile::Cell);
-              case Tile::Iron:
-                return countNeighbor(neighbors, Tile::Free)
-                  || countNeighbor(neighbors, Tile::Gold);
-              case Tile::Emerald:
-                return countNeighbor(neighbors, Tile::Free) >= 2
-                  - !!countNeighbor(neighbors, Tile::Moderator)
-                  - !! countNeighbor(neighbors, Tile::Cell);
-              case Tile::Copper:
-                return countNeighbor(neighbors, Tile::Free)
-                  || countNeighbor(neighbors, Tile::Glowstone);
-              case Tile::Tin:
-                for (int i{}; i < 6; i += 2)
-                  if ((neighbors[i] == Tile::Free || neighbors[i] == Tile::Lapis)
-                      && (neighbors[i + 1] == Tile::Free || neighbors[i + 1] == Tile::Lapis))
-                    return true;
-                return false;
-              case Tile::Magnesium:
-                return countNeighbor(neighbors, Tile::Casing)
-                  && (countNeighbor(neighbors, Tile::Free) || countNeighbor(neighbors, Tile::Moderator));
-              default:
-                return false;
-            }
-          });
-          if (tile < Tile::Air) {
-            if (!isValid(tile))
-              return -1.0;
-            cooling += settings.coolingRate[tile];
-          } else {
-            double best{};
-            for (int i{}; i < Tile::Air; ++i) {
-              if (settings.allowedCoolers[i] && settings.coolingRate[i] > best && isValid(i)) {
-                best = settings.coolingRate[i];
-              }
-            }
-            cooling += best;
+          switch (tile) {
+            case Tile::Water:
+              if (!countNeighbor(neighbors, Tile::Cell) && !countNeighbor(neighbors, Tile::Moderator))
+                return {};
+              break;
+            case Tile::Redstone:
+              if (!countNeighbor(neighbors, Tile::Cell))
+                return {};
+              break;
+            case Tile::Quartz:
+              if (!countNeighbor(neighbors, Tile::Moderator))
+                return {};
+              break;
+            case Tile::Gold:
+              if (!countNeighbor(neighbors, Tile::Water) || !countNeighbor(neighbors, Tile::Redstone))
+                return {};
+              break;
+            case Tile::Glowstone:
+              if (countNeighbor(neighbors, Tile::Moderator) < 2)
+                return {};
+              break;
+            case Tile::Lapis:
+              if (!countNeighbor(neighbors, Tile::Cell) || !countNeighbor(neighbors, Tile::Casing))
+                return {};
+              break;
+            case Tile::Diamond:
+              if (!countNeighbor(neighbors, Tile::Water) || !countNeighbor(neighbors, Tile::Quartz))
+                return {};
+              break;
+            case Tile::Helium:
+              if (countNeighbor(neighbors, Tile::Redstone) != 1 || !countNeighbor(neighbors, Tile::Casing))
+                return {};
+              break;
+            case Tile::Enderium:
+              if (countNeighbor(neighbors, Tile::Casing) != 3)
+                return {};
+              break;
+            case Tile::Cryotheum:
+              if (countNeighbor(neighbors, Tile::Cell) < 2)
+                return {};
+              break;
+            case Tile::Iron:
+              if (!countNeighbor(neighbors, Tile::Gold))
+                return {};
+              break;
+            case Tile::Emerald:
+              if (!countNeighbor(neighbors, Tile::Moderator) || !countNeighbor(neighbors, Tile::Cell))
+                return {};
+              break;
+            case Tile::Copper:
+              if (!countNeighbor(neighbors, Tile::Glowstone))
+                return {};
+              break;
+            case Tile::Tin:
+              for (int i{}; i < 6; i += 2)
+                if (neighbors[i] == Tile::Lapis && neighbors[i + 1] == Tile::Lapis)
+                  goto valid;
+              return {};
+            case Tile::Magnesium:
+              if (!countNeighbor(neighbors, Tile::Casing) || !countNeighbor(neighbors, Tile::Moderator))
+                return {};
           }
+          valid: result.cooling += settings.coolingRate[tile];
         }
       }
     }
   }
-  power *= settings.fuelBasePower;
-  heat *= settings.fuelBaseHeat;
-  return std::min(1., cooling / heat) * power;
+  result.power *= settings.fuelBasePower;
+  result.heat *= settings.fuelBaseHeat;
+  return result;
 }

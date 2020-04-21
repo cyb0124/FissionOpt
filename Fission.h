@@ -10,7 +10,7 @@ namespace Tile {
     Lapis, Diamond, Helium, Enderium, Cryotheum,
     Iron, Emerald, Copper, Tin, Magnesium,
     // Other
-    Air, Cell, Moderator, Casing, Free
+    Air, Cell, Moderator, Casing
   };
   std::string toString(int tile);
 }
@@ -24,6 +24,13 @@ struct Settings {
   double coolingRate[Tile::Air];
 };
 
-double evaluate(const Settings &settings, const xt::xtensor<int, 3> &state);
+struct Evaluation {
+  bool valid;
+  double power, heat, cooling;
+  double netHeat() const { return heat - cooling; }
+  double effPower() const { return valid ? power * std::min(1.0, cooling / heat) : -1.0; }
+};
+
+Evaluation evaluate(const Settings &settings, const xt::xtensor<int, 3> &state);
 
 #endif
