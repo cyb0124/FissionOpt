@@ -55,7 +55,7 @@ $(() => { FissionOpt().then((FissionOpt) => {
   };
 
   const normal = $('#normal'), noNetHeat = $('#noNetHeat');
-  const tileNames = ['Wt', 'Rs', 'Qz', 'Au', 'Gs', 'Lp', 'Dm', 'He', 'Ed', 'Cr', 'Fe', 'Em', 'Cu', 'Sn', 'Mg', '  ', '[]', '##'];
+  const tileNames = ['Wt', 'Rs', 'Qz', 'Au', 'Gs', 'Lp', 'Dm', 'He', 'Ed', 'Cr', 'Fe', 'Em', 'Cu', 'Sn', 'Mg', '&nbsp;&nbsp;', '[]', '##'];
   const tileClasses = tileNames.slice();
   tileClasses[15] = 'row';
   tileClasses[16] = 'cell';
@@ -88,7 +88,7 @@ $(() => { FissionOpt().then((FissionOpt) => {
         const row = $('<div></div>').addClass('row');
         for (let z = 0; z < shapes[2]; ++z) {
           if (z)
-            row.append(' ');
+            row.append('&nbsp;');
           const tile = data[x * strides[0] + y * strides[1] + z * strides[2]];
           row.append($('<span>' + tileNames[tile] + '</span>').addClass(tileClasses[tile]));
         }
@@ -101,7 +101,7 @@ $(() => { FissionOpt().then((FissionOpt) => {
   function runBatch() {
     scheduleBatch();
     let whichChanged = 0;
-    for (let i = 0; i < 256; ++i)
+    for (let i = 0; i < 1024; ++i)
       whichChanged |= opt.step();
     if (whichChanged & 1)
       displayDesign(opt.getBest(), normal);

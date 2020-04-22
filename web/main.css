@@ -72,6 +72,7 @@ input {
   float: left;
   border: 1px solid black;
   padding: 0.5em;
+  margin-bottom: 1em;
   text-align: center;
   font-family: sans-serif;
   min-width: 20em;
