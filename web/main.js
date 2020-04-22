@@ -55,9 +55,12 @@ $(() => { FissionOpt().then((FissionOpt) => {
   };
 
   const normal = $('#normal'), noNetHeat = $('#noNetHeat');
-  const tileNames = ['Wt', 'Rs', 'Qz', 'Au', 'Gs', 'Lp', 'Dm', 'He', 'Ed', 'Cr', 'Fe', 'Em', 'Cu', 'Sn', 'Mg', '&nbsp;&nbsp;', '[]', '##'];
+  const tileNames = ['Wt', 'Rs', 'Qz', 'Au', 'Gs', 'Lp', 'Dm', 'He', 'Ed', 'Cr', 'Fe', 'Em', 'Cu', 'Sn', 'Mg', '..', '[]', '##'];
+  const tileTitles = ['Water', 'Redstone', 'Quartz', 'Gold', 'Glowstone', 'Lapis', 'Diamond', 'Liquid Helium',
+    'Enderium', 'Cryotheum', 'Iron', 'Emerald', 'Copper', 'Tin', 'Magnesium', 'Air', 'Reactor Cell', 'Moderator'];
+  $('#coolers>:not(:first)').each((i, x) => { $(x).attr('title', tileTitles[i]); });
   const tileClasses = tileNames.slice();
-  tileClasses[15] = 'row';
+  tileClasses[15] = 'air';
   tileClasses[16] = 'cell';
   tileClasses[17] = 'mod';
   const displayDesign = (design, element) => {
@@ -88,9 +91,10 @@ $(() => { FissionOpt().then((FissionOpt) => {
         const row = $('<div></div>').addClass('row');
         for (let z = 0; z < shapes[2]; ++z) {
           if (z)
-            row.append('&nbsp;');
+            row.append(' ');
           const tile = data[x * strides[0] + y * strides[1] + z * strides[2]];
-          row.append($('<span>' + tileNames[tile] + '</span>').addClass(tileClasses[tile]));
+          row.append($('<span>' + tileNames[tile] + '</span>')
+            .addClass(tileClasses[tile]).attr('title', tileTitles[tile]));
         }
         element.append(row);
       }
