@@ -9,7 +9,8 @@ void OptMeta::restart() {
 }
 
 OptMeta::OptMeta(const Settings &settings)
-  :settings(settings) {
+  :settings(settings), nStagnation(),
+  maxStagnation(settings.sizeX * settings.sizeY * settings.sizeZ * 16) {
   restart();
   best = population.front();
   bestNoNetHeat = population.front();
@@ -22,6 +23,8 @@ OptMeta::OptMeta(const Settings &settings)
 }
 
 int OptMeta::step() {
+  if (nStagnation == maxStagnation)
+    restart();
   int whichChanged{};
   int bestIndividual{};
   double bestValue;
@@ -50,8 +53,9 @@ int OptMeta::step() {
   }
   double oldValue(population.front().value.effPower());
   if (bestValue > oldValue)
-    whichChanged |= 4;
+    nStagnation = 0;
   if (bestValue + 0.01 >= oldValue)
     std::swap(population.front(), population[bestIndividual]);
+  ++nStagnation;
   return whichChanged;
 }

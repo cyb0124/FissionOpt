@@ -66,6 +66,7 @@ static void printIndividual(const OptMetaIndividual &individual) {
   std::cout << "heat=" << individual.value.heat << std::endl;
   std::cout << "cooling=" << individual.value.cooling << std::endl;
   std::cout << "netHeat=" << individual.value.netHeat() << std::endl;
+  std::cout << "dutyCycle=" << individual.value.dutyCycle() << std::endl;
   std::cout << "effPower=" << individual.value.effPower() << std::endl;
 }
 
@@ -77,22 +78,15 @@ int main() {
     {20, 80, 80, 120, 120, 100, 120, 120, 140, 140, 60, 140, 60, 80, 100}
   };
   OptMeta opt(settings);
-  int maxStagnation(settings.sizeX * settings.sizeY * settings.sizeZ * 16);
-  for (int nRestart{}; ; ++nRestart) {
-    for (int nStagnation{}; nStagnation < maxStagnation; ++nStagnation) {
-      int whichChanged(opt.step());
-      if (whichChanged & 1) {
-        std::cout << "*** Best ***" << std::endl;
-        printIndividual(opt.getBest());
-      }
-      if (whichChanged & 2) {
-        std::cout << "*** Best No Net Heat ***" << std::endl;
-        printIndividual(opt.getBestNoNetHeat());
-      }
-      if (whichChanged & 4) {
-        nStagnation = 0;
-      }
+  while (true) {
+    int whichChanged(opt.step());
+    if (whichChanged & 1) {
+      std::cout << "*** Best ***" << std::endl;
+      printIndividual(opt.getBest());
     }
-    opt.restart();
+    if (whichChanged & 2) {
+      std::cout << "*** Best No Net Heat ***" << std::endl;
+      printIndividual(opt.getBestNoNetHeat());
+    }
   }
 }
