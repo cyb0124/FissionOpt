@@ -1,67 +1,6 @@
 #include <xtensor/xview.hpp>
 #include "Fission.h"
 
-namespace Tile {
-  std::string toString(int tile) {
-    switch (tile) {
-      case Water:
-        return "Wt";
-      case Redstone:
-        return "Rs";
-      case Quartz:
-        return "Qz";
-      case Gold:
-        return "Au";
-      case Glowstone:
-        return "Gs";
-      case Lapis:
-        return "Lp";
-      case Diamond:
-        return "Dm";
-      case Helium:
-        return "He";
-      case Enderium:
-        return "Ed";
-      case Cryotheum:
-        return "Cr";
-      case Iron:
-        return "Fe";
-      case Emerald:
-        return "Em";
-      case Copper:
-        return "Cu";
-      case Tin:
-        return "Sn";
-      case Magnesium:
-        return "Mg";
-      case Air:
-        return "  ";
-      case Cell:
-        return "[]";
-      case Moderator:
-        return "##";
-      default:
-        return "??";
-    }
-  }
-}
-
-std::string stateToString(const xt::xtensor<int, 3> &state) {
-  std::string result;
-  for (int x{}; x < state.shape(0); ++x) {
-    result += "Layer " + std::to_string(x + 1) + "\n";
-    for (int y{}; y < state.shape(1); ++y) {
-      for (int z{}; z < state.shape(2); ++z) {
-        result += Tile::toString(state(x, y, z));
-        if (z < state.shape(2) - 1)
-          result.push_back(' ');
-      }
-      result.push_back('\n');
-    }
-  }
-  return result;
-}
-
 static int getTileWithCasing(const xt::xtensor<int, 3> &state, int x, int y, int z) {
   if (state.in_bounds(x, y, z))
     return state(x, y, z);

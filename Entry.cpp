@@ -1,6 +1,65 @@
 #include <iostream>
 #include "OptMeta.h"
 
+static std::string tileToString(int tile) {
+  switch (tile) {
+    case Tile::Water:
+      return "Wt";
+    case Tile::Redstone:
+      return "Rs";
+    case Tile::Quartz:
+      return "Qz";
+    case Tile::Gold:
+      return "Au";
+    case Tile::Glowstone:
+      return "Gs";
+    case Tile::Lapis:
+      return "Lp";
+    case Tile::Diamond:
+      return "Dm";
+    case Tile::Helium:
+      return "He";
+    case Tile::Enderium:
+      return "Ed";
+    case Tile::Cryotheum:
+      return "Cr";
+    case Tile::Iron:
+      return "Fe";
+    case Tile::Emerald:
+      return "Em";
+    case Tile::Copper:
+      return "Cu";
+    case Tile::Tin:
+      return "Sn";
+    case Tile::Magnesium:
+      return "Mg";
+    case Tile::Air:
+      return "  ";
+    case Tile::Cell:
+      return "[]";
+    case Tile::Moderator:
+      return "##";
+    default:
+      return "??";
+  }
+}
+
+static std::string stateToString(const xt::xtensor<int, 3> &state) {
+  std::string result;
+  for (int x{}; x < state.shape(0); ++x) {
+    result += "Layer " + std::to_string(x + 1) + "\n";
+    for (int y{}; y < state.shape(1); ++y) {
+      for (int z{}; z < state.shape(2); ++z) {
+        result += tileToString(state(x, y, z));
+        if (z < state.shape(2) - 1)
+          result.push_back(' ');
+      }
+      result.push_back('\n');
+    }
+  }
+  return result;
+}
+
 static void printIndividual(const OptMetaIndividual &individual) {
   std::cout << stateToString(individual.state);
   std::cout << "power=" << individual.value.power << std::endl;

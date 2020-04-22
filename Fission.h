@@ -12,10 +12,7 @@ namespace Tile {
     // Other
     Air, Cell, Moderator, Casing
   };
-  std::string toString(int tile);
 }
-
-std::string stateToString(const xt::xtensor<int, 3> &state);
 
 struct Settings {
   int sizeX, sizeY, sizeZ;
