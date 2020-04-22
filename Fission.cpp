@@ -13,16 +13,16 @@ static int getEffWithCasing(const xt::xtensor<int, 3> &effs, int x, int y, int z
   return 0;
 }
 
-static int hasConnected(const xt::xtensor<int, 3> &state, int x, int y, int z, int dx, int dy, int dz) {
+static bool hasConnected(const xt::xtensor<int, 3> &state, int x, int y, int z, int dx, int dy, int dz) {
   for (int n{}; n < 5; ++n) {
     x += dx; y += dy; z += dz;
     int tile(getTileWithCasing(state, x, y, z));
     if (tile == Tile::Cell)
-      return 1;
+      return true;
     if (tile != Tile::Moderator)
-      return 0;
+      return false;
   }
-  return 0;
+  return false;
 }
 
 static int countEff(const xt::xtensor<int, 3> &state, int x, int y, int z) {
@@ -118,7 +118,10 @@ Evaluation evaluate(const Settings &settings, const xt::xtensor<int, 3> &state) 
                 return {};
               break;
             case Tile::Enderium:
-              if (countNeighbor(neighbors, Tile::Casing) != 3)
+              if (countNeighbor(neighbors, Tile::Casing) != 3
+                || x && x != state.shape(0) - 1
+                || y && y != state.shape(1) - 1
+                || z && z != state.shape(2) - 1)
                 return {};
               break;
             case Tile::Cryotheum:
