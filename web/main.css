@@ -1,0 +1,106 @@
+body {
+  line-height: 150%;
+}
+
+table {
+  border-spacing: 1px;
+  background-color: black;
+}
+
+td, th {
+  text-align: center;
+  font-weight: normal;
+  padding: 4px;
+  background-color: white;
+}
+
+h2 {
+  display: inline;
+  margin-right: 1ch;
+}
+
+input {
+  text-align: center;
+}
+
+#settings>*, main>* {
+  margin-top: 0.3em;
+}
+
+.disabledLink {
+  color: gray;
+  cursor: not-allowed;
+}
+
+#sizeX, #sizeY, #sizeZ {
+  width: 2.5ch;
+}
+
+#fuelBasePower, #fuelBaseHeat {
+  width: 8.5ch;
+}
+
+#coolers>:not(:first-child) {
+  font-family: monospace;
+  font-weight: bold;
+  font-size: 135%;
+}
+
+#rate input {
+  width: 3.5ch;
+}
+
+.Wt {color: dodgerblue;}
+.Rs {color: red;}
+.Qz {color: lightgray;}
+.Au {color: gold;}
+.Gs {color: #dc0;}
+.Lp {color: blue;}
+.Dm {color: powderblue;}
+.He {color: lightcoral;}
+.Ed {color: teal;}
+.Cr {color: deepskyBlue;}
+.Fe {color: wheat;}
+.Em {color: green;}
+.Cu {color: brown;}
+.Sn {color: lightsteelblue;}
+.Mg {color: pink;}
+.cell {color: gray;}
+.mod {color: black;}
+
+#normal, #noNetHeat {
+  float: left;
+  border: 1px solid black;
+  padding: 0.5em;
+  text-align: center;
+  font-family: sans-serif;
+  min-width: 20em;
+}
+
+.info {
+  position: relative;
+}
+
+.info>:nth-child(1) {
+  position: absolute;
+  left: 0px;
+}
+
+.info>:nth-child(2) {
+  position: absolute;
+  right: 0px;
+}
+
+.row {
+  font-family: monospace;
+  font-weight: bold;
+  font-size: 120%;
+}
+
+.layerSpacer {
+  height: 1em;
+}
+
+.hidden {
+  display: none;
+}

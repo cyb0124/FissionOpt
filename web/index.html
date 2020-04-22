@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>NuclearCraft Fission Optimizer</title>
+    <link rel="stylesheet" href="main.css"/>
+    <script src="https://code.jquery.com/jquery-3.5.0.slim.min.js"></script>
+    <script src="FissionOpt.js"></script>
+    <script src="main.js"></script>
+  </head>
+  <body>
+    <header>
+      <div>
+        <h2>NuclearCraft Fission Optimizer</h2>
+        by cyb0124, <a href="https://github.com/cyb0124/FissionOpt">source</a>
+      </div>
+      <div>This program generates a fission reactor design that maximizes power production. Cooling downtime is accounted. Fuel consumption is ignored.</div>
+    </header>
+    <section id="settings">
+      <div>
+        Core Size:
+        <input type="text" id="sizeZ"> &times;
+        <input type="text" id="sizeY"> &times;
+        <input type="text" id="sizeX">
+      </div>
+      <div>Fuel Base Power: <input type="text" id="fuelBasePower"> RF/t</div>
+      <div>Fuel Base Heat: <input text="text" id="fuelBaseHeat"> H/t</div>
+      <div>Note that these numbers should already have the multipliers at the top of the fission config applied.</div>
+      <div>The numbers from tooltip (not JEI) have the correct value. Or, you can load one of the common values below.</div>
+      <table>
+        <thead><tr><td>Fuel</td><td>LEU-235</td><td>MOX-239</td></tr></thead>
+        <tr><th>Default</th><td><a href="javascript:;" id="LEU235Default">Load</a></td><td><a href="javascript:;" id="MOX239Default">Load</a></td></tr>
+        <tr><th>E2E</th>
+          <td><a href="javascript:;" id="LEU235E2E">Load</a></td>
+          <td><a href="javascript:;" id="MOX239E2E">Load</a></td>
+        </tr>
+        <tr><th>PO3</th>
+          <td><a href="javascript:;" id="LEU235PO3">Load</a></td>
+          <td><a href="javascript:;" id="MOX239PO3">Load</a></td>
+        </tr>
+      </table>
+      <div>For ExtremeReactors' Yellorium or Blutonium, enter the numbers for LEU-235 and click <a href="javascript:;" id="br">here</a> once.</div>
+      <div>For IC2's Enriched Uranium Nuclear Fuel, enter the numbers for LEU-235 and click <a href="javascript:;" id="ic2">here</a> once.</div>
+      <div>For IC2's MOX Nuclear Fuel, enter the numbers for MOX-239 and click <a href="javascript:;" id="ic2mox">here</a> once.</div>
+      <table>
+        <thead><tr id="coolers"><th>Cooler</th>
+          <th class="Wt">Wt</th><th class="Rs">Rs</th><th class="Qz">Qz</th>
+          <th class="Au">Au</th><th class="Gs">Gs</th><th class="Lp">Lp</th>
+          <th class="Dm">Dm</th><th class="He">He</th><th class="Ed">Ed</th>
+          <th class="Cr">Cr</th><th class="Fe">Fe</th><th class="Em">Em</th>
+          <th class="Cu">Cu</th><th class="Sn">Sn</th><th class="Mg">Mg</th>
+        </tr></thead>
+        <tbody>
+          <tr id="rate"><th>Rate (H/t)</th>
+            <td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>
+            <td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>
+            <td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>
+            <td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>
+            <td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>
+          </tr>
+          <tr id="allow"><th>Allow</th>
+            <td><input type="checkbox" checked></td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td>
+            <td><input type="checkbox" checked></td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td>
+            <td><input type="checkbox" checked></td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td>
+            <td><input type="checkbox" checked></td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td>
+            <td><input type="checkbox" checked></td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td>
+          </tr>
+        </tbody>
+      </table>
+      <div>
+        Load common cooling rate values:
+        <a href="javascript:;" id="coolerDefault">Default</a>
+        <a href="javascript:;" id="coolerE2E">E2E</a>
+        <a href="javascript:;" id="coolerPO3">PO3</a>
+      </div>
+    </section>
+    <main>
+      <div>
+        <a href="javascript:;" id="run">Run</a>
+        <a href="javascript:;" id="pause" class="disabledLink">Pause</a>
+        <a href="javascript:;" id="stop" class="disabledLink">Stop</a>
+      </div>
+      <div>
+        <div id="normal" class="hidden">
+          <div>Normal Design</div>
+        </div>
+        <div id="noNetHeat" class="hidden">
+          <div>No Net Heat Design</div>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>
