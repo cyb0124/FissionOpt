@@ -1,63 +1,65 @@
 #include <iostream>
 #include "OptMeta.h"
 
-static std::string tileToString(int tile) {
-  switch (tile) {
-    case Tile::Water:
-      return "Wt";
-    case Tile::Redstone:
-      return "Rs";
-    case Tile::Quartz:
-      return "Qz";
-    case Tile::Gold:
-      return "Au";
-    case Tile::Glowstone:
-      return "Gs";
-    case Tile::Lapis:
-      return "Lp";
-    case Tile::Diamond:
-      return "Dm";
-    case Tile::Helium:
-      return "He";
-    case Tile::Enderium:
-      return "Ed";
-    case Tile::Cryotheum:
-      return "Cr";
-    case Tile::Iron:
-      return "Fe";
-    case Tile::Emerald:
-      return "Em";
-    case Tile::Copper:
-      return "Cu";
-    case Tile::Tin:
-      return "Sn";
-    case Tile::Magnesium:
-      return "Mg";
-    case Tile::Air:
-      return "  ";
-    case Tile::Cell:
-      return "[]";
-    case Tile::Moderator:
-      return "##";
-    default:
-      return "??";
-  }
-}
-
-static std::string stateToString(const xt::xtensor<int, 3> &state) {
-  std::string result;
-  for (int x{}; x < state.shape(0); ++x) {
-    result += "Layer " + std::to_string(x + 1) + "\n";
-    for (int y{}; y < state.shape(1); ++y) {
-      for (int z{}; z < state.shape(2); ++z) {
-        result += tileToString(state(x, y, z));
-        if (z < state.shape(2) - 1)
-          result.push_back(' ');
-      }
-      result.push_back('\n');
+namespace {
+  std::string tileToString(int tile) {
+    switch (tile) {
+      case Tile::Water:
+        return "Wt";
+      case Tile::Redstone:
+        return "Rs";
+      case Tile::Quartz:
+        return "Qz";
+      case Tile::Gold:
+        return "Au";
+      case Tile::Glowstone:
+        return "Gs";
+      case Tile::Lapis:
+        return "Lp";
+      case Tile::Diamond:
+        return "Dm";
+      case Tile::Helium:
+        return "He";
+      case Tile::Enderium:
+        return "Ed";
+      case Tile::Cryotheum:
+        return "Cr";
+      case Tile::Iron:
+        return "Fe";
+      case Tile::Emerald:
+        return "Em";
+      case Tile::Copper:
+        return "Cu";
+      case Tile::Tin:
+        return "Sn";
+      case Tile::Magnesium:
+        return "Mg";
+      case Tile::Cell:
+        return "[]";
+      case Tile::Moderator:
+        return "##";
+      default:
+        return "  ";
     }
   }
-  return result;
+
+  static std::string stateToString(const xt::xtensor<int, 3> &state) {
+    std::string result;
+    for (int x{}; x < state.shape(0); ++x) {
+      result += "Layer " + std::to_string(x + 1) + "\n";
+      for (int y{}; y < state.shape(1); ++y) {
+        for (int z{}; z < state.shape(2); ++z) {
+          int tile(state(x, y, z));
+          if (tile >= Tile::Active && tile < Tile::Cell)
+            result += ">" + tileToString(tile - Tile::Active);
+          else
+            result += " " + tileToString(tile);
+        }
+        result.push_back('\n');
+      }
+    }
+    return result;
+  }
 }
 
 static void printIndividual(const OptMetaIndividual &individual) {
@@ -72,10 +74,18 @@ static void printIndividual(const OptMetaIndividual &individual) {
 
 int main() {
   Settings settings{
-    1, 3, 5,
+    5, 5, 5,
     682.105263158, 56.8421052632,
-    {1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1},
-    {20, 80, 80, 120, 120, 100, 120, 120, 140, 140, 60, 140, 60, 80, 100}
+    {
+      -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, -1, -1, -1, -1, -1,
+       0,  8,  0,  0,  0,  0,  0,  0, 0, 0, 0,  0,  0,  0,  0,
+      -1, -1
+    },
+    {
+      20, 80, 80, 120, 120, 100, 120, 120, 140, 140, 60, 140, 60, 80, 100,
+      50, 1000, 1500, 1750, 2000, 2250, 3500, 3300, 2750, 3250, 1700, 2750, 1125, 1250, 2000
+    },
+    true
   };
   OptMeta opt(settings);
   while (true) {

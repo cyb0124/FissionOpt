@@ -1,5 +1,4 @@
 #include <xtensor/xview.hpp>
-#include <unordered_set>
 #include "Fission.h"
 
 namespace {
@@ -106,7 +105,7 @@ Evaluation evaluate(const Settings &settings, const xt::xtensor<int, 3> &state) 
             return {};
           result.power += eff * (modPower / 6.0);
           result.heat += eff * (modHeat / 6.0);
-        } else if (tile < Tile::Air) {
+        } else if (tile < Tile::Cell) {
           int rule;
           if (tile < Tile::Active) {
             rule = tile;

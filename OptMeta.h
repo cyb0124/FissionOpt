@@ -5,6 +5,7 @@
 #include "Fission.h"
 
 struct OptMetaIndividual {
+  int limit[Tile::Air];
   xt::xtensor<int, 3> state;
   Evaluation value;
 };
@@ -12,9 +13,7 @@ struct OptMetaIndividual {
 class OptMeta {
   const Settings &settings;
   int nStagnation, maxStagnation;
-  std::array<OptMetaIndividual, 5> population;
-  OptMetaIndividual best, bestNoNetHeat;
-  std::vector<int> allTiles;
+  OptMetaIndividual parent, best, bestNoNetHeat;
   std::mt19937 rng;
   void restart();
 public:

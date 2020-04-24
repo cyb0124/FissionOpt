@@ -13,15 +13,15 @@ namespace Tile {
     Lapis, Diamond, Helium, Enderium, Cryotheum,
     Iron, Emerald, Copper, Tin, Magnesium, Active,
     // Other
-    Air = Active * 2, Cell, Moderator, Casing
+    Cell = Active * 2, Moderator, Air, Casing
   };
 }
 
 struct Settings {
   int sizeX, sizeY, sizeZ;
   double fuelBasePower, fuelBaseHeat;
-  int coolerLimits[Tile::Air];
-  double coolingRates[Tile::Air];
+  int limit[Tile::Air];
+  double coolingRates[Tile::Cell];
   bool ensureActiveCoolerAccessible;
 };
 
