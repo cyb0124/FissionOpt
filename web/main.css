@@ -40,14 +40,14 @@ input {
   width: 8.5ch;
 }
 
-#coolers>:not(:first-child) {
+#blockType>:not(:first-child) {
   font-family: monospace;
   font-weight: bold;
   font-size: 135%;
 }
 
-#rate input {
-  width: 3.5ch;
+#rate input, #limit input, #activeRate input, #activeLimit input {
+  width: 5.5ch;
 }
 
 .Wt {color: dodgerblue;}

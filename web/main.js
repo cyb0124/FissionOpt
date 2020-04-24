@@ -38,31 +38,47 @@ $(() => { FissionOpt().then((FissionOpt) => {
   $('#ic2').click(() => { applyFuelFactor(18 / 19); });
   $('#ic2mox').click(() => { applyFuelFactor(9 / 7); });
   
-  const rates = [], allows = [];
+  const rates = [], limits = [];
   $('#rate input').each(function() { rates.push($(this)); });
-  $('#allow input').each(function() { allows.push($(this)); });
+  $('#activeRate input').each(function() { rates.push($(this)); });
+  $('#limit input').each(function() { limits.push($(this)); });
+  {
+    const tail = limits.splice(-2);
+    $('#activeLimit input').each(function() { limits.push($(this)); });
+    limits.push(...tail);
+  }
   const loadRatePreset = (preset) => {
     if (opt !== null)
       return;
     $.each(rates, (i, x) => { x.val(preset[i]); });
   };
-  $('#coolerDefault').click(() => { loadRatePreset([60, 90, 90, 120, 130, 120, 150, 140, 120, 160, 80, 160, 80, 120, 110]); });
-  $('#coolerE2E').click(() => { loadRatePreset([20, 80, 80, 120, 120, 100, 120, 120, 140, 140, 60, 140, 60, 80, 100]); });
-  $('#coolerPO3').click(() => { loadRatePreset([40, 160, 160, 240, 240, 200, 240, 240, 280, 800, 120, 280, 120, 160, 200]); });
+  $('#coolerDefault').click(() => { loadRatePreset([
+    60, 90, 90, 120, 130, 120, 150, 140, 120, 160, 80, 160, 80, 120, 110,
+    150, 3200, 3000, 4800, 4000, 2800, 7000, 6600, 5400, 6400, 2400, 3600, 2600, 3000, 3600
+  ]); });
+  $('#coolerE2E').click(() => { loadRatePreset([
+    20, 80, 80, 120, 120, 100, 120, 120, 140, 140, 60, 140, 60, 80, 100,
+    50, 1000, 1500, 1750, 2000, 2250, 3500, 3300, 2750, 3250, 1700, 2750, 1125, 1250, 2000
+  ]); });
+  $('#coolerPO3').click(() => { loadRatePreset([
+    40, 160, 160, 240, 240, 200, 240, 240, 280, 800, 120, 280, 120, 160, 200,
+    50, 1600, 20000, 4000, 2700, 3200, 3500, 3300, 2700, 3200, 1200, 1800, 1300, 1500, 1800
+  ]); });
 
   const scheduleBatch = () => {
     timeout = window.setTimeout(runBatch, 0);
   };
 
   const normal = $('#normal'), noNetHeat = $('#noNetHeat');
-  const tileNames = ['Wt', 'Rs', 'Qz', 'Au', 'Gs', 'Lp', 'Dm', 'He', 'Ed', 'Cr', 'Fe', 'Em', 'Cu', 'Sn', 'Mg', '..', '[]', '##'];
+  const nCoolerTypes = 15;
+  const tileNames = ['Wt', 'Rs', 'Qz', 'Au', 'Gs', 'Lp', 'Dm', 'He', 'Ed', 'Cr', 'Fe', 'Em', 'Cu', 'Sn', 'Mg', '[]', '##', '..'];
   const tileTitles = ['Water', 'Redstone', 'Quartz', 'Gold', 'Glowstone', 'Lapis', 'Diamond', 'Liquid Helium',
-    'Enderium', 'Cryotheum', 'Iron', 'Emerald', 'Copper', 'Tin', 'Magnesium', 'Air', 'Reactor Cell', 'Moderator'];
-  $('#coolers>:not(:first)').each((i, x) => { $(x).attr('title', tileTitles[i]); });
+    'Enderium', 'Cryotheum', 'Iron', 'Emerald', 'Copper', 'Tin', 'Magnesium', 'Reactor Cell', 'Moderator', 'Air'];
+  $('#blockType>:not(:first)').each((i, x) => { $(x).attr('title', tileTitles[i]); });
   const tileClasses = tileNames.slice();
-  tileClasses[15] = 'air';
-  tileClasses[16] = 'cell';
-  tileClasses[17] = 'mod';
+  tileClasses[15] = 'cell';
+  tileClasses[16] = 'mod';
+  tileClasses[17] = 'air';
   const displayDesign = (design, element) => {
     element.children(':not(:first)').remove();
     const appendInfo = (label, value, unit) => {
@@ -92,9 +108,21 @@ $(() => { FissionOpt().then((FissionOpt) => {
         for (let z = 0; z < shapes[2]; ++z) {
           if (z)
             row.append(' ');
-          const tile = data[x * strides[0] + y * strides[1] + z * strides[2]];
-          row.append($('<span>' + tileNames[tile] + '</span>')
-            .addClass(tileClasses[tile]).attr('title', tileTitles[tile]));
+          let tile = data[x * strides[0] + y * strides[1] + z * strides[2]];
+          let active = false;
+          if (tile >= nCoolerTypes) {
+            tile -= nCoolerTypes;
+            if (tile < nCoolerTypes)
+              active = true;
+          }
+          const col = $('<span>' + tileNames[tile] + '</span>').addClass(tileClasses[tile]);
+          if (active) {
+            col.attr('title', 'Active ' + tileTitles[tile]);
+            col.css('outline', '2px dashed black')
+          } else {
+            col.attr('title', tileTitles[tile]);
+          }
+          row.append(col);
         }
         element.append(row);
       }
@@ -136,8 +164,12 @@ $(() => { FissionOpt().then((FissionOpt) => {
         settings.sizeZ = parseSize($('#sizeZ').val());
         settings.fuelBasePower = parsePositiveFloat('Fuel Base Power', fuelBasePower.val());
         settings.fuelBaseHeat = parsePositiveFloat('Fuel Base Heat', fuelBaseHeat.val());
+        settings.ensureActiveCoolerAccessible = $('#ensureActiveCoolerAccessible').is(':checked');
         $.each(rates, (i, x) => { settings.setRate(i, parsePositiveFloat('Cooling Rate', x.val())); });
-        $.each(allows, (i, x) => { settings.setAllow(i, x.is(':checked')); });
+        $.each(limits, (i, x) => {
+          x = parseInt(x.val());
+          settings.setLimit(i, x >= 0 ? x : -1);
+        });
       } catch (error) {
         alert('Error: ' + error.message);
         return;

@@ -32,7 +32,10 @@
       <div>The numbers from tooltip (not JEI) have the correct value. Or, you can load one of the common values below.</div>
       <table>
         <thead><tr><td>Fuel</td><td>LEU-235</td><td>MOX-239</td></tr></thead>
-        <tr><th>Default</th><td><a href="javascript:;" id="LEU235Default">Load</a></td><td><a href="javascript:;" id="MOX239Default">Load</a></td></tr>
+        <tr><th>Default</th>
+          <td><a href="javascript:;" id="LEU235Default">Load</a></td>
+          <td><a href="javascript:;" id="MOX239Default">Load</a></td>
+        </tr>
         <tr><th>E2E</th>
           <td><a href="javascript:;" id="LEU235E2E">Load</a></td>
           <td><a href="javascript:;" id="MOX239E2E">Load</a></td>
@@ -46,35 +49,56 @@
       <div>For IC2's Enriched Uranium Nuclear Fuel, enter the numbers for LEU-235 and click <a href="javascript:;" id="ic2">here</a> once.</div>
       <div>For IC2's MOX Nuclear Fuel, enter the numbers for MOX-239 and click <a href="javascript:;" id="ic2mox">here</a> once.</div>
       <table>
-        <thead><tr id="coolers"><th>Cooler</th>
+        <thead><tr id="blockType"><th>Block Type</th>
           <th class="Wt">Wt</th><th class="Rs">Rs</th><th class="Qz">Qz</th>
           <th class="Au">Au</th><th class="Gs">Gs</th><th class="Lp">Lp</th>
           <th class="Dm">Dm</th><th class="He">He</th><th class="Ed">Ed</th>
           <th class="Cr">Cr</th><th class="Fe">Fe</th><th class="Em">Em</th>
           <th class="Cu">Cu</th><th class="Sn">Sn</th><th class="Mg">Mg</th>
+          <th class="cell">[]</th><th class="mod">##</th>
         </tr></thead>
         <tbody>
-          <tr id="rate"><th>Rate (H/t)</th>
+          <tr id="rate"><th>Cooling Rate (H/t)</th>
             <td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>
             <td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>
             <td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>
             <td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>
             <td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>
+            <td>&mdash;</td><td>&mdash;</td>
           </tr>
-          <tr id="allow"><th>Allow</th>
-            <td><input type="checkbox" checked></td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td>
-            <td><input type="checkbox" checked></td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td>
-            <td><input type="checkbox" checked></td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td>
-            <td><input type="checkbox" checked></td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td>
-            <td><input type="checkbox" checked></td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td>
+          <tr id="limit"><th>Max Allowed</th>
+            <td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>
+            <td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>
+            <td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>
+            <td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>
+            <td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>
+            <td><input type="text"></td><td><input type="text"></td>
+          </tr>
+          <tr id="activeRate"><th>Active Rate (H/t)</th>
+            <td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>
+            <td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>
+            <td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>
+            <td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>
+            <td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>
+            <td>&mdash;</td><td>&mdash;</td>
+          </tr>
+          <tr id="activeLimit"><th>Max Active Allowed</th>
+            <td><input type="text" value="0"></td><td><input type="text" value="0"></td><td><input type="text" value="0"></td>
+            <td><input type="text" value="0"></td><td><input type="text" value="0"></td><td><input type="text" value="0"></td>
+            <td><input type="text" value="0"></td><td><input type="text" value="0"></td><td><input type="text" value="0"></td>
+            <td><input type="text" value="0"></td><td><input type="text" value="0"></td><td><input type="text" value="0"></td>
+            <td><input type="text" value="0"></td><td><input type="text" value="0"></td><td><input type="text" value="0"></td>
+            <td>&mdash;</td><td>&mdash;</td>
           </tr>
         </tbody>
       </table>
       <div>
+        Note that active cooling rate should account for fluid input rate. JEI has the correct value.<br>
         Load common cooling rate values:
         <a href="javascript:;" id="coolerDefault">Default</a>
         <a href="javascript:;" id="coolerE2E">E2E</a>
-        <a href="javascript:;" id="coolerPO3">PO3</a>
+        <a href="javascript:;" id="coolerPO3">PO3</a><br>
+        <label>Ensure active coolers are accessible by piping: <input type="checkbox" id="ensureActiveCoolerAccessible" checked></label>
       </div>
     </section>
     <main>

@@ -1,12 +1,12 @@
 #include <emscripten/bind.h>
 #include "../OptMeta.h"
 
-static void setAllow(Settings &settings, int index, bool allow) {
-  settings.allowedCoolers[index] = allow;
+static void setLimit(Settings &settings, int index, int limit) {
+  settings.limit[index] = limit;
 }
 
 static void setRate(Settings &settings, int index, double rate) {
-  settings.coolingRate[index] = rate;
+  settings.coolingRates[index] = rate;
 }
 
 static emscripten::val getData(const OptMetaIndividual &x) {
@@ -53,8 +53,9 @@ EMSCRIPTEN_BINDINGS(FissionOpt) {
     .property("sizeZ", &Settings::sizeZ)
     .property("fuelBasePower", &Settings::fuelBasePower)
     .property("fuelBaseHeat", &Settings::fuelBaseHeat)
-    .function("setAllow", &setAllow)
-    .function("setRate", &setRate);
+    .function("setLimit", &setLimit)
+    .function("setRate", &setRate)
+    .property("ensureActiveCoolerAccessible", &Settings::ensureActiveCoolerAccessible);
   emscripten::class_<OptMetaIndividual>("OptMetaIndividual")
     .function("getData", &getData)
     .function("getShape", &getShape)
