@@ -110,7 +110,7 @@ Evaluation evaluate(const Settings &settings, const xt::xtensor<int, 3> &state) 
           if (tile < Tile::Active) {
             rule = tile;
           } else {
-            if (!AccessibilityChecker(state, tile).run(x, y, z))
+            if (settings.ensureActiveCoolerAccessible && !AccessibilityChecker(state, tile).run(x, y, z))
               return {};
             rule = tile - Tile::Active;
           }
