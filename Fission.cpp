@@ -1,48 +1,79 @@
 #include <xtensor/xview.hpp>
+#include <unordered_set>
 #include "Fission.h"
 
-static int getTileWithCasing(const xt::xtensor<int, 3> &state, int x, int y, int z) {
-  if (state.in_bounds(x, y, z))
-    return state(x, y, z);
-  return Tile::Casing;
-}
-
-static int getEffWithCasing(const xt::xtensor<int, 3> &effs, int x, int y, int z) {
-  if (effs.in_bounds(x, y, z))
-    return effs(x, y, z);
-  return 0;
-}
-
-static bool hasConnected(const xt::xtensor<int, 3> &state, int x, int y, int z, int dx, int dy, int dz) {
-  for (int n{}; n < 5; ++n) {
-    x += dx; y += dy; z += dz;
-    int tile(getTileWithCasing(state, x, y, z));
-    if (tile == Tile::Cell)
-      return true;
-    if (tile != Tile::Moderator)
-      return false;
+namespace {
+  int getTileWithCasing(const xt::xtensor<int, 3> &state, int x, int y, int z) {
+    if (state.in_bounds(x, y, z))
+      return state(x, y, z);
+    return Tile::Casing;
   }
-  return false;
-}
 
-static int countEff(const xt::xtensor<int, 3> &state, int x, int y, int z) {
-  if (state(x, y, z) != Tile::Cell)
+  int getEffWithCasing(const xt::xtensor<int, 3> &effs, int x, int y, int z) {
+    if (effs.in_bounds(x, y, z))
+      return effs(x, y, z);
     return 0;
-  return 1
-    + hasConnected(state, x, y, z, -1, 0, 0)
-    + hasConnected(state, x, y, z, +1, 0, 0)
-    + hasConnected(state, x, y, z, 0, -1, 0)
-    + hasConnected(state, x, y, z, 0, +1, 0)
-    + hasConnected(state, x, y, z, 0, 0, -1)
-    + hasConnected(state, x, y, z, 0, 0, +1);
-}
+  }
 
-static int countNeighbor(const int neighbors[6], int tile) {
-  int result{};
-  for (int i{}; i < 6; ++i)
-    if (neighbors[i] == tile)
-      ++result;
-  return result;
+  bool hasConnected(const xt::xtensor<int, 3> &state, int x, int y, int z, int dx, int dy, int dz) {
+    for (int n{}; n < neutronReach + 1; ++n) {
+      x += dx; y += dy; z += dz;
+      int tile(getTileWithCasing(state, x, y, z));
+      if (tile == Tile::Cell)
+        return true;
+      if (tile != Tile::Moderator)
+        return false;
+    }
+    return false;
+  }
+
+  int countEff(const xt::xtensor<int, 3> &state, int x, int y, int z) {
+    if (state(x, y, z) != Tile::Cell)
+      return 0;
+    return 1
+      + hasConnected(state, x, y, z, -1, 0, 0)
+      + hasConnected(state, x, y, z, +1, 0, 0)
+      + hasConnected(state, x, y, z, 0, -1, 0)
+      + hasConnected(state, x, y, z, 0, +1, 0)
+      + hasConnected(state, x, y, z, 0, 0, -1)
+      + hasConnected(state, x, y, z, 0, 0, +1);
+  }
+
+  int countNeighbor(const int neighbors[6], int tile) {
+    int result{};
+    for (int i{}; i < 6; ++i)
+      if (neighbors[i] == tile)
+        ++result;
+    return result;
+  }
+
+  class AccessibilityChecker {
+    const xt::xtensor<int, 3> &state;
+    int compatibleTile;
+    xt::xtensor<bool, 3> visited;
+  public:
+    AccessibilityChecker(const xt::xtensor<int, 3> &state, int compatibleTile)
+      :state(state), compatibleTile(compatibleTile),
+      visited(xt::zeros<bool>(state.shape())) {}
+
+    bool run(int x, int y, int z) {
+      if (!state.in_bounds(x, y, z))
+        return true;
+      if (visited(x, y, z))
+        return false;
+      visited(x, y, z) = true;
+      int tile(state(x, y, z));
+      if (tile != Tile::Air && tile != compatibleTile)
+        return false;
+      return
+        run(x - 1, y, z) ||
+        run(x + 1, y, z) ||
+        run(x, y - 1, z) ||
+        run(x, y + 1, z) ||
+        run(x, y, z - 1) ||
+        run(x, y, z + 1);
+    }
+  };
 }
 
 Evaluation evaluate(const Settings &settings, const xt::xtensor<int, 3> &state) {
@@ -73,9 +104,17 @@ Evaluation evaluate(const Settings &settings, const xt::xtensor<int, 3> &state) 
             + getEffWithCasing(effs, x, y, z + 1));
           if (!eff)
             return {};
-          result.power += eff / 6.0;
-          result.heat += eff / 3.0;
+          result.power += eff * (modPower / 6.0);
+          result.heat += eff * (modHeat / 6.0);
         } else if (tile < Tile::Air) {
+          int rule;
+          if (tile < Tile::Active) {
+            rule = tile;
+          } else {
+            if (!AccessibilityChecker(state, tile).run(x, y, z))
+              return {};
+            rule = tile - Tile::Active;
+          }
           int neighbors[] {
             getTileWithCasing(state, x - 1, y, z),
             getTileWithCasing(state, x + 1, y, z),
@@ -84,7 +123,7 @@ Evaluation evaluate(const Settings &settings, const xt::xtensor<int, 3> &state) 
             getTileWithCasing(state, x, y, z - 1),
             getTileWithCasing(state, x, y, z + 1)
           };
-          switch (tile) {
+          switch (rule) {
             case Tile::Water:
               if (!countNeighbor(neighbors, Tile::Cell) && !countNeighbor(neighbors, Tile::Moderator))
                 return {};
@@ -149,7 +188,7 @@ Evaluation evaluate(const Settings &settings, const xt::xtensor<int, 3> &state) 
               if (!countNeighbor(neighbors, Tile::Casing) || !countNeighbor(neighbors, Tile::Moderator))
                 return {};
           }
-          valid: result.cooling += settings.coolingRate[tile];
+          valid: result.cooling += settings.coolingRates[tile];
         }
       }
     }

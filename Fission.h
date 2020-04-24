@@ -3,22 +3,26 @@
 #include <xtensor/xtensor.hpp>
 #include <string>
 
+constexpr int neutronReach(4);
+constexpr double modPower(1.0), modHeat(2.0);
+
 namespace Tile {
   enum {
     // Cooler
     Water, Redstone, Quartz, Gold, Glowstone,
     Lapis, Diamond, Helium, Enderium, Cryotheum,
-    Iron, Emerald, Copper, Tin, Magnesium,
+    Iron, Emerald, Copper, Tin, Magnesium, Active,
     // Other
-    Air, Cell, Moderator, Casing
+    Air = Active * 2, Cell, Moderator, Casing
   };
 }
 
 struct Settings {
   int sizeX, sizeY, sizeZ;
   double fuelBasePower, fuelBaseHeat;
-  bool allowedCoolers[Tile::Air];
-  double coolingRate[Tile::Air];
+  int coolerLimits[Tile::Air];
+  double coolingRates[Tile::Air];
+  bool ensureActiveCoolerAccessible;
 };
 
 struct Evaluation {
