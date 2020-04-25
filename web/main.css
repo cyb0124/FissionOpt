@@ -41,6 +41,10 @@ input {
   width: 8.5ch;
 }
 
+.fuelPresets {
+  overflow-x: auto;
+}
+
 #blockType>:not(:first-child) {
   font-family: monospace;
   font-weight: bold;
