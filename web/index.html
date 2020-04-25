@@ -31,18 +31,200 @@
       <div>Note that these numbers should already have the multipliers at the top of the fission config applied.</div>
       <div>The numbers from tooltip (not JEI) have the correct value. Or, you can load one of the common values below.</div>
       <table>
-        <thead><tr><td>Fuel</td><td>LEU-235</td><td>MOX-239</td></tr></thead>
+        <thead><tr><td>Fuel</td>
+          <td>Uranium Ingot</td>
+          <td>TBU</td>
+          <td>LEU-235</td>
+          <td>HEU-235</td>
+          <td>LEU-233</td>
+          <td>HEU-233</td>
+          <td>LEN-236</td>
+          <td>HEN-236</td>
+          <td>MOX-239</td>
+          <td>MOX-241</td>
+          <td>LEP-239</td>
+          <td>HEP-239</td>
+          <td>LEP-241</td>
+          <td>HEP-241</td>
+          <td>LEA-242</td>
+          <td>HEA-242</td>
+          <td>LECm-243</td>
+          <td>HECm-243</td>
+          <td>LECm-245</td>
+          <td>HECm-245</td>
+          <td>LECm-247</td>
+          <td>HECm-247</td>
+          <td>LEB-248</td>
+          <td>HEB-248</td>
+          <td>LECf-249</td>
+          <td>HECf-249</td>
+          <td>LECf-251</td>
+          <td>HECf-251</td>
+        </tr></thead>
         <tr><th>Default</th>
-          <td><a href="javascript:;" id="LEU235Default">Load</a></td>
-          <td><a href="javascript:;" id="MOX239Default">Load</a></td>
+          <td>&mdash;</td>
+          <td><a href="javascript:;" id="DefTBU">Normal</a>
+          <br><a href="javascript:;" id="DefTBUO">Oxide</a></td>
+          <td><a href="javascript:;" id="DefLEU235">Normal</a>
+          <br><a href="javascript:;" id="DefLEU235O">Oxide</a></td>
+          <td><a href="javascript:;" id="DefHEU235">Normal</a>
+          <br><a href="javascript:;" id="DefHEU235O">Oxide</a></td>
+          <td><a href="javascript:;" id="DefLEU233">Normal</a>
+          <br><a href="javascript:;" id="DefLEU233O">Oxide</a></td>
+          <td><a href="javascript:;" id="DefHEU233">Normal</a>
+          <br><a href="javascript:;" id="DefHEU233O">Oxide</a></td>
+          <td><a href="javascript:;" id="DefLEN236">Normal</a>
+          <br><a href="javascript:;" id="DefLEN236O">Oxide</a></td>
+          <td><a href="javascript:;" id="DefHEN236">Normal</a>
+          <br><a href="javascript:;" id="DefHEN236O">Oxide</a></td>
+          <td><a href="javascript:;" id="DefMOX239">Load</a></td>
+          <td><a href="javascript:;" id="DefMOX241">Load</a></td>
+          <td><a href="javascript:;" id="DefLEP239">Normal</a>
+          <br><a href="javascript:;" id="DefLEP239O">Oxide</a></td>
+          <td><a href="javascript:;" id="DefHEP239">Normal</a>
+          <br><a href="javascript:;" id="DefHEP239O">Oxide</a></td>
+          <td><a href="javascript:;" id="DefLEP241">Normal</a>
+          <br><a href="javascript:;" id="DefLEP241O">Oxide</a></td>
+          <td><a href="javascript:;" id="DefHEP241">Normal</a>
+          <br><a href="javascript:;" id="DefHEP241O">Oxide</a></td>
+          <td><a href="javascript:;" id="DefLEA242">Normal</a>
+          <br><a href="javascript:;" id="DefLEA242O">Oxide</a></td>
+          <td><a href="javascript:;" id="DefHEA242">Normal</a>
+          <br><a href="javascript:;" id="DefHEA242O">Oxide</a></td>
+          <td><a href="javascript:;" id="DefLECm243">Normal</a>
+          <br><a href="javascript:;" id="DefLECm243O">Oxide</a></td>
+          <td><a href="javascript:;" id="DefHECm243">Normal</a>
+          <br><a href="javascript:;" id="DefHECm243O">Oxide</a></td>
+          <td><a href="javascript:;" id="DefLECm245">Normal</a>
+          <br><a href="javascript:;" id="DefLECm245O">Oxide</a></td>
+          <td><a href="javascript:;" id="DefHECm245">Normal</a>
+          <br><a href="javascript:;" id="DefHECm245O">Oxide</a></td>
+          <td><a href="javascript:;" id="DefLECm247">Normal</a>
+          <br><a href="javascript:;" id="DefLECm247O">Oxide</a></td>
+          <td><a href="javascript:;" id="DefHECm247">Normal</a>
+          <br><a href="javascript:;" id="DefHECm247O">Oxide</a></td>
+          <td><a href="javascript:;" id="DefLEB248">Normal</a>
+          <br><a href="javascript:;" id="DefLEB248O">Oxide</a></td>
+          <td><a href="javascript:;" id="DefHEB248">Normal</a>
+          <br><a href="javascript:;" id="DefHEB248O">Oxide</a></td>
+          <td><a href="javascript:;" id="DefLECf249">Normal</a>
+          <br><a href="javascript:;" id="DefLECf249O">Oxide</a></td>
+          <td><a href="javascript:;" id="DefHECf249">Normal</a>
+          <br><a href="javascript:;" id="DefHECf249O">Oxide</a></td>
+          <td><a href="javascript:;" id="DefLECf251">Normal</a>
+          <br><a href="javascript:;" id="DefLECf251O">Oxide</a></td>
+          <td><a href="javascript:;" id="DefHECf251">Normal</a>
+          <br><a href="javascript:;" id="DefHECf251O">Oxide</a></td>
         </tr>
         <tr><th>E2E</th>
-          <td><a href="javascript:;" id="LEU235E2E">Load</a></td>
-          <td><a href="javascript:;" id="MOX239E2E">Load</a></td>
+          <td><a href="javascript:;" id="E2EUraniumIngot">Load</a></td>
+          <td><a href="javascript:;" id="E2ETBU">Normal</a>
+          <br><a href="javascript:;" id="E2ETBUO">Oxide</a></td>
+          <td><a href="javascript:;" id="E2ELEU235">Normal</a>
+          <br><a href="javascript:;" id="E2ELEU235O">Oxide</a></td>
+          <td><a href="javascript:;" id="E2EHEU235">Normal</a>
+          <br><a href="javascript:;" id="E2EHEU235O">Oxide</a></td>
+          <td><a href="javascript:;" id="E2ELEU233">Normal</a>
+          <br><a href="javascript:;" id="E2ELEU233O">Oxide</a></td>
+          <td><a href="javascript:;" id="E2EHEU233">Normal</a>
+          <br><a href="javascript:;" id="E2EHEU233O">Oxide</a></td>
+          <td><a href="javascript:;" id="E2ELEN236">Normal</a>
+          <br><a href="javascript:;" id="E2ELEN236O">Oxide</a></td>
+          <td><a href="javascript:;" id="E2EHEN236">Normal</a>
+          <br><a href="javascript:;" id="E2EHEN236O">Oxide</a></td>
+          <td><a href="javascript:;" id="E2EMOX239">Load</a></td>
+          <td><a href="javascript:;" id="E2EMOX241">Load</a></td>
+          <td><a href="javascript:;" id="E2ELEP239">Normal</a>
+          <br><a href="javascript:;" id="E2ELEP239O">Oxide</a></td>
+          <td><a href="javascript:;" id="E2EHEP239">Normal</a>
+          <br><a href="javascript:;" id="E2EHEP239O">Oxide</a></td>
+          <td><a href="javascript:;" id="E2ELEP241">Normal</a>
+          <br><a href="javascript:;" id="E2ELEP241O">Oxide</a></td>
+          <td><a href="javascript:;" id="E2EHEP241">Normal</a>
+          <br><a href="javascript:;" id="E2EHEP241O">Oxide</a></td>
+          <td><a href="javascript:;" id="E2ELEA242">Normal</a>
+          <br><a href="javascript:;" id="E2ELEA242O">Oxide</a></td>
+          <td><a href="javascript:;" id="E2EHEA242">Normal</a>
+          <br><a href="javascript:;" id="E2EHEA242O">Oxide</a></td>
+          <td><a href="javascript:;" id="E2ELECm243">Normal</a>
+          <br><a href="javascript:;" id="E2ELECm243O">Oxide</a></td>
+          <td><a href="javascript:;" id="E2EHECm243">Normal</a>
+          <br><a href="javascript:;" id="E2EHECm243O">Oxide</a></td>
+          <td><a href="javascript:;" id="E2ELECm245">Normal</a>
+          <br><a href="javascript:;" id="E2ELECm245O">Oxide</a></td>
+          <td><a href="javascript:;" id="E2EHECm245">Normal</a>
+          <br><a href="javascript:;" id="E2EHECm245O">Oxide</a></td>
+          <td><a href="javascript:;" id="E2ELECm247">Normal</a>
+          <br><a href="javascript:;" id="E2ELECm247O">Oxide</a></td>
+          <td><a href="javascript:;" id="E2EHECm247">Normal</a>
+          <br><a href="javascript:;" id="E2EHECm247O">Oxide</a></td>
+          <td><a href="javascript:;" id="E2ELEB248">Normal</a>
+          <br><a href="javascript:;" id="E2ELEB248O">Oxide</a></td>
+          <td><a href="javascript:;" id="E2EHEB248">Normal</a>
+          <br><a href="javascript:;" id="E2EHEB248O">Oxide</a></td>
+          <td><a href="javascript:;" id="E2ELECf249">Normal</a>
+          <br><a href="javascript:;" id="E2ELECf249O">Oxide</a></td>
+          <td><a href="javascript:;" id="E2EHECf249">Normal</a>
+          <br><a href="javascript:;" id="E2EHECf249O">Oxide</a></td>
+          <td><a href="javascript:;" id="E2ELECf251">Normal</a>
+          <br><a href="javascript:;" id="E2ELECf251O">Oxide</a></td>
+          <td><a href="javascript:;" id="E2EHECf251">Normal</a>
+          <br><a href="javascript:;" id="E2EHECf251O">Oxide</a></td>
         </tr>
         <tr><th>PO3</th>
-          <td><a href="javascript:;" id="LEU235PO3">Load</a></td>
-          <td><a href="javascript:;" id="MOX239PO3">Load</a></td>
+          <td>&mdash;</td>
+          <td><a href="javascript:;" id="PO3TBU">Normal</a>
+          <br><a href="javascript:;" id="PO3TBUO">Oxide</a></td>
+          <td><a href="javascript:;" id="PO3LEU235">Normal</a>
+          <br><a href="javascript:;" id="PO3LEU235O">Oxide</a></td>
+          <td><a href="javascript:;" id="PO3HEU235">Normal</a>
+          <br><a href="javascript:;" id="PO3HEU235O">Oxide</a></td>
+          <td><a href="javascript:;" id="PO3LEU233">Normal</a>
+          <br><a href="javascript:;" id="PO3LEU233O">Oxide</a></td>
+          <td><a href="javascript:;" id="PO3HEU233">Normal</a>
+          <br><a href="javascript:;" id="PO3HEU233O">Oxide</a></td>
+          <td><a href="javascript:;" id="PO3LEN236">Normal</a>
+          <br><a href="javascript:;" id="PO3LEN236O">Oxide</a></td>
+          <td><a href="javascript:;" id="PO3HEN236">Normal</a>
+          <br><a href="javascript:;" id="PO3HEN236O">Oxide</a></td>
+          <td><a href="javascript:;" id="PO3MOX239">Load</a></td>
+          <td><a href="javascript:;" id="PO3MOX241">Load</a></td>
+          <td><a href="javascript:;" id="PO3LEP239">Normal</a>
+          <br><a href="javascript:;" id="PO3LEP239O">Oxide</a></td>
+          <td><a href="javascript:;" id="PO3HEP239">Normal</a>
+          <br><a href="javascript:;" id="PO3HEP239O">Oxide</a></td>
+          <td><a href="javascript:;" id="PO3LEP241">Normal</a>
+          <br><a href="javascript:;" id="PO3LEP241O">Oxide</a></td>
+          <td><a href="javascript:;" id="PO3HEP241">Normal</a>
+          <br><a href="javascript:;" id="PO3HEP241O">Oxide</a></td>
+          <td><a href="javascript:;" id="PO3LEA242">Normal</a>
+          <br><a href="javascript:;" id="PO3LEA242O">Oxide</a></td>
+          <td><a href="javascript:;" id="PO3HEA242">Normal</a>
+          <br><a href="javascript:;" id="PO3HEA242O">Oxide</a></td>
+          <td><a href="javascript:;" id="PO3LECm243">Normal</a>
+          <br><a href="javascript:;" id="PO3LECm243O">Oxide</a></td>
+          <td><a href="javascript:;" id="PO3HECm243">Normal</a>
+          <br><a href="javascript:;" id="PO3HECm243O">Oxide</a></td>
+          <td><a href="javascript:;" id="PO3LECm245">Normal</a>
+          <br><a href="javascript:;" id="PO3LECm245O">Oxide</a></td>
+          <td><a href="javascript:;" id="PO3HECm245">Normal</a>
+          <br><a href="javascript:;" id="PO3HECm245O">Oxide</a></td>
+          <td><a href="javascript:;" id="PO3LECm247">Normal</a>
+          <br><a href="javascript:;" id="PO3LECm247O">Oxide</a></td>
+          <td><a href="javascript:;" id="PO3HECm247">Normal</a>
+          <br><a href="javascript:;" id="PO3HECm247O">Oxide</a></td>
+          <td><a href="javascript:;" id="PO3LEB248">Normal</a>
+          <br><a href="javascript:;" id="PO3LEB248O">Oxide</a></td>
+          <td><a href="javascript:;" id="PO3HEB248">Normal</a>
+          <br><a href="javascript:;" id="PO3HEB248O">Oxide</a></td>
+          <td><a href="javascript:;" id="PO3LECf249">Normal</a>
+          <br><a href="javascript:;" id="PO3LECf249O">Oxide</a></td>
+          <td><a href="javascript:;" id="PO3HECf249">Normal</a>
+          <br><a href="javascript:;" id="PO3HECf249O">Oxide</a></td>
+          <td><a href="javascript:;" id="PO3LECf251">Normal</a>
+          <br><a href="javascript:;" id="PO3LECf251O">Oxide</a></td>
+          <td><a href="javascript:;" id="PO3HECf251">Normal</a>
+          <br><a href="javascript:;" id="PO3HECf251O">Oxide</a></td>
         </tr>
       </table>
       <div>For ExtremeReactors' Yellorium or Blutonium, enter the numbers for LEU-235 and click <a href="javascript:;" id="br">here</a> once.</div>
@@ -95,9 +277,9 @@
       <div>
         Note that active cooling rate should account for fluid input rate. JEI has the correct value.<br>
         Load common cooling rate values:
-        <a href="javascript:;" id="coolerDefault">Default</a>
-        <a href="javascript:;" id="coolerE2E">E2E</a>
-        <a href="javascript:;" id="coolerPO3">PO3</a><br>
+        <a href="javascript:;" id="DefRate">Default</a>
+        <a href="javascript:;" id="E2ERate">E2E</a>
+        <a href="javascript:;" id="PO3Rate">PO3</a><br>
         <label>Ensure active coolers are accessible by piping: <input type="checkbox" id="ensureActiveCoolerAccessible" checked></label>
       </div>
     </section>
