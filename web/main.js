@@ -325,6 +325,8 @@ $(() => { FissionOpt().then((FissionOpt) => {
         alert('Error: ' + error.message);
         return;
       }
+      normal.addClass('hidden');
+      noNetHeat.addClass('hidden');
       opt = new FissionOpt.OptMeta(settings);
     }
     scheduleBatch();
