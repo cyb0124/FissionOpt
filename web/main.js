@@ -230,7 +230,26 @@ $(() => { FissionOpt().then((FissionOpt) => {
   tileClasses[15] = 'cell';
   tileClasses[16] = 'mod';
   tileClasses[17] = 'air';
+
+  const displayTile = (tile) => {
+    let active = false;
+    if (tile >= nCoolerTypes) {
+      tile -= nCoolerTypes;
+      if (tile < nCoolerTypes)
+        active = true;
+    }
+    const result = $('<span>' + tileNames[tile] + '</span>').addClass(tileClasses[tile]);
+    if (active) {
+      result.attr('title', 'Active ' + tileTitles[tile]);
+      result.css('outline', '2px dashed black')
+    } else {
+      result.attr('title', tileTitles[tile]);
+    }
+    return result;
+  };
+
   const displayDesign = (design, element) => {
+    element.removeClass('hidden');
     element.children(':not(:first)').remove();
     const appendInfo = (label, value, unit) => {
       const row = $('<div></div>').addClass('info');
@@ -245,12 +264,14 @@ $(() => { FissionOpt().then((FissionOpt) => {
     appendInfo('Net Heat', design.getNetHeat(), 'H/t');
     appendInfo('Duty Cycle', design.getDutyCycle() * 100, '%');
     appendInfo('Avg Power', design.getEffPower(), 'RF/t');
-    element.append('<div></div>')
+
     const shapes = [], strides = [], data = design.getData();
     for (let i = 0; i < 3; ++i) {
       shapes.push(design.getShape(i));
       strides.push(design.getStride(i));
     }
+    let resourceMap = {};
+    resourceMap[-1] = (shapes[0] * shapes[1] + shapes[1] * shapes[2] + shapes[2] * shapes[0]) * 2;
     for (let x = 0; x < shapes[0]; ++x) {
       element.append($('<div></div>').addClass('layerSpacer'));
       element.append('<div>Layer ' + (x + 1) + '</div>');
@@ -259,26 +280,29 @@ $(() => { FissionOpt().then((FissionOpt) => {
         for (let z = 0; z < shapes[2]; ++z) {
           if (z)
             row.append(' ');
-          let tile = data[x * strides[0] + y * strides[1] + z * strides[2]];
-          let active = false;
-          if (tile >= nCoolerTypes) {
-            tile -= nCoolerTypes;
-            if (tile < nCoolerTypes)
-              active = true;
-          }
-          const col = $('<span>' + tileNames[tile] + '</span>').addClass(tileClasses[tile]);
-          if (active) {
-            col.attr('title', 'Active ' + tileTitles[tile]);
-            col.css('outline', '2px dashed black')
-          } else {
-            col.attr('title', tileTitles[tile]);
-          }
-          row.append(col);
+          const tile = data[x * strides[0] + y * strides[1] + z * strides[2]];
+          if (!resourceMap.hasOwnProperty(tile))
+            resourceMap[tile] = 1;
+          else
+            ++resourceMap[tile];
+          row.append(displayTile(tile));
         }
         element.append(row);
       }
     }
-    element.removeClass('hidden');
+
+    element.append($('<div></div>').addClass('layerSpacer'));
+    element.append('<div>Total number of blocks used</div>')
+    resourceMap = Object.entries(resourceMap);
+    resourceMap.sort((x, y) => y[1] - x[1]);
+    for (resource of resourceMap) {
+      const row = $('<div></div>');
+      if (resource[0] < 0)
+        row.append('Casing');
+      else
+        row.append(displayTile(resource[0]).addClass('row'));
+      element.append(row.append(' &times; ' + resource[1]));
+    }
   };
 
   function runBatch() {
