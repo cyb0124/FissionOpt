@@ -221,7 +221,7 @@ $(() => { FissionOpt().then((FissionOpt) => {
   };
 
   const normal = $('#normal'), noNetHeat = $('#noNetHeat');
-  const nCoolerTypes = 15;
+  const nCoolerTypes = 15, air = nCoolerTypes * 2 + 2;
   const tileNames = ['Wt', 'Rs', 'Qz', 'Au', 'Gs', 'Lp', 'Dm', 'He', 'Ed', 'Cr', 'Fe', 'Em', 'Cu', 'Sn', 'Mg', '[]', '##', '..'];
   const tileTitles = ['Water', 'Redstone', 'Quartz', 'Gold', 'Glowstone', 'Lapis', 'Diamond', 'Liquid Helium',
     'Enderium', 'Cryotheum', 'Iron', 'Emerald', 'Copper', 'Tin', 'Magnesium', 'Reactor Cell', 'Moderator', 'Air'];
@@ -296,6 +296,8 @@ $(() => { FissionOpt().then((FissionOpt) => {
     resourceMap = Object.entries(resourceMap);
     resourceMap.sort((x, y) => y[1] - x[1]);
     for (resource of resourceMap) {
+      if (resource[0] == air)
+        continue;
       const row = $('<div></div>');
       if (resource[0] < 0)
         row.append('Casing');
