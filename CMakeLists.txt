@@ -5,8 +5,8 @@ set(CMAKE_CXX_STANDARD 17)
 add_executable(FissionOpt
   Fission.h
   Fission.cpp
-  OptMeta.h
-  OptMeta.cpp
+  OptFission.h
+  OptFission.cpp
   Entry.cpp
 )
 

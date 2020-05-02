@@ -1,57 +1,57 @@
 #include <iostream>
-#include "OptMeta.h"
+#include "OptFission.h"
 
 namespace {
   std::string tileToString(int tile) {
     switch (tile) {
-      case Tile::Water:
+      case Fission::Water:
         return "Wt";
-      case Tile::Redstone:
+      case Fission::Redstone:
         return "Rs";
-      case Tile::Quartz:
+      case Fission::Quartz:
         return "Qz";
-      case Tile::Gold:
+      case Fission::Gold:
         return "Au";
-      case Tile::Glowstone:
+      case Fission::Glowstone:
         return "Gs";
-      case Tile::Lapis:
+      case Fission::Lapis:
         return "Lp";
-      case Tile::Diamond:
+      case Fission::Diamond:
         return "Dm";
-      case Tile::Helium:
+      case Fission::Helium:
         return "He";
-      case Tile::Enderium:
+      case Fission::Enderium:
         return "Ed";
-      case Tile::Cryotheum:
+      case Fission::Cryotheum:
         return "Cr";
-      case Tile::Iron:
+      case Fission::Iron:
         return "Fe";
-      case Tile::Emerald:
+      case Fission::Emerald:
         return "Em";
-      case Tile::Copper:
+      case Fission::Copper:
         return "Cu";
-      case Tile::Tin:
+      case Fission::Tin:
         return "Sn";
-      case Tile::Magnesium:
+      case Fission::Magnesium:
         return "Mg";
-      case Tile::Cell:
+      case Fission::Cell:
         return "[]";
-      case Tile::Moderator:
+      case Fission::Moderator:
         return "##";
       default:
         return "  ";
     }
   }
 
-  static std::string stateToString(const xt::xtensor<int, 3> &state) {
+  std::string stateToString(const xt::xtensor<int, 3> &state) {
     std::string result;
     for (int x{}; x < state.shape(0); ++x) {
       result += "Layer " + std::to_string(x + 1) + "\n";
       for (int y{}; y < state.shape(1); ++y) {
         for (int z{}; z < state.shape(2); ++z) {
           int tile(state(x, y, z));
-          if (tile >= Tile::Active && tile < Tile::Cell)
-            result += ">" + tileToString(tile - Tile::Active);
+          if (tile >= Fission::Active && tile < Fission::Cell)
+            result += ">" + tileToString(tile - Fission::Active);
           else
             result += " " + tileToString(tile);
         }
@@ -60,20 +60,22 @@ namespace {
     }
     return result;
   }
-}
 
-static void printIndividual(const OptMetaIndividual &individual) {
-  std::cout << stateToString(individual.state);
-  std::cout << "power=" << individual.value.power << std::endl;
-  std::cout << "heat=" << individual.value.heat << std::endl;
-  std::cout << "cooling=" << individual.value.cooling << std::endl;
-  std::cout << "netHeat=" << individual.value.netHeat() << std::endl;
-  std::cout << "dutyCycle=" << individual.value.dutyCycle() << std::endl;
-  std::cout << "effPower=" << individual.value.effPower() << std::endl;
+  void printIndividual(const Fission::Individual &individual) {
+    std::cout << stateToString(individual.state);
+    std::cout << "power=" << individual.value.power << std::endl;
+    std::cout << "heat=" << individual.value.heat << std::endl;
+    std::cout << "cooling=" << individual.value.cooling << std::endl;
+    std::cout << "netHeat=" << individual.value.netHeat << std::endl;
+    std::cout << "dutyCycle=" << individual.value.dutyCycle << std::endl;
+    std::cout << "avgPower=" << individual.value.avgPower << std::endl;
+    std::cout << "avgBreed=" << individual.value.avgBreed << std::endl;
+    std::cout << "efficiency=" << individual.value.efficiency << std::endl;
+  }
 }
 
 int main() {
-  Settings settings{
+  Fission::Settings settings{
     5, 5, 5,
     682.105263158, 56.8421052632,
     {
@@ -87,16 +89,12 @@ int main() {
     },
     true
   };
-  OptMeta opt(settings);
+  settings.bestPower(true);
+  Fission::Opt opt(settings);
   while (true) {
-    int whichChanged(opt.step());
-    if (whichChanged & 1) {
+    if (opt.step()) {
       std::cout << "*** Best ***" << std::endl;
       printIndividual(opt.getBest());
-    }
-    if (whichChanged & 2) {
-      std::cout << "*** Best No Net Heat ***" << std::endl;
-      printIndividual(opt.getBestNoNetHeat());
     }
   }
 }
