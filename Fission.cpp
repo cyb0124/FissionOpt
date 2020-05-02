@@ -182,6 +182,22 @@ namespace Fission {
         + isActiveSafe(state, active, tile, x, y, z + 1);
     }
 
+    bool isTileSafe(const xt::xtensor<int, 3> &state, int tile, int x, int y, int z) {
+      if (!state.in_bounds(x, y, z))
+        return false;
+      return state(x, y, z) == tile;
+    }
+
+    int countNeighbors(const xt::xtensor<int, 3> &state, int tile, int x, int y, int z) {
+      return
+        + isTileSafe(state, tile, x - 1, y, z)
+        + isTileSafe(state, tile, x + 1, y, z)
+        + isTileSafe(state, tile, x, y - 1, z)
+        + isTileSafe(state, tile, x, y + 1, z)
+        + isTileSafe(state, tile, x, y, z - 1)
+        + isTileSafe(state, tile, x, y, z + 1);
+    }
+
     int countCasingNeighbors(const xt::xtensor<int, 3> &state, int x, int y, int z) {
       return
         + !state.in_bounds(x - 1, y, z)
@@ -235,7 +251,6 @@ namespace Fission {
             int mult(countMult(state, isModeratorInLine, x, y, z));
             mults(x, y, z) = mult;
             rules(x, y, z) = -1;
-            isActive(x, y, z) = true;
             ++result.breed;
             result.powerMult += mult;
             result.heatMult += mult * (mult + 1) / 2.0;
@@ -275,10 +290,10 @@ namespace Fission {
             }
           } else switch (rules(x, y, z)) {
             case Redstone:
-              isActive(x, y, z) = countActiveNeighbors(state, isActive, Cell, x, y, z);
+              isActive(x, y, z) = countNeighbors(state, Cell, x, y, z);
               break;
             case Lapis:
-              isActive(x, y, z) = countActiveNeighbors(state, isActive, Cell, x, y, z)
+              isActive(x, y, z) = countNeighbors(state, Cell, x, y, z)
                 && countCasingNeighbors(state, x, y, z);
               break;
             case Enderium:
@@ -288,7 +303,7 @@ namespace Fission {
                 && (!z || z == state.shape(2) - 1);
               break;
             case Cryotheum:
-              isActive(x, y, z) = countActiveNeighbors(state, isActive, Cell, x, y, z) >= 2;
+              isActive(x, y, z) = countNeighbors(state, Cell, x, y, z) >= 2;
           }
         }
       }
@@ -299,7 +314,7 @@ namespace Fission {
         for (int z{}; z < state.shape(2); ++z) {
           switch (rules(x, y, z)) {
             case Water:
-              isActive(x, y, z) = countActiveNeighbors(state, isActive, Cell, x, y, z)
+              isActive(x, y, z) = countNeighbors(state, Cell, x, y, z)
                 || countActiveNeighbors(state, isActive, Moderator, x, y, z);
               break;
             case Quartz:
@@ -314,7 +329,7 @@ namespace Fission {
               break;
             case Emerald:
               isActive(x, y, z) = countActiveNeighbors(state, isActive, Moderator, x, y, z)
-                && countActiveNeighbors(state, isActive, Cell, x, y, z);
+                && countNeighbors(state, Cell, x, y, z);
               break;
             case Tin:
               isActive(x, y, z) =
