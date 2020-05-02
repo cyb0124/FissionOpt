@@ -13,16 +13,16 @@ namespace Fission {
     Lapis, Diamond, Helium, Enderium, Cryotheum,
     Iron, Emerald, Copper, Tin, Magnesium, Active,
     // Other
-    Cell = Active * 2, Moderator, Air, Casing
+    Cell = Active * 2, Moderator, Air
   };
 
   enum {
-    GoalValid,
     GoalAvgPower,
     GoalEfficiency,
     GoalAvgBreed,
     GoalHeatNeutral,
-    GoalNoOverCooling
+    GoalNoOverCooling,
+    GoalNoInvalid
   };
 
   struct Settings {
@@ -40,8 +40,8 @@ namespace Fission {
 
   struct Evaluation {
     // Raw
-    bool valid;
     double breed, powerMult, heatMult, cooling;
+    int nInvalid;
     // Computed
     double heat, netHeat, dutyCycle, power, avgPower, avgBreed, efficiency;
 

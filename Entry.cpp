@@ -61,23 +61,24 @@ namespace {
     return result;
   }
 
-  void printIndividual(const Fission::Individual &individual) {
-    std::cout << stateToString(individual.state);
-    std::cout << "power=" << individual.value.power << std::endl;
-    std::cout << "heat=" << individual.value.heat << std::endl;
-    std::cout << "cooling=" << individual.value.cooling << std::endl;
-    std::cout << "netHeat=" << individual.value.netHeat << std::endl;
-    std::cout << "dutyCycle=" << individual.value.dutyCycle << std::endl;
-    std::cout << "avgPower=" << individual.value.avgPower << std::endl;
-    std::cout << "avgBreed=" << individual.value.avgBreed << std::endl;
-    std::cout << "efficiency=" << individual.value.efficiency << std::endl;
+  void printSample(const Fission::Sample &sample) {
+    std::cout << stateToString(sample.state);
+    std::cout << "power=" << sample.value.power << std::endl;
+    std::cout << "heat=" << sample.value.heat << std::endl;
+    std::cout << "cooling=" << sample.value.cooling << std::endl;
+    std::cout << "netHeat=" << sample.value.netHeat << std::endl;
+    std::cout << "dutyCycle=" << sample.value.dutyCycle << std::endl;
+    std::cout << "avgBreed=" << sample.value.avgBreed << std::endl;
+    std::cout << "efficiency=" << sample.value.efficiency << std::endl;
+    std::cout << "nInvalid=" << sample.value.nInvalid << std::endl;
+    std::cout << "avgPower=" << sample.value.avgPower << std::endl;
   }
 }
 
 int main() {
   Fission::Settings settings{
-    5, 5, 5,
-    682.105263158, 56.8421052632,
+    3, 3, 3,
+    1008, 75,
     {
       -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, -1, -1, -1, -1, -1,
        0,  8,  0,  0,  0,  0,  0,  0, 0, 0, 0,  0,  0,  0,  0,
@@ -94,7 +95,7 @@ int main() {
   while (true) {
     if (opt.step()) {
       std::cout << "*** Best ***" << std::endl;
-      printIndividual(opt.getBest());
+      printSample(opt.getBest());
     }
   }
 }
