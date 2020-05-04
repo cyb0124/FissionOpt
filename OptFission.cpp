@@ -82,11 +82,12 @@ namespace Fission {
     auto &child(children[bestChild]);
     bool globalParetoChanged{};
     if (penalizedFitness(child.value) + 0.01 >= penalizedFitness(parent.value)) {
+      if (penalizedFitness(child.value) > penalizedFitness(parent.value))
+        nConverge = 0;
       parent = std::move(child);
       if (rawFitness(parent.value) > rawFitness(localUtopia))
         localUtopia = parent.value;
       if (feasible(parent.value) && rawFitness(parent.value) > rawFitness(localPareto)) {
-        nConverge = 0;
         localPareto = parent.value;
         if (rawFitness(parent.value) > rawFitness(globalPareto.value)) {
           globalPareto = parent;
