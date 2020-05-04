@@ -12,12 +12,16 @@ namespace Fission {
 
   class Opt {
     const Settings &settings;
+    double maxCooling;
     int nConverge, maxConverge;
+    bool penaltyEnabled;
     Evaluation localUtopia, localPareto;
     Sample parent, globalPareto;
     std::mt19937 rng;
     void restart();
     void removeInvalidTiles();
+    bool feasible(const Evaluation &x);
+    double rawFitness(const Evaluation &x);
     double penalizedFitness(const Evaluation &x);
   public:
     Opt(const Settings &settings);

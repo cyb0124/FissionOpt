@@ -8,11 +8,16 @@ namespace Fission {
     parent.value = evaluate(settings, parent.state, nullptr);
     localUtopia = parent.value;
     localPareto = parent.value;
+    penaltyEnabled = false;
+    nConverge = 0;
   }
 
   Opt::Opt(const Settings &settings)
-    :settings(settings), nConverge(),
+    :settings(settings), maxCooling(),
     maxConverge(settings.sizeX * settings.sizeY * settings.sizeZ * 16) {
+    for (int i{}; i < Cell; ++i)
+      if (settings.limit[i])
+        maxCooling = std::max(maxCooling, settings.coolingRates[i]);
     restart();
     globalPareto = parent;
   }
@@ -24,16 +29,30 @@ namespace Fission {
       globalPareto.state(x, y, z) = Air;
   }
 
+  bool Opt::feasible(const Evaluation &x) {
+    return !settings.ensureHeatNeutral || x.netHeat <= 0.0;
+  }
+
+  double Opt::rawFitness(const Evaluation &x) {
+    return settings.breeder ? x.avgBreed : x.avgPower;
+  }
+
   double Opt::penalizedFitness(const Evaluation &x) {
-    double result(x.fitness(settings));
-    if (!x.feasible(settings))
-      result -= (localUtopia.fitness(settings) - localPareto.fitness(settings)) * x.netHeat;
+    double result(rawFitness(x));
+    if (penaltyEnabled && !feasible(x))
+      result -= (rawFitness(localUtopia) - rawFitness(localPareto)) * (x.netHeat / maxCooling);
     return result;
   }
 
   bool Opt::step() {
-    if (nConverge == maxConverge)
-      restart();
+    if (nConverge == maxConverge) {
+      if (!penaltyEnabled && !feasible(localUtopia)) {
+        penaltyEnabled = true;
+        nConverge = 0;
+      } else {
+        restart();
+      }
+    }
     std::uniform_int_distribution<>
       xDist(0, settings.sizeX - 1),
       yDist(0, settings.sizeY - 1),
@@ -64,12 +83,12 @@ namespace Fission {
     bool globalParetoChanged{};
     if (penalizedFitness(child.value) + 0.01 >= penalizedFitness(parent.value)) {
       parent = std::move(child);
-      if (parent.value.fitness(settings) > localUtopia.fitness(settings))
+      if (rawFitness(parent.value) > rawFitness(localUtopia))
         localUtopia = parent.value;
-      if (parent.value.feasible(settings) && parent.value.fitness(settings) > localPareto.fitness(settings)) {
+      if (feasible(parent.value) && rawFitness(parent.value) > rawFitness(localPareto)) {
         nConverge = 0;
         localPareto = parent.value;
-        if (parent.value.fitness(settings) > globalPareto.value.fitness(settings)) {
+        if (rawFitness(parent.value) > rawFitness(globalPareto.value)) {
           globalPareto = parent;
           removeInvalidTiles();
           globalParetoChanged = true;

@@ -11,14 +11,6 @@ namespace Fission {
     avgBreed = breed * dutyCycle;
   }
 
-  bool Evaluation::feasible(const Settings &settings) const {
-    return !settings.ensureHeatNeutral || netHeat <= 0.0;
-  }
-
-  double Evaluation::fitness(const Settings &settings) const {
-    return settings.breeder ? avgBreed : avgPower;
-  }
-
   namespace {
     int getTileSafe(const xt::xtensor<int, 3> &state, int x, int y, int z) {
       if (!state.in_bounds(x, y, z))

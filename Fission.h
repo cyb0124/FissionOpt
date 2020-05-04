@@ -33,8 +33,6 @@ namespace Fission {
     double heat, netHeat, dutyCycle, power, avgPower, avgBreed;
 
     void compute(const Settings &settings);
-    bool feasible(const Settings &settings) const;
-    double fitness(const Settings &settings) const;
   };
 
   Evaluation evaluate(const Settings &settings, const xt::xtensor<int, 3> &state, std::vector<std::tuple<int, int, int>> *invalidTiles);

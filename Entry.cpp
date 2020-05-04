@@ -75,7 +75,7 @@ namespace {
 
 int main() {
   Fission::Settings settings{
-    3, 3, 3,
+    5, 5, 5,
     1008, 75,
     {
       -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, -1, -1, -1, -1, -1,
