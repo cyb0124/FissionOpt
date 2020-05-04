@@ -28,7 +28,8 @@ namespace Fission {
 
   struct Evaluation {
     // Raw
-    double breed, powerMult, heatMult, cooling;
+    double powerMult, heatMult, cooling;
+    int breed;
     // Computed
     double heat, netHeat, dutyCycle, power, avgPower, avgBreed;
 
