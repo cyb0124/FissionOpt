@@ -16,43 +16,28 @@ namespace Fission {
     Cell = Active * 2, Moderator, Air
   };
 
-  enum {
-    GoalAvgPower,
-    GoalEfficiency,
-    GoalAvgBreed,
-    GoalHeatNeutral,
-    GoalNoOverCooling,
-    GoalNoInvalid
-  };
-
   struct Settings {
     int sizeX, sizeY, sizeZ;
     double fuelBasePower, fuelBaseHeat;
     int limit[Air];
     double coolingRates[Cell];
     bool ensureActiveCoolerAccessible;
-    std::vector<int> goals;
-
-    void bestPower(bool preferHeatNeutral);
-    void bestEfficiency(bool preferHeatNeutral);
-    void bestBreeder(bool preferHeatNeutral);
+    bool ensureHeatNeutral;
+    bool breeder;
   };
 
   struct Evaluation {
     // Raw
     double breed, powerMult, heatMult, cooling;
-    int nInvalid;
     // Computed
-    double heat, netHeat, dutyCycle, power, avgPower, avgBreed, efficiency;
+    double heat, netHeat, dutyCycle, power, avgPower, avgBreed;
 
     void compute(const Settings &settings);
-    bool asGoodAs(int goal, const Evaluation &o) const;
-    bool asGoodAs(const std::vector<int> &goals, const Evaluation &o) const;
-    bool betterThan(int goal, const Evaluation &o) const;
-    bool betterThan(const std::vector<int> &goals, const Evaluation &o) const;
+    bool feasible(const Settings &settings) const;
+    double fitness(const Settings &settings) const;
   };
 
-  Evaluation evaluate(const Settings &settings, const xt::xtensor<int, 3> &state);
+  Evaluation evaluate(const Settings &settings, const xt::xtensor<int, 3> &state, std::vector<std::tuple<int, int, int>> *invalidTiles);
 }
 
 #endif

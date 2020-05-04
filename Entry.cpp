@@ -69,8 +69,6 @@ namespace {
     std::cout << "netHeat=" << sample.value.netHeat << std::endl;
     std::cout << "dutyCycle=" << sample.value.dutyCycle << std::endl;
     std::cout << "avgBreed=" << sample.value.avgBreed << std::endl;
-    std::cout << "efficiency=" << sample.value.efficiency << std::endl;
-    std::cout << "nInvalid=" << sample.value.nInvalid << std::endl;
     std::cout << "avgPower=" << sample.value.avgPower << std::endl;
   }
 }
@@ -88,9 +86,8 @@ int main() {
       20, 80, 80, 120, 120, 100, 120, 120, 140, 140, 60, 140, 60, 80, 100,
       50, 1000, 1500, 1750, 2000, 2250, 3500, 3300, 2750, 3250, 1700, 2750, 1125, 1250, 2000
     },
-    true
+    true, false, false
   };
-  settings.bestPower(true);
   Fission::Opt opt(settings);
   while (true) {
     if (opt.step()) {

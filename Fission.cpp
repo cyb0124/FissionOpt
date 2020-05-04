@@ -2,64 +2,6 @@
 #include "Fission.h"
 
 namespace Fission {
-  void Settings::bestPower(bool preferHeatNeutral) {
-    if (preferHeatNeutral) {
-      goals = {
-        GoalHeatNeutral,
-        GoalAvgPower,
-        GoalNoOverCooling,
-        GoalNoInvalid
-      };
-    } else {
-      goals = {
-        GoalAvgPower,
-        GoalHeatNeutral,
-        GoalNoOverCooling,
-        GoalNoInvalid
-      };
-    }
-  }
-
-  void Settings::bestEfficiency(bool preferHeatNeutral) {
-    if (preferHeatNeutral) {
-      goals = {
-        GoalHeatNeutral,
-        GoalEfficiency,
-        GoalAvgPower,
-        GoalNoOverCooling,
-        GoalNoInvalid
-      };
-    } else {
-      goals = {
-        GoalEfficiency,
-        GoalAvgPower,
-        GoalHeatNeutral,
-        GoalNoOverCooling,
-        GoalNoInvalid
-      };
-    }
-  }
-
-  void Settings::bestBreeder(bool preferHeatNeutral) {
-    if (preferHeatNeutral) {
-      goals = {
-        GoalHeatNeutral,
-        GoalAvgBreed,
-        GoalAvgPower,
-        GoalNoOverCooling,
-        GoalNoInvalid
-      };
-    } else {
-      goals = {
-        GoalAvgBreed,
-        GoalAvgPower,
-        GoalHeatNeutral,
-        GoalNoOverCooling,
-        GoalNoInvalid
-      };
-    }
-  }
-
   void Evaluation::compute(const Settings &settings) {
     heat = settings.fuelBaseHeat * heatMult;
     netHeat = heat - cooling;
@@ -67,63 +9,14 @@ namespace Fission {
     power = settings.fuelBasePower * powerMult;
     avgPower = power * dutyCycle;
     avgBreed = breed * dutyCycle;
-    efficiency = std::max(1.0, powerMult / breed);
   }
 
-  bool Evaluation::asGoodAs(int goal, const Evaluation &o) const {
-    switch (goal) {
-      default: // GoalAvgPower
-        return avgPower + 0.01 >= o.avgPower;
-      case GoalEfficiency:
-        return efficiency + 0.01 >= o.efficiency;
-      case GoalAvgBreed:
-        return avgBreed + 0.01 >= o.avgBreed;
-      case GoalHeatNeutral:
-        if (netHeat <= 0)
-          return true;
-        return netHeat - 0.01 <= o.netHeat;
-      case GoalNoOverCooling:
-        return cooling - 0.01 <= o.cooling;
-      case GoalNoInvalid:
-        return nInvalid <= o.nInvalid;
-    }
+  bool Evaluation::feasible(const Settings &settings) const {
+    return !settings.ensureHeatNeutral || netHeat <= 0.0;
   }
 
-  bool Evaluation::betterThan(int goal, const Evaluation &o) const {
-    switch (goal) {
-      default: // GoalAvgPower
-        return avgPower > o.avgPower + 0.01;
-      case GoalEfficiency:
-        return efficiency > o.efficiency + 0.01;
-      case GoalAvgBreed:
-        return avgBreed > o.avgBreed + 0.01;
-      case GoalHeatNeutral:
-        if (o.netHeat <= 0)
-          return false;
-        return netHeat < o.netHeat - 0.01;
-      case GoalNoOverCooling:
-        return cooling < o.cooling - 0.01;
-      case GoalNoInvalid:
-        return nInvalid < o.nInvalid;
-    }
-  }
-
-  bool Evaluation::asGoodAs(const std::vector<int> &goals, const Evaluation &o) const {
-    for (int goal : goals)
-      if (betterThan(goal, o))
-        return true;
-      else if (!asGoodAs(goal, o))
-        return false;
-    return true;
-  }
-
-  bool Evaluation::betterThan(const std::vector<int> &goals, const Evaluation &o) const {
-    for (int goal : goals)
-      if (betterThan(goal, o))
-        return true;
-      else if (!asGoodAs(goal, o))
-        return false;
-    return false;
+  double Evaluation::fitness(const Settings &settings) const {
+    return settings.breeder ? avgBreed : avgPower;
   }
 
   namespace {
@@ -237,7 +130,7 @@ namespace Fission {
     };
   }
 
-  Evaluation evaluate(const Settings &settings, const xt::xtensor<int, 3> &state) {
+  Evaluation evaluate(const Settings &settings, const xt::xtensor<int, 3> &state, std::vector<std::tuple<int, int, int>> *invalidTiles) {
     Evaluation result{true};
     xt::xtensor<int, 3> mults(xt::empty<int>(state.shape()));
     xt::xtensor<int, 3> rules(xt::empty<int>(state.shape()));
@@ -285,8 +178,8 @@ namespace Fission {
               isActive(x, y, z) = true;
               result.powerMult += mult * (modPower / 6.0);
               result.heatMult += mult * (modHeat / 6.0);
-            } else if (!isModeratorInLine(x, y, z)) {
-              ++result.nInvalid;
+            } else if (invalidTiles && !isModeratorInLine(x, y, z)) {
+              invalidTiles->emplace_back(x, y, z);
             }
           } else switch (rules(x, y, z)) {
             case Redstone:
@@ -376,8 +269,8 @@ namespace Fission {
               isActive(x, y, z) = countActiveNeighbors(state, isActive, Gold, x, y, z);
             if (isActive(x, y, z))
               result.cooling += settings.coolingRates[tile];
-            else
-              ++result.nInvalid;
+            else if (invalidTiles)
+              invalidTiles->emplace_back(x, y, z);
           }
         }
       }

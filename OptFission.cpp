@@ -1,52 +1,45 @@
 #include "OptFission.h"
 
 namespace Fission {
-  bool SampleComparator::operator()(const Sample &x, const Sample &y) const {
-    return x.value.betterThan(settings.goals, y.value);
-  }
-
   void Opt::restart() {
-    std::vector<std::tuple<int, int, int>> positions;
-    for (int x{}; x < settings.sizeX; ++x)
-      for (int y{}; y < settings.sizeY; ++y)
-        for (int z{}; z < settings.sizeZ; ++z)
-          positions.emplace_back(x, y, z);
-    for (int i{}; i < 1024; ++i) {
-      Sample sample;
-      std::copy(settings.limit, settings.limit + Air, sample.limit);
-      sample.state = xt::broadcast<int>(Air,
-        {settings.sizeX, settings.sizeY, settings.sizeZ});
-      std::shuffle(positions.begin(), positions.end(), rng);
-      std::vector<int> allTiles;
-      allTiles.clear();
-      for (auto &[x, y, z] : positions) {
-        for (int tile{}; tile < Air; ++tile)
-          if (sample.limit[tile])
-            allTiles.emplace_back(tile);
-        if (allTiles.empty())
-          break;
-        int newTile(allTiles[std::uniform_int_distribution<>(0, static_cast<int>(allTiles.size() - 1))(rng)]);
-        --sample.limit[newTile];
-        sample.state(x, y, z) = newTile;
-      }
-      sample.value = evaluate(settings, sample.state);
-      samples.emplace(sample);
-    }
+    auto &sample(samples.front());
+    std::copy(settings.limit, settings.limit + Air, sample.limit);
+    sample.state = xt::broadcast<int>(Air,
+      {settings.sizeX, settings.sizeY, settings.sizeZ});
+    sample.value = evaluate(settings, sample.state, nullptr);
+    for (int i(1); i < samples.size(); ++i)
+      samples[i] = sample;
+    localUtopia = sample.value;
+    localPareto = sample.value;
   }
 
   Opt::Opt(const Settings &settings)
-    :settings(settings), nStagnation(),
-    maxStagnation(settings.sizeX * settings.sizeY * settings.sizeZ * 16),
-    samples(SampleComparator{settings}) {
+    :settings(settings), nConverge(),
+    maxConverge(settings.sizeX * settings.sizeY * settings.sizeZ * 16) {
     restart();
-    best = *samples.begin();
+    globalPareto = samples.front();
+  }
+
+  void Opt::removeInvalidTiles() {
+    std::vector<std::tuple<int, int, int>> invalidTiles;
+    evaluate(settings, globalPareto.state, &invalidTiles);
+    for (auto [x, y, z] : invalidTiles)
+      globalPareto.state(x, y, z) = Air;
+  }
+
+  double Opt::penalizedFitness(const Evaluation &x) {
+    double result(x.fitness(settings));
+    if (!x.feasible(settings))
+      result -= (localUtopia.fitness(settings) - localPareto.fitness(settings)) * x.netHeat;
+    return result;
   }
 
   bool Opt::step() {
-    if (nStagnation == maxStagnation)
+    if (nConverge == maxConverge)
       restart();
     std::uniform_int_distribution<> distIndex(0, static_cast<int>(samples.size() - 1));
-    Sample sample(*std::next(samples.begin(), std::min(distIndex(rng), distIndex(rng))));
+    Sample &candidateA(samples[distIndex(rng)]), &candidateB(samples[distIndex(rng)]);
+    Sample sample(penalizedFitness(candidateA.value) > penalizedFitness(candidateB.value) ? candidateA : candidateB);
     int x(std::uniform_int_distribution<>(0, settings.sizeX - 1)(rng));
     int y(std::uniform_int_distribution<>(0, settings.sizeY - 1)(rng));
     int z(std::uniform_int_distribution<>(0, settings.sizeZ - 1)(rng));
@@ -61,18 +54,24 @@ namespace Fission {
     if (newTile != Air)
       --sample.limit[newTile];
     sample.state(x, y, z) = newTile;
-    sample.value = evaluate(settings, sample.state);
-    samples.erase(std::prev(samples.end()));
-    auto itr(samples.emplace(sample));
-    bool bestChanged{};
-    if (itr == samples.begin()) {
-      nStagnation = 0;
-      if (sample.value.betterThan(settings.goals, best.value)) {
-        best = std::move(sample);
-        bestChanged = true;
+    sample.value = evaluate(settings, sample.state, nullptr);
+    auto range(std::minmax_element(samples.begin(), samples.end(), [&](const Sample &x, const Sample &y) {
+      return penalizedFitness(x.value) < penalizedFitness(y.value);
+    }));
+    *range.first = sample;
+    if (sample.value.fitness(settings) > localUtopia.fitness(settings))
+      localUtopia = sample.value;
+    bool globalParetoChanged{};
+    if (sample.value.feasible(settings) && sample.value.fitness(settings) > localPareto.fitness(settings)) {
+      nConverge = 0;
+      localPareto = sample.value;
+      if (sample.value.fitness(settings) > globalPareto.value.fitness(settings)) {
+        globalPareto = std::move(sample);
+        removeInvalidTiles();
+        globalParetoChanged = true;
       }
     }
-    ++nStagnation;
-    return bestChanged;
+    ++nConverge;
+    return globalParetoChanged;
   }
 }
