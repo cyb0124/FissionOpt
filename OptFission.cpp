@@ -2,22 +2,19 @@
 
 namespace Fission {
   void Opt::restart() {
-    auto &sample(samples.front());
-    std::copy(settings.limit, settings.limit + Air, sample.limit);
-    sample.state = xt::broadcast<int>(Air,
+    std::copy(settings.limit, settings.limit + Air, parent.limit);
+    parent.state = xt::broadcast<int>(Air,
       {settings.sizeX, settings.sizeY, settings.sizeZ});
-    sample.value = evaluate(settings, sample.state, nullptr);
-    for (int i(1); i < samples.size(); ++i)
-      samples[i] = sample;
-    localUtopia = sample.value;
-    localPareto = sample.value;
+    parent.value = evaluate(settings, parent.state, nullptr);
+    localUtopia = parent.value;
+    localPareto = parent.value;
   }
 
   Opt::Opt(const Settings &settings)
     :settings(settings), nConverge(),
     maxConverge(settings.sizeX * settings.sizeY * settings.sizeZ * 16) {
     restart();
-    globalPareto = samples.front();
+    globalPareto = parent;
   }
 
   void Opt::removeInvalidTiles() {
@@ -37,38 +34,46 @@ namespace Fission {
   bool Opt::step() {
     if (nConverge == maxConverge)
       restart();
-    std::uniform_int_distribution<> distIndex(0, static_cast<int>(samples.size() - 1));
-    Sample &candidateA(samples[distIndex(rng)]), &candidateB(samples[distIndex(rng)]);
-    Sample sample(penalizedFitness(candidateA.value) > penalizedFitness(candidateB.value) ? candidateA : candidateB);
-    int x(std::uniform_int_distribution<>(0, settings.sizeX - 1)(rng));
-    int y(std::uniform_int_distribution<>(0, settings.sizeY - 1)(rng));
-    int z(std::uniform_int_distribution<>(0, settings.sizeZ - 1)(rng));
-    int oldTile(sample.state(x, y, z));
-    if (oldTile != Air)
-      ++sample.limit[oldTile];
-    std::vector<int> allTiles{Air};
-    for (int tile{}; tile < Air; ++tile)
-      if (sample.limit[tile])
-        allTiles.emplace_back(tile);
-    int newTile(allTiles[std::uniform_int_distribution<>(0, static_cast<int>(allTiles.size() - 1))(rng)]);
-    if (newTile != Air)
-      --sample.limit[newTile];
-    sample.state(x, y, z) = newTile;
-    sample.value = evaluate(settings, sample.state, nullptr);
-    auto range(std::minmax_element(samples.begin(), samples.end(), [&](const Sample &x, const Sample &y) {
-      return penalizedFitness(x.value) < penalizedFitness(y.value);
-    }));
-    *range.first = sample;
-    if (sample.value.fitness(settings) > localUtopia.fitness(settings))
-      localUtopia = sample.value;
+    std::uniform_int_distribution<>
+      xDist(0, settings.sizeX - 1),
+      yDist(0, settings.sizeY - 1),
+      zDist(0, settings.sizeZ - 1);
+    int bestChild{};
+    std::array<Sample, 4> children;
+    for (int i{}; i < children.size(); ++i) {
+      auto &child(children[i]);
+      child.state = parent.state;
+      std::copy(parent.limit, parent.limit + Air, child.limit);
+      int x(xDist(rng)), y(yDist(rng)), z(zDist(rng));
+      int oldTile(child.state(x, y, z));
+      if (oldTile != Air)
+        ++child.limit[oldTile];
+      std::vector<int> allTiles{Air};
+      for (int tile{}; tile < Air; ++tile)
+        if (child.limit[tile])
+          allTiles.emplace_back(tile);
+      int newTile(allTiles[std::uniform_int_distribution<>(0, static_cast<int>(allTiles.size() - 1))(rng)]);
+      if (newTile != Air)
+        --child.limit[newTile];
+      child.state(x, y, z) = newTile;
+      child.value = evaluate(settings, child.state, nullptr);
+      if (i && penalizedFitness(child.value) > penalizedFitness(children[bestChild].value))
+        bestChild = i;
+    }
+    auto &child(children[bestChild]);
     bool globalParetoChanged{};
-    if (sample.value.feasible(settings) && sample.value.fitness(settings) > localPareto.fitness(settings)) {
-      nConverge = 0;
-      localPareto = sample.value;
-      if (sample.value.fitness(settings) > globalPareto.value.fitness(settings)) {
-        globalPareto = std::move(sample);
-        removeInvalidTiles();
-        globalParetoChanged = true;
+    if (penalizedFitness(child.value) + 0.01 >= penalizedFitness(parent.value)) {
+      parent = std::move(child);
+      if (parent.value.fitness(settings) > localUtopia.fitness(settings))
+        localUtopia = parent.value;
+      if (parent.value.feasible(settings) && parent.value.fitness(settings) > localPareto.fitness(settings)) {
+        nConverge = 0;
+        localPareto = parent.value;
+        if (parent.value.fitness(settings) > globalPareto.value.fitness(settings)) {
+          globalPareto = parent;
+          removeInvalidTiles();
+          globalParetoChanged = true;
+        }
       }
     }
     ++nConverge;

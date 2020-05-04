@@ -13,9 +13,8 @@ namespace Fission {
   class Opt {
     const Settings &settings;
     int nConverge, maxConverge;
-    std::array<Sample, 5> samples;
     Evaluation localUtopia, localPareto;
-    Sample globalPareto;
+    Sample parent, globalPareto;
     std::mt19937 rng;
     void restart();
     void removeInvalidTiles();
