@@ -61,7 +61,10 @@ EMSCRIPTEN_BINDINGS(FissionOpt) {
     .function("setRate", &setRate)
     .property("ensureActiveCoolerAccessible", &Fission::Settings::ensureActiveCoolerAccessible)
     .property("ensureHeatNeutral", &Fission::Settings::ensureHeatNeutral)
-    .property("breeder", &Fission::Settings::breeder);
+    .property("breeder", &Fission::Settings::breeder)
+    .property("symX", &Fission::Settings::symX)
+    .property("symY", &Fission::Settings::symY)
+    .property("symZ", &Fission::Settings::symZ);
   emscripten::class_<Fission::Sample>("FissionSample")
     .function("getData", &getData)
     .function("getShape", &getShape)

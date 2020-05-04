@@ -44,6 +44,52 @@ namespace Fission {
     return result;
   }
 
+  void Opt::mutateAndEvaluate(Sample &sample, int x, int y, int z) {
+    int nAffected(1);
+    if (settings.symX && x != settings.sizeX - x - 1)
+      nAffected *= 2;
+    if (settings.symY && y != settings.sizeY - y - 1)
+      nAffected *= 2;
+    if (settings.symZ && z != settings.sizeZ - z - 1)
+      nAffected *= 2;
+    int oldTile(sample.state(x, y, z));
+    if (oldTile != Air)
+      sample.limit[oldTile] += nAffected;
+    std::vector<int> allTiles{Air};
+    for (int tile{}; tile < Air; ++tile)
+      if (sample.limit[tile] < 0 || sample.limit[tile] >= nAffected)
+        allTiles.emplace_back(tile);
+    int newTile(allTiles[std::uniform_int_distribution<>(0, static_cast<int>(allTiles.size() - 1))(rng)]);
+    if (newTile != Air)
+      sample.limit[newTile] -= nAffected;
+    sample.state(x, y, z) = newTile;
+    if (settings.symX) {
+      sample.state(settings.sizeX - x - 1, y, z) = newTile;
+      if (settings.symY) {
+        sample.state(x, settings.sizeY - y - 1, z) = newTile;
+        sample.state(settings.sizeX - x - 1, settings.sizeY - y - 1, z) = newTile;
+        if (settings.symZ) {
+          sample.state(x, y, settings.sizeZ - z - 1) = newTile;
+          sample.state(settings.sizeX - x - 1, y, settings.sizeZ - z - 1) = newTile;
+          sample.state(x, settings.sizeY - y - 1, settings.sizeZ - z - 1) = newTile;
+          sample.state(settings.sizeX - x - 1, settings.sizeY - y - 1, settings.sizeZ - z - 1) = newTile;
+        }
+      } else if (settings.symZ) {
+        sample.state(x, y, settings.sizeZ - z - 1) = newTile;
+        sample.state(settings.sizeX - x - 1, y, settings.sizeZ - z - 1) = newTile;
+      }
+    } else if (settings.symY) {
+      sample.state(x, settings.sizeY - y - 1, z) = newTile;
+      if (settings.symZ) {
+        sample.state(x, y, settings.sizeZ - z - 1) = newTile;
+        sample.state(x, settings.sizeY - y - 1, settings.sizeZ - z - 1) = newTile;
+      }
+    } else if (settings.symZ) {
+      sample.state(x, y, settings.sizeZ - z - 1) = newTile;
+    }
+    sample.value = evaluate(settings, sample.state, nullptr);
+  }
+
   bool Opt::step() {
     if (nConverge == maxConverge) {
       if (!penaltyEnabled && !feasible(localUtopia)) {
@@ -63,19 +109,7 @@ namespace Fission {
       auto &child(children[i]);
       child.state = parent.state;
       std::copy(parent.limit, parent.limit + Air, child.limit);
-      int x(xDist(rng)), y(yDist(rng)), z(zDist(rng));
-      int oldTile(child.state(x, y, z));
-      if (oldTile != Air)
-        ++child.limit[oldTile];
-      std::vector<int> allTiles{Air};
-      for (int tile{}; tile < Air; ++tile)
-        if (child.limit[tile])
-          allTiles.emplace_back(tile);
-      int newTile(allTiles[std::uniform_int_distribution<>(0, static_cast<int>(allTiles.size() - 1))(rng)]);
-      if (newTile != Air)
-        --child.limit[newTile];
-      child.state(x, y, z) = newTile;
-      child.value = evaluate(settings, child.state, nullptr);
+      mutateAndEvaluate(child, xDist(rng), yDist(rng), zDist(rng));
       if (i && penalizedFitness(child.value) > penalizedFitness(children[bestChild].value))
         bestChild = i;
     }

@@ -23,6 +23,7 @@ namespace Fission {
     bool feasible(const Evaluation &x);
     double rawFitness(const Evaluation &x);
     double penalizedFitness(const Evaluation &x);
+    void mutateAndEvaluate(Sample &sample, int x, int y, int z);
   public:
     Opt(const Settings &settings);
     bool step();

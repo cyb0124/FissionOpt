@@ -24,6 +24,7 @@ namespace Fission {
     bool ensureActiveCoolerAccessible;
     bool ensureHeatNeutral;
     bool breeder;
+    bool symX, symY, symZ;
   };
 
   struct Evaluation {

@@ -86,7 +86,8 @@ int main() {
       20, 80, 80, 120, 120, 100, 120, 120, 140, 140, 60, 140, 60, 80, 100,
       50, 1000, 1500, 1750, 2000, 2250, 3500, 3300, 2750, 3250, 1700, 2750, 1125, 1250, 2000
     },
-    true, true, false
+    true, true, false,
+    false, false, false
   };
   Fission::Opt opt(settings);
   while (true) {

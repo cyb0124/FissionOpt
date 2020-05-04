@@ -347,6 +347,9 @@ $(() => { FissionOpt().then((FissionOpt) => {
         settings.ensureActiveCoolerAccessible = $('#ensureActiveCoolerAccessible').is(':checked');
         settings.ensureHeatNeutral = $('#ensureHeatNeutral').is(':checked');
         settings.breeder = $('#breeder').is(':checked');
+        settings.symX = $('#symX').is(':checked');
+        settings.symY = $('#symY').is(':checked');
+        settings.symZ = $('#symZ').is(':checked');
         $.each(rates, (i, x) => { settings.setRate(i, parsePositiveFloat('Cooling Rate', x.val())); });
         $.each(limits, (i, x) => {
           x = parseInt(x.val());
