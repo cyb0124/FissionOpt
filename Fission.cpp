@@ -123,7 +123,7 @@ namespace Fission {
   }
 
   Evaluation evaluate(const Settings &settings, const xt::xtensor<int, 3> &state, std::vector<std::tuple<int, int, int>> *invalidTiles) {
-    Evaluation result{true};
+    Evaluation result{};
     xt::xtensor<int, 3> mults(xt::empty<int>(state.shape()));
     xt::xtensor<int, 3> rules(xt::empty<int>(state.shape()));
     xt::xtensor<bool, 3> isActive(xt::zeros<bool>(state.shape()));
