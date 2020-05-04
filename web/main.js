@@ -220,7 +220,7 @@ $(() => { FissionOpt().then((FissionOpt) => {
     timeout = window.setTimeout(runBatch, 0);
   };
 
-  const normal = $('#normal'), noNetHeat = $('#noNetHeat');
+  const design = $('#design');
   const nCoolerTypes = 15, air = nCoolerTypes * 2 + 2;
   const tileNames = ['Wt', 'Rs', 'Qz', 'Au', 'Gs', 'Lp', 'Dm', 'He', 'Ed', 'Cr', 'Fe', 'Em', 'Cu', 'Sn', 'Mg', '[]', '##', '..'];
   const tileTitles = ['Water', 'Redstone', 'Quartz', 'Gold', 'Glowstone', 'Lapis', 'Diamond', 'Liquid Helium',
@@ -248,33 +248,35 @@ $(() => { FissionOpt().then((FissionOpt) => {
     return result;
   };
 
-  const displayDesign = (design, element) => {
-    element.removeClass('hidden');
-    element.children(':not(:first)').remove();
+  const displaySample = (sample) => {
+    design.empty();
+    let block = $('<div></div>');
     const appendInfo = (label, value, unit) => {
       const row = $('<div></div>').addClass('info');
       row.append('<div>' + label + '</div>');
       row.append('<div>' + unit + '</div>');
       row.append(Math.round(value * 100) / 100);
-      element.append(row);
+      block.append(row);
     };
-    appendInfo('Max Power', design.getPower(), 'RF/t');
-    appendInfo('Heat', design.getHeat(), 'H/t');
-    appendInfo('Cooling', design.getCooling(), 'H/t');
-    appendInfo('Net Heat', design.getNetHeat(), 'H/t');
-    appendInfo('Duty Cycle', design.getDutyCycle() * 100, '%');
-    appendInfo('Avg Power', design.getEffPower(), 'RF/t');
+    appendInfo('Max Power', sample.getPower(), 'RF/t');
+    appendInfo('Heat', sample.getHeat(), 'H/t');
+    appendInfo('Cooling', sample.getCooling(), 'H/t');
+    appendInfo('Net Heat', sample.getNetHeat(), 'H/t');
+    appendInfo('Duty Cycle', sample.getDutyCycle() * 100, '%');
+    appendInfo('Avg Breed Spd', sample.getAvgBreed(), '&times;');
+    appendInfo('Avg Power', sample.getAvgPower(), 'RF/t');
+    design.append(block);
 
-    const shapes = [], strides = [], data = design.getData();
+    const shapes = [], strides = [], data = sample.getData();
     for (let i = 0; i < 3; ++i) {
-      shapes.push(design.getShape(i));
-      strides.push(design.getStride(i));
+      shapes.push(sample.getShape(i));
+      strides.push(sample.getStride(i));
     }
     let resourceMap = {};
     resourceMap[-1] = (shapes[0] * shapes[1] + shapes[1] * shapes[2] + shapes[2] * shapes[0]) * 2;
     for (let x = 0; x < shapes[0]; ++x) {
-      element.append($('<div></div>').addClass('layerSpacer'));
-      element.append('<div>Layer ' + (x + 1) + '</div>');
+      block = $('<div></div>');
+      block.append('<div>Layer ' + (x + 1) + '</div>');
       for (let y = 0; y < shapes[1]; ++y) {
         const row = $('<div></div>').addClass('row');
         for (let z = 0; z < shapes[2]; ++z) {
@@ -287,12 +289,13 @@ $(() => { FissionOpt().then((FissionOpt) => {
             ++resourceMap[tile];
           row.append(displayTile(tile));
         }
-        element.append(row);
+        block.append(row);
       }
+      design.append(block);
     }
 
-    element.append($('<div></div>').addClass('layerSpacer'));
-    element.append('<div>Total number of blocks used</div>')
+    block = $('<div></div>');
+    block.append('<div>Total number of blocks used</div>')
     resourceMap = Object.entries(resourceMap);
     resourceMap.sort((x, y) => y[1] - x[1]);
     for (resource of resourceMap) {
@@ -303,22 +306,22 @@ $(() => { FissionOpt().then((FissionOpt) => {
         row.append('Casing');
       else
         row.append(displayTile(resource[0]).addClass('row'));
-      element.append(row.append(' &times; ' + resource[1]));
+      block.append(row.append(' &times; ' + resource[1]));
     }
+    design.append(block);
   };
 
   function runBatch() {
     scheduleBatch();
-    let whichChanged = 0;
+    let changed = false;
     for (let i = 0; i < 1024; ++i)
-      whichChanged |= opt.step();
-    if (whichChanged & 1)
-      displayDesign(opt.getBest(), normal);
-    if (whichChanged & 2)
-      displayDesign(opt.getBestNoNetHeat(), noNetHeat)
+      if (opt.step())
+        changed = true;
+    if (changed)
+      displaySample(opt.getBest());
   };
 
-  const settings = new FissionOpt.Settings();
+  const settings = new FissionOpt.FissionSettings();
   run.click(() => {
     if (timeout !== null)
       return;
@@ -342,6 +345,8 @@ $(() => { FissionOpt().then((FissionOpt) => {
         settings.fuelBasePower = parsePositiveFloat('Fuel Base Power', fuelBasePower.val());
         settings.fuelBaseHeat = parsePositiveFloat('Fuel Base Heat', fuelBaseHeat.val());
         settings.ensureActiveCoolerAccessible = $('#ensureActiveCoolerAccessible').is(':checked');
+        settings.ensureHeatNeutral = $('#ensureHeatNeutral').is(':checked');
+        settings.breeder = $('#breeder').is(':checked');
         $.each(rates, (i, x) => { settings.setRate(i, parsePositiveFloat('Cooling Rate', x.val())); });
         $.each(limits, (i, x) => {
           x = parseInt(x.val());
@@ -351,9 +356,8 @@ $(() => { FissionOpt().then((FissionOpt) => {
         alert('Error: ' + error.message);
         return;
       }
-      normal.addClass('hidden');
-      noNetHeat.addClass('hidden');
-      opt = new FissionOpt.OptMeta(settings);
+      design.empty();
+      opt = new FissionOpt.FissionOpt(settings);
     }
     scheduleBatch();
     updateDisables();

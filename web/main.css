@@ -74,13 +74,16 @@ input {
 .cell {color: gray;}
 .mod {color: black;}
 
-#normal, #noNetHeat {
+#design>* {
   float: left;
   border: 1px solid black;
   padding: 0.5em;
   margin-bottom: 1em;
   text-align: center;
   font-family: sans-serif;
+}
+
+#design>:first-child {
   min-width: 20em;
 }
 
@@ -102,12 +105,4 @@ input {
   font-family: monospace;
   font-weight: bold;
   font-size: 120%;
-}
-
-.layerSpacer {
-  height: 1em;
-}
-
-.hidden {
-  display: none;
 }

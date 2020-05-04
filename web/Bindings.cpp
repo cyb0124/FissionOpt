@@ -1,62 +1,68 @@
 #include <emscripten/bind.h>
-#include "../OptMeta.h"
+#include "../OptFission.h"
 
-static void setLimit(Settings &settings, int index, int limit) {
-  settings.limit[index] = limit;
+static void setLimit(Fission::Settings &x, int index, int limit) {
+  x.limit[index] = limit;
 }
 
-static void setRate(Settings &settings, int index, double rate) {
-  settings.coolingRates[index] = rate;
+static void setRate(Fission::Settings &x, int index, double rate) {
+  x.coolingRates[index] = rate;
 }
 
-static emscripten::val getData(const OptMetaIndividual &x) {
+static emscripten::val getData(const Fission::Sample &x) {
   return emscripten::val(emscripten::typed_memory_view(x.state.size(), x.state.data()));
 }
 
-static int getShape(const OptMetaIndividual &x, int i) {
+static int getShape(const Fission::Sample &x, int i) {
   return x.state.shape(i);
 }
 
-static int getStride(const OptMetaIndividual &x, int i) {
+static int getStride(const Fission::Sample &x, int i) {
   return x.state.strides()[i];
 }
 
-static double getPower(const OptMetaIndividual &x) {
+static double getPower(const Fission::Sample &x) {
   return x.value.power;
 }
 
-static double getHeat(const OptMetaIndividual &x) {
+static double getHeat(const Fission::Sample &x) {
   return x.value.heat;
 }
 
-static double getCooling(const OptMetaIndividual &x) {
+static double getCooling(const Fission::Sample &x) {
   return x.value.cooling;
 }
 
-static double getNetHeat(const OptMetaIndividual &x) {
-  return x.value.netHeat();
+static double getNetHeat(const Fission::Sample &x) {
+  return x.value.netHeat;
 }
 
-static double getDutyCycle(const OptMetaIndividual &x) {
-  return x.value.dutyCycle();
+static double getDutyCycle(const Fission::Sample &x) {
+  return x.value.dutyCycle;
 }
 
-static double getEffPower(const OptMetaIndividual &x) {
-  return x.value.effPower();
+static double getAvgPower(const Fission::Sample &x) {
+  return x.value.avgPower;
+}
+
+static double getAvgBreed(const Fission::Sample &x) {
+  return x.value.avgBreed;
 }
 
 EMSCRIPTEN_BINDINGS(FissionOpt) {
-  emscripten::class_<Settings>("Settings")
+  emscripten::class_<Fission::Settings>("FissionSettings")
     .constructor<>()
-    .property("sizeX", &Settings::sizeX)
-    .property("sizeY", &Settings::sizeY)
-    .property("sizeZ", &Settings::sizeZ)
-    .property("fuelBasePower", &Settings::fuelBasePower)
-    .property("fuelBaseHeat", &Settings::fuelBaseHeat)
+    .property("sizeX", &Fission::Settings::sizeX)
+    .property("sizeY", &Fission::Settings::sizeY)
+    .property("sizeZ", &Fission::Settings::sizeZ)
+    .property("fuelBasePower", &Fission::Settings::fuelBasePower)
+    .property("fuelBaseHeat", &Fission::Settings::fuelBaseHeat)
     .function("setLimit", &setLimit)
     .function("setRate", &setRate)
-    .property("ensureActiveCoolerAccessible", &Settings::ensureActiveCoolerAccessible);
-  emscripten::class_<OptMetaIndividual>("OptMetaIndividual")
+    .property("ensureActiveCoolerAccessible", &Fission::Settings::ensureActiveCoolerAccessible)
+    .property("ensureHeatNeutral", &Fission::Settings::ensureHeatNeutral)
+    .property("breeder", &Fission::Settings::breeder);
+  emscripten::class_<Fission::Sample>("FissionSample")
     .function("getData", &getData)
     .function("getShape", &getShape)
     .function("getStride", &getStride)
@@ -65,10 +71,10 @@ EMSCRIPTEN_BINDINGS(FissionOpt) {
     .function("getCooling", &getCooling)
     .function("getNetHeat", &getNetHeat)
     .function("getDutyCycle", &getDutyCycle)
-    .function("getEffPower", &getEffPower);
-  emscripten::class_<OptMeta>("OptMeta")
-    .constructor<const Settings&>()
-    .function("step", &OptMeta::step)
-    .function("getBest", &OptMeta::getBest)
-    .function("getBestNoNetHeat", &OptMeta::getBestNoNetHeat);
+    .function("getAvgPower", &getAvgPower)
+    .function("getAvgBreed", &getAvgBreed);
+  emscripten::class_<Fission::Opt>("FissionOpt")
+    .constructor<const Fission::Settings&>()
+    .function("step", &Fission::Opt::step)
+    .function("getBest", &Fission::Opt::getBest);
 }

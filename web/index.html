@@ -15,8 +15,7 @@
         by cyb0124, <a href="https://github.com/cyb0124/FissionOpt">source</a>
       </div>
       <div>
-        This program generates a fission reactor design that maximizes effective power output.
-        Fuel consumption is ignored.
+        This program generates a fission reactor design that maximizes effective power output or breeding speed.
       </div>
     </header>
     <section id="settings">
@@ -280,7 +279,9 @@
         <a href="javascript:;" id="DefRate">Default</a>
         <a href="javascript:;" id="E2ERate">E2E</a>
         <a href="javascript:;" id="PO3Rate">PO3</a><br>
-        <label>Ensure active coolers are accessible by piping: <input type="checkbox" id="ensureActiveCoolerAccessible" checked></label>
+        <label><input type="checkbox" id="ensureActiveCoolerAccessible" checked>Ensure active coolers are accessible by piping.</label><br>
+        <label><input type="checkbox" id="ensureHeatNeutral" checked>Only generate heat neutral reactor.</label><br>
+        <label><input type="checkbox" id="breeder">Optimize for breeding speed instead of power.</label>
       </div>
     </section>
     <main>
@@ -289,14 +290,7 @@
         <a href="javascript:;" id="pause" class="disabledLink">Pause</a>
         <a href="javascript:;" id="stop" class="disabledLink">Stop</a>
       </div>
-      <div>
-        <div id="normal" class="hidden">
-          <div>Highest Power Design</div>
-        </div>
-        <div id="noNetHeat" class="hidden">
-          <div>Heat Neutral Design</div>
-        </div>
-      </div>
+      <div id="design"></div>
     </main>
   </body>
 </html>
