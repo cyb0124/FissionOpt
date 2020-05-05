@@ -7,7 +7,7 @@ add_executable(FissionOpt
   Fission.cpp
   OptFission.h
   OptFission.cpp
-  Entry.cpp
+  Benchmark.cpp
 )
 
 target_include_directories(FissionOpt PRIVATE
