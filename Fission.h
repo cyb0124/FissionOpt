@@ -4,6 +4,8 @@
 #include <string>
 
 namespace Fission {
+  using Coords = std::vector<std::tuple<int, int, int>>;
+
   constexpr int neutronReach(4);
   constexpr double modPower(1.0), modHeat(2.0);
 
@@ -37,7 +39,30 @@ namespace Fission {
     void compute(const Settings &settings);
   };
 
-  Evaluation evaluate(const Settings &settings, const xt::xtensor<int, 3> &state, std::vector<std::tuple<int, int, int>> *invalidTiles);
+  class Evaluator {
+    const Settings &settings;
+    xt::xtensor<int, 3> mults, rules;
+    xt::xtensor<bool, 3> isActive, isModeratorInLine, visited;
+    Coords invalidTiles;
+    const xt::xtensor<int, 3> *state;
+    int compatibleTile;
+
+    int getTileSafe(int x, int y, int z) const;
+    int getMultSafe(int x, int y, int z) const;
+    bool countMult(int x, int y, int z, int dx, int dy, int dz);
+    int countMult(int x, int y, int z);
+    bool isActiveSafe(int tile, int x, int y, int z) const;
+    int countActiveNeighbors(int tile, int x, int y, int z) const;
+    bool isTileSafe(int tile, int x, int y, int z) const;
+    int countNeighbors(int tile, int x, int y, int z) const;
+    int countCasingNeighbors(int x, int y, int z) const;
+    bool checkAccessibility(int compatibleTile, int x, int y, int z);
+    bool checkAccessibility(int x, int y, int z);
+  public:
+    Evaluator(const Settings &settings);
+    Evaluation run(const xt::xtensor<int, 3> &state);
+    void canonicalize(xt::xtensor<int, 3> &state) const;
+  };
 }
 
 #endif

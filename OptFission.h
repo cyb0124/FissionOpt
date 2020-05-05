@@ -12,15 +12,17 @@ namespace Fission {
 
   class Opt {
     const Settings &settings;
-    std::vector<std::tuple<int, int, int>> positions;
+    Evaluator evaluator;
+    Coords allowedCoords;
+    std::vector<int> allowedTiles;
     double maxCooling;
     int nConverge, maxConverge;
     bool penaltyEnabled;
     Evaluation localUtopia, localPareto;
     Sample parent, globalPareto;
+    std::array<Sample, 4> children;
     std::mt19937 rng;
     void restart();
-    void removeInvalidTiles();
     bool feasible(const Evaluation &x);
     double rawFitness(const Evaluation &x);
     double penalizedFitness(const Evaluation &x);

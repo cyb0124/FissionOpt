@@ -2,25 +2,24 @@
 
 namespace Fission {
   void Opt::restart() {
-    std::shuffle(positions.begin(), positions.end(), rng);
+    std::shuffle(allowedCoords.begin(), allowedCoords.end(), rng);
     std::copy(settings.limit, settings.limit + Air, parent.limit);
     parent.state = xt::broadcast<int>(Air,
       {settings.sizeX, settings.sizeY, settings.sizeZ});
-    std::vector<int> allTiles;
-    for (auto &[x, y, z] : positions) {
+    for (auto &[x, y, z] : allowedCoords) {
       int nSym(getNSym(x, y, z));
-      allTiles.clear();
+      allowedTiles.clear();
       for (int tile{}; tile < Air; ++tile)
         if (parent.limit[tile] < 0 || parent.limit[tile] >= nSym)
-          allTiles.emplace_back(tile);
-      if (allTiles.empty())
+          allowedTiles.emplace_back(tile);
+      if (allowedTiles.empty())
         break;
-      int newTile(allTiles[std::uniform_int_distribution<>(0, static_cast<int>(allTiles.size() - 1))(rng)]);
+      int newTile(allowedTiles[std::uniform_int_distribution<>(0, static_cast<int>(allowedTiles.size() - 1))(rng)]);
       parent.limit[newTile] -= nSym;
       setTileWithSym(parent, x, y, z, newTile);
     }
 
-    parent.value = evaluate(settings, parent.state, nullptr);
+    parent.value = evaluator.run(parent.state);
     localUtopia = parent.value;
     localPareto = parent.value;
     penaltyEnabled = false;
@@ -28,13 +27,13 @@ namespace Fission {
   }
 
   Opt::Opt(const Settings &settings)
-    :settings(settings), maxCooling(),
+    :settings(settings), evaluator(settings), maxCooling(),
     maxConverge(settings.sizeX * settings.sizeY * settings.sizeZ * 16) {
 
     for (int x(settings.symX ? settings.sizeX / 2 : 0); x < settings.sizeX; ++x)
       for (int y(settings.symY ? settings.sizeY / 2 : 0); y < settings.sizeY; ++y)
         for (int z(settings.symZ ? settings.sizeZ / 2 : 0); z < settings.sizeZ; ++z)
-          positions.emplace_back(x, y, z);
+          allowedCoords.emplace_back(x, y, z);
 
     for (int i{}; i < Cell; ++i)
       if (settings.limit[i])
@@ -42,13 +41,6 @@ namespace Fission {
 
     restart();
     globalPareto = parent;
-  }
-
-  void Opt::removeInvalidTiles() {
-    std::vector<std::tuple<int, int, int>> invalidTiles;
-    evaluate(settings, globalPareto.state, &invalidTiles);
-    for (auto [x, y, z] : invalidTiles)
-      globalPareto.state(x, y, z) = Air;
   }
 
   bool Opt::feasible(const Evaluation &x) {
@@ -118,7 +110,7 @@ namespace Fission {
     if (newTile != Air)
       sample.limit[newTile] -= nSym;
     setTileWithSym(sample, x, y, z, newTile);
-    sample.value = evaluate(settings, sample.state, nullptr);
+    sample.value = evaluator.run(sample.state);
   }
 
   bool Opt::step() {
@@ -135,7 +127,6 @@ namespace Fission {
       yDist(0, settings.sizeY - 1),
       zDist(0, settings.sizeZ - 1);
     int bestChild{};
-    std::array<Sample, 4> children;
     for (int i{}; i < children.size(); ++i) {
       auto &child(children[i]);
       child.state = parent.state;
@@ -159,7 +150,8 @@ namespace Fission {
         localPareto = parent.value;
         if (rawFitness(parent.value) > rawFitness(globalPareto.value)) {
           globalPareto = parent;
-          removeInvalidTiles();
+          evaluator.run(globalPareto.state);
+          evaluator.canonicalize(globalPareto.state);
           globalParetoChanged = true;
         }
       }
