@@ -12,6 +12,7 @@ namespace Fission {
 
   class Opt {
     const Settings &settings;
+    std::vector<std::tuple<int, int, int>> positions;
     double maxCooling;
     int nConverge, maxConverge;
     bool penaltyEnabled;
@@ -23,6 +24,8 @@ namespace Fission {
     bool feasible(const Evaluation &x);
     double rawFitness(const Evaluation &x);
     double penalizedFitness(const Evaluation &x);
+    int getNSym(int x, int y, int z);
+    void setTileWithSym(Sample &sample, int x, int y, int z, int tile);
     void mutateAndEvaluate(Sample &sample, int x, int y, int z);
   public:
     Opt(const Settings &settings);

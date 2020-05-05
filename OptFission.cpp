@@ -2,9 +2,24 @@
 
 namespace Fission {
   void Opt::restart() {
+    std::shuffle(positions.begin(), positions.end(), rng);
     std::copy(settings.limit, settings.limit + Air, parent.limit);
     parent.state = xt::broadcast<int>(Air,
       {settings.sizeX, settings.sizeY, settings.sizeZ});
+    std::vector<int> allTiles;
+    for (auto &[x, y, z] : positions) {
+      int nSym(getNSym(x, y, z));
+      allTiles.clear();
+      for (int tile{}; tile < Air; ++tile)
+        if (parent.limit[tile] < 0 || parent.limit[tile] >= nSym)
+          allTiles.emplace_back(tile);
+      if (allTiles.empty())
+        break;
+      int newTile(allTiles[std::uniform_int_distribution<>(0, static_cast<int>(allTiles.size() - 1))(rng)]);
+      parent.limit[newTile] -= nSym;
+      setTileWithSym(parent, x, y, z, newTile);
+    }
+
     parent.value = evaluate(settings, parent.state, nullptr);
     localUtopia = parent.value;
     localPareto = parent.value;
@@ -15,9 +30,16 @@ namespace Fission {
   Opt::Opt(const Settings &settings)
     :settings(settings), maxCooling(),
     maxConverge(settings.sizeX * settings.sizeY * settings.sizeZ * 16) {
+
+    for (int x(settings.symX ? settings.sizeX / 2 : 0); x < settings.sizeX; ++x)
+      for (int y(settings.symY ? settings.sizeY / 2 : 0); y < settings.sizeY; ++y)
+        for (int z(settings.symZ ? settings.sizeZ / 2 : 0); z < settings.sizeZ; ++z)
+          positions.emplace_back(x, y, z);
+
     for (int i{}; i < Cell; ++i)
       if (settings.limit[i])
         maxCooling = std::max(maxCooling, settings.coolingRates[i]);
+
     restart();
     globalPareto = parent;
   }
@@ -44,49 +66,58 @@ namespace Fission {
     return result;
   }
 
-  void Opt::mutateAndEvaluate(Sample &sample, int x, int y, int z) {
-    int nAffected(1);
+  int Opt::getNSym(int x, int y, int z) {
+    int result(1);
     if (settings.symX && x != settings.sizeX - x - 1)
-      nAffected *= 2;
+      result *= 2;
     if (settings.symY && y != settings.sizeY - y - 1)
-      nAffected *= 2;
+      result *= 2;
     if (settings.symZ && z != settings.sizeZ - z - 1)
-      nAffected *= 2;
+      result *= 2;
+    return result;
+  }
+
+  void Opt::setTileWithSym(Sample &sample, int x, int y, int z, int tile) {
+    sample.state(x, y, z) = tile;
+    if (settings.symX) {
+      sample.state(settings.sizeX - x - 1, y, z) = tile;
+      if (settings.symY) {
+        sample.state(x, settings.sizeY - y - 1, z) = tile;
+        sample.state(settings.sizeX - x - 1, settings.sizeY - y - 1, z) = tile;
+        if (settings.symZ) {
+          sample.state(x, y, settings.sizeZ - z - 1) = tile;
+          sample.state(settings.sizeX - x - 1, y, settings.sizeZ - z - 1) = tile;
+          sample.state(x, settings.sizeY - y - 1, settings.sizeZ - z - 1) = tile;
+          sample.state(settings.sizeX - x - 1, settings.sizeY - y - 1, settings.sizeZ - z - 1) = tile;
+        }
+      } else if (settings.symZ) {
+        sample.state(x, y, settings.sizeZ - z - 1) = tile;
+        sample.state(settings.sizeX - x - 1, y, settings.sizeZ - z - 1) = tile;
+      }
+    } else if (settings.symY) {
+      sample.state(x, settings.sizeY - y - 1, z) = tile;
+      if (settings.symZ) {
+        sample.state(x, y, settings.sizeZ - z - 1) = tile;
+        sample.state(x, settings.sizeY - y - 1, settings.sizeZ - z - 1) = tile;
+      }
+    } else if (settings.symZ) {
+      sample.state(x, y, settings.sizeZ - z - 1) = tile;
+    }
+  }
+
+  void Opt::mutateAndEvaluate(Sample &sample, int x, int y, int z) {
+    int nSym(getNSym(x, y, z));
     int oldTile(sample.state(x, y, z));
     if (oldTile != Air)
-      sample.limit[oldTile] += nAffected;
+      sample.limit[oldTile] += nSym;
     std::vector<int> allTiles{Air};
     for (int tile{}; tile < Air; ++tile)
-      if (sample.limit[tile] < 0 || sample.limit[tile] >= nAffected)
+      if (sample.limit[tile] < 0 || sample.limit[tile] >= nSym)
         allTiles.emplace_back(tile);
     int newTile(allTiles[std::uniform_int_distribution<>(0, static_cast<int>(allTiles.size() - 1))(rng)]);
     if (newTile != Air)
-      sample.limit[newTile] -= nAffected;
-    sample.state(x, y, z) = newTile;
-    if (settings.symX) {
-      sample.state(settings.sizeX - x - 1, y, z) = newTile;
-      if (settings.symY) {
-        sample.state(x, settings.sizeY - y - 1, z) = newTile;
-        sample.state(settings.sizeX - x - 1, settings.sizeY - y - 1, z) = newTile;
-        if (settings.symZ) {
-          sample.state(x, y, settings.sizeZ - z - 1) = newTile;
-          sample.state(settings.sizeX - x - 1, y, settings.sizeZ - z - 1) = newTile;
-          sample.state(x, settings.sizeY - y - 1, settings.sizeZ - z - 1) = newTile;
-          sample.state(settings.sizeX - x - 1, settings.sizeY - y - 1, settings.sizeZ - z - 1) = newTile;
-        }
-      } else if (settings.symZ) {
-        sample.state(x, y, settings.sizeZ - z - 1) = newTile;
-        sample.state(settings.sizeX - x - 1, y, settings.sizeZ - z - 1) = newTile;
-      }
-    } else if (settings.symY) {
-      sample.state(x, settings.sizeY - y - 1, z) = newTile;
-      if (settings.symZ) {
-        sample.state(x, y, settings.sizeZ - z - 1) = newTile;
-        sample.state(x, settings.sizeY - y - 1, settings.sizeZ - z - 1) = newTile;
-      }
-    } else if (settings.symZ) {
-      sample.state(x, y, settings.sizeZ - z - 1) = newTile;
-    }
+      sample.limit[newTile] -= nSym;
+    setTileWithSym(sample, x, y, z, newTile);
     sample.value = evaluate(settings, sample.state, nullptr);
   }
 
