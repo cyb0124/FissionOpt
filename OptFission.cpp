@@ -18,8 +18,7 @@ namespace Fission {
       parent.limit[newTile] -= nSym;
       setTileWithSym(parent, x, y, z, newTile);
     }
-
-    parent.value = evaluator.run(parent.state);
+    evaluator.run(parent.state, parent.value);
     localUtopia = parent.value;
     localPareto = parent.value;
     penaltyEnabled = false;
@@ -111,7 +110,7 @@ namespace Fission {
     if (newTile != Air)
       sample.limit[newTile] -= nSym;
     setTileWithSym(sample, x, y, z, newTile);
-    sample.value = evaluator.run(sample.state);
+    evaluator.run(sample.state, sample.value);
   }
 
   bool Opt::step() {
@@ -136,12 +135,13 @@ namespace Fission {
       if (i && penalizedFitness(child.value) > penalizedFitness(children[bestChild].value))
         bestChild = i;
     }
+    bool bestChanged{};
     auto &child(children[bestChild]);
     bool globalParetoChanged(isFirstIteration && feasible(globalPareto.value));
-    if (penalizedFitness(child.value) + 0.01 >= penalizedFitness(parent.value)) {
+    if (penalizedFitness(child.value) + 1e-6 >= penalizedFitness(parent.value)) {
       if (penalizedFitness(child.value) > penalizedFitness(parent.value))
         nConverge = 0;
-      parent = std::move(child);
+      std::swap(parent, child);
       if (rawFitness(parent.value) > rawFitness(localUtopia)) {
         nConverge = 0;
         localUtopia = parent.value;
@@ -157,10 +157,9 @@ namespace Fission {
     }
     ++nConverge;
     isFirstIteration = false;
-    if (globalParetoChanged) {
-      evaluator.run(globalPareto.state);
-      evaluator.canonicalize(globalPareto.state);
-    }
+    if (globalParetoChanged)
+      for (auto &[x, y, z] : globalPareto.value.invalidTiles)
+        globalPareto.state(x, y, z) = Air;
     return globalParetoChanged;
   }
 }

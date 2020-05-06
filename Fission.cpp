@@ -124,11 +124,14 @@ namespace Fission {
     isModeratorInLine(xt::empty<bool>({settings.sizeX, settings.sizeY, settings.sizeZ})),
     visited(xt::empty<bool>({settings.sizeX, settings.sizeY, settings.sizeZ})) {}
 
-  Evaluation Evaluator::run(const xt::xtensor<int, 3> &state) {
-    Evaluation result{};
+  void Evaluator::run(const xt::xtensor<int, 3> &state, Evaluation &result) {
+    result.invalidTiles.clear();
+    result.powerMult = 0.0;
+    result.heatMult = 0.0;
+    result.cooling = 0.0;
+    result.breed = 0;
     isActive.fill(false);
     isModeratorInLine.fill(false);
-    invalidTiles.clear();
     this->state = &state;
     for (int x{}; x < settings.sizeX; ++x) {
       for (int y{}; y < settings.sizeY; ++y) {
@@ -173,7 +176,7 @@ namespace Fission {
               result.powerMult += mult * (modPower / 6.0);
               result.heatMult += mult * (modHeat / 6.0);
             } else if (!isModeratorInLine(x, y, z)) {
-              invalidTiles.emplace_back(x, y, z);
+              result.invalidTiles.emplace_back(x, y, z);
             }
           } else switch (rules(x, y, z)) {
             case Redstone:
@@ -264,18 +267,12 @@ namespace Fission {
             if (isActive(x, y, z))
               result.cooling += settings.coolingRates[tile];
             else
-              invalidTiles.emplace_back(x, y, z);
+              result.invalidTiles.emplace_back(x, y, z);
           }
         }
       }
     }
 
     result.compute(settings);
-    return result;
-  }
-
-  void Evaluator::canonicalize(xt::xtensor<int, 3> &state) const {
-    for (auto &[x, y, z] : invalidTiles)
-      state(x, y, z) = Air;
   }
 }

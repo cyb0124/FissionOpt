@@ -31,6 +31,7 @@ namespace Fission {
 
   struct Evaluation {
     // Raw
+    Coords invalidTiles;
     double powerMult, heatMult, cooling;
     int breed;
     // Computed
@@ -43,7 +44,6 @@ namespace Fission {
     const Settings &settings;
     xt::xtensor<int, 3> mults, rules;
     xt::xtensor<bool, 3> isActive, isModeratorInLine, visited;
-    Coords invalidTiles;
     const xt::xtensor<int, 3> *state;
     int compatibleTile;
 
@@ -58,10 +58,9 @@ namespace Fission {
     int countCasingNeighbors(int x, int y, int z) const;
     bool checkAccessibility(int compatibleTile, int x, int y, int z);
     bool checkAccessibility(int x, int y, int z);
-  public:
+public:
     Evaluator(const Settings &settings);
-    Evaluation run(const xt::xtensor<int, 3> &state);
-    void canonicalize(xt::xtensor<int, 3> &state) const;
+    void run(const xt::xtensor<int, 3> &state, Evaluation &result);
   };
 }
 
