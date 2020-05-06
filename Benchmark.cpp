@@ -69,6 +69,7 @@ namespace {
     std::cout << "netHeat=" << sample.value.netHeat << std::endl;
     std::cout << "dutyCycle=" << sample.value.dutyCycle << std::endl;
     std::cout << "avgBreed=" << sample.value.avgBreed << std::endl;
+    std::cout << "efficiency=" << sample.value.efficiency << std::endl;
     std::cout << "avgPower=" << sample.value.avgPower << std::endl;
   }
 

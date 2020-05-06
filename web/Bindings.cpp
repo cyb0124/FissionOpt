@@ -49,6 +49,10 @@ static double getAvgBreed(const Fission::Sample &x) {
   return x.value.avgBreed;
 }
 
+static double getEfficiency(const Fission::Sample &x) {
+  return x.value.efficiency;
+}
+
 EMSCRIPTEN_BINDINGS(FissionOpt) {
   emscripten::class_<Fission::Settings>("FissionSettings")
     .constructor<>()
@@ -75,7 +79,8 @@ EMSCRIPTEN_BINDINGS(FissionOpt) {
     .function("getNetHeat", &getNetHeat)
     .function("getDutyCycle", &getDutyCycle)
     .function("getAvgPower", &getAvgPower)
-    .function("getAvgBreed", &getAvgBreed);
+    .function("getAvgBreed", &getAvgBreed)
+    .function("getEfficiency", &getEfficiency);
   emscripten::class_<Fission::Opt>("FissionOpt")
     .constructor<const Fission::Settings&>()
     .function("step", &Fission::Opt::step)

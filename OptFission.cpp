@@ -21,23 +21,17 @@ namespace Fission {
     evaluator.run(parent.state, parent.value);
     localUtopia = parent.value;
     localPareto = parent.value;
-    penaltyEnabled = false;
+    infeasibilityPenalty = false;
     nConverge = 0;
   }
 
   Opt::Opt(const Settings &settings)
-    :settings(settings), evaluator(settings), maxCooling(), isFirstIteration(true),
+    :settings(settings), evaluator(settings), isFirstIteration(true),
     maxConverge(settings.sizeX * settings.sizeY * settings.sizeZ * 16) {
-
     for (int x(settings.symX ? settings.sizeX / 2 : 0); x < settings.sizeX; ++x)
       for (int y(settings.symY ? settings.sizeY / 2 : 0); y < settings.sizeY; ++y)
         for (int z(settings.symZ ? settings.sizeZ / 2 : 0); z < settings.sizeZ; ++z)
           allowedCoords.emplace_back(x, y, z);
-
-    for (int i{}; i < Cell; ++i)
-      if (settings.limit[i])
-        maxCooling = std::max(maxCooling, settings.coolingRates[i]);
-
     restart();
     globalPareto = parent;
   }
@@ -47,13 +41,13 @@ namespace Fission {
   }
 
   double Opt::rawFitness(const Evaluation &x) {
-    return settings.breeder ? x.avgBreed : x.avgPower;
+    return settings.breeder ? x.avgBreed : x.avgMult;
   }
 
   double Opt::penalizedFitness(const Evaluation &x) {
     double result(rawFitness(x));
-    if (penaltyEnabled && !feasible(x))
-      result -= (rawFitness(localUtopia) - rawFitness(localPareto)) * (x.netHeat / maxCooling);
+    if (infeasibilityPenalty && !feasible(x))
+      result -= (rawFitness(localUtopia) - rawFitness(localPareto)) * (x.netHeat / (8 * settings.fuelBaseHeat));
     return result;
   }
 
@@ -115,8 +109,8 @@ namespace Fission {
 
   bool Opt::step() {
     if (nConverge == maxConverge) {
-      if (!penaltyEnabled && !feasible(localUtopia)) {
-        penaltyEnabled = true;
+      if (!infeasibilityPenalty && !feasible(localUtopia)) {
+        infeasibilityPenalty = true;
         nConverge = 0;
       } else {
         restart();
@@ -138,7 +132,7 @@ namespace Fission {
     bool bestChanged{};
     auto &child(children[bestChild]);
     bool globalParetoChanged(isFirstIteration && feasible(globalPareto.value));
-    if (penalizedFitness(child.value) + 1e-6 >= penalizedFitness(parent.value)) {
+    if (penalizedFitness(child.value) + 1e-8 >= penalizedFitness(parent.value)) {
       if (penalizedFitness(child.value) > penalizedFitness(parent.value))
         nConverge = 0;
       std::swap(parent, child);

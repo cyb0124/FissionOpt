@@ -15,10 +15,9 @@ namespace Fission {
     Evaluator evaluator;
     Coords allowedCoords;
     std::vector<int> allowedTiles;
-    double maxCooling;
     bool isFirstIteration;
     int nConverge, maxConverge;
-    bool penaltyEnabled;
+    bool infeasibilityPenalty;
     Evaluation localUtopia, localPareto;
     Sample parent, globalPareto;
     std::array<Sample, 4> children;

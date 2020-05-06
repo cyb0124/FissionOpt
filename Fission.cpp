@@ -6,9 +6,11 @@ namespace Fission {
     heat = settings.fuelBaseHeat * heatMult;
     netHeat = heat - cooling;
     dutyCycle = std::min(1.0, cooling / heat);
-    power = settings.fuelBasePower * powerMult;
+    avgMult = powerMult * dutyCycle;
+    power = powerMult * settings.fuelBasePower;
     avgPower = power * dutyCycle;
     avgBreed = breed * dutyCycle;
+    efficiency = breed ? powerMult / breed : 1.0;
   }
 
   int Evaluator::getTileSafe(int x, int y, int z) const {

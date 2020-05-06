@@ -35,7 +35,7 @@ namespace Fission {
     double powerMult, heatMult, cooling;
     int breed;
     // Computed
-    double heat, netHeat, dutyCycle, power, avgPower, avgBreed;
+    double heat, netHeat, dutyCycle, avgMult, power, avgPower, avgBreed, efficiency;
 
     void compute(const Settings &settings);
   };
