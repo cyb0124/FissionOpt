@@ -1,3 +1,4 @@
+#include <iostream>
 #include "OptFission.h"
 
 namespace Fission {
@@ -47,7 +48,7 @@ namespace Fission {
   double Opt::penalizedFitness(const Evaluation &x) {
     double result(rawFitness(x));
     if (infeasibilityPenalty && !feasible(x))
-      result -= (rawFitness(localUtopia) - rawFitness(localPareto)) * (x.netHeat / (8 * settings.fuelBaseHeat));
+      result -= (rawFitness(localUtopia) - rawFitness(localPareto)) * x.netHeat / (x.breed * settings.fuelBaseHeat) * 2.0;
     return result;
   }
 
