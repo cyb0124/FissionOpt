@@ -16,6 +16,7 @@ namespace Fission {
     Coords allowedCoords;
     std::vector<int> allowedTiles;
     double maxCooling;
+    bool isFirstIteration;
     int nConverge, maxConverge;
     bool penaltyEnabled;
     Evaluation localUtopia, localPareto;

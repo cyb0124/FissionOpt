@@ -27,7 +27,7 @@ namespace Fission {
   }
 
   Opt::Opt(const Settings &settings)
-    :settings(settings), evaluator(settings), maxCooling(),
+    :settings(settings), evaluator(settings), maxCooling(), isFirstIteration(true),
     maxConverge(settings.sizeX * settings.sizeY * settings.sizeZ * 16) {
 
     for (int x(settings.symX ? settings.sizeX / 2 : 0); x < settings.sizeX; ++x)
@@ -137,7 +137,7 @@ namespace Fission {
         bestChild = i;
     }
     auto &child(children[bestChild]);
-    bool globalParetoChanged{};
+    bool globalParetoChanged(isFirstIteration && feasible(globalPareto.value));
     if (penalizedFitness(child.value) + 0.01 >= penalizedFitness(parent.value)) {
       if (penalizedFitness(child.value) > penalizedFitness(parent.value))
         nConverge = 0;
@@ -151,13 +151,16 @@ namespace Fission {
         localPareto = parent.value;
         if (rawFitness(parent.value) > rawFitness(globalPareto.value)) {
           globalPareto = parent;
-          evaluator.run(globalPareto.state);
-          evaluator.canonicalize(globalPareto.state);
           globalParetoChanged = true;
         }
       }
     }
     ++nConverge;
+    isFirstIteration = false;
+    if (globalParetoChanged) {
+      evaluator.run(globalPareto.state);
+      evaluator.canonicalize(globalPareto.state);
+    }
     return globalParetoChanged;
   }
 }
