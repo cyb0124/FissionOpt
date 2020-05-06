@@ -1,6 +1,6 @@
 $(() => { FissionOpt().then((FissionOpt) => {
   const run = $('#run'), pause = $('#pause'), stop = $('#stop');
-  let opt = null, timeout = null;
+  let opt = null, timeout = null, bestChanged, nIterationsSinceLastRedraw;
   
   const updateDisables = () => {
     $('#settings input').prop('disabled', opt !== null);
@@ -313,12 +313,15 @@ $(() => { FissionOpt().then((FissionOpt) => {
 
   function runBatch() {
     scheduleBatch();
-    let changed = false;
-    for (let i = 0; i < 1024; ++i)
+    const nBatch = Math.min(1024, Math.ceil(327680 / (settings.sizeZ * settings.sizeY * settings.sizeZ)));
+    for (let i = 0; i < nBatch; ++i)
       if (opt.step())
-        changed = true;
-    if (changed)
+        bestChanged = true;
+    nIterationsSinceLastRedraw += nBatch;
+    if (bestChanged && nIterationsSinceLastRedraw >= 1024) {
+      nIterationsSinceLastRedraw = 0;
       displaySample(opt.getBest());
+    }
   };
 
   const settings = new FissionOpt.FissionSettings();
@@ -361,6 +364,8 @@ $(() => { FissionOpt().then((FissionOpt) => {
       }
       design.empty();
       opt = new FissionOpt.FissionOpt(settings);
+      bestChanged = false;
+      nIterationsSinceLastRedraw = 0;
     }
     scheduleBatch();
     updateDisables();
