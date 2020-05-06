@@ -102,11 +102,12 @@ namespace Fission {
     int oldTile(sample.state(x, y, z));
     if (oldTile != Air)
       sample.limit[oldTile] += nSym;
-    std::vector<int> allTiles{Air};
+    allowedTiles.clear();
+    allowedTiles.emplace_back(Air);
     for (int tile{}; tile < Air; ++tile)
       if (sample.limit[tile] < 0 || sample.limit[tile] >= nSym)
-        allTiles.emplace_back(tile);
-    int newTile(allTiles[std::uniform_int_distribution<>(0, static_cast<int>(allTiles.size() - 1))(rng)]);
+        allowedTiles.emplace_back(tile);
+    int newTile(allowedTiles[std::uniform_int_distribution<>(0, static_cast<int>(allowedTiles.size() - 1))(rng)]);
     if (newTile != Air)
       sample.limit[newTile] -= nSym;
     setTileWithSym(sample, x, y, z, newTile);
