@@ -313,13 +313,15 @@ $(() => { FissionOpt().then((FissionOpt) => {
 
   function runBatch() {
     scheduleBatch();
-    const nBatch = Math.min(1024, Math.ceil(327680 / (settings.sizeZ * settings.sizeY * settings.sizeZ)));
+    const maxBatch = 1024;
+    const nBatch = Math.min(maxBatch, Math.ceil(327680 / (settings.sizeZ * settings.sizeY * settings.sizeZ)));
     for (let i = 0; i < nBatch; ++i)
       if (opt.step())
         bestChanged = true;
     nIterationsSinceLastRedraw += nBatch;
-    if (bestChanged && nIterationsSinceLastRedraw >= 1024) {
+    if (bestChanged && nIterationsSinceLastRedraw >= maxBatch) {
       nIterationsSinceLastRedraw = 0;
+      bestChanged = false;
       displaySample(opt.getBest());
     }
   };
