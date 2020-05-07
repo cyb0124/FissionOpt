@@ -486,13 +486,18 @@ int main() {
   std::string results;
   for (auto &entry : benchmarks) {
     std::cout << entry.first << std::endl;
+    bool success{};
     Fission::Opt opt(entry.second);
     for (int i{}; i < 1024 * 256; ++i)
-      opt.step();
+      if (opt.step())
+        success = true;
     printSample(opt.getBest());
-    std::cout << std::endl;
-    results += entry.first + ": " + std::to_string(
-      entry.second.breeder ? opt.getBest().value.avgBreed : opt.getBest().value.avgPower) + '\n';
+    results += entry.first + ": ";
+    if (success)
+      results += std::to_string(entry.second.breeder ? opt.getBest().value.avgBreed : opt.getBest().value.avgPower);
+    else
+      results += "fail";
+    results += '\n';
   }
   std::cout << "Results:" << std::endl;
   std::cout << results << std::flush;
