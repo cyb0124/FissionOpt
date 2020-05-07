@@ -84,5 +84,8 @@ EMSCRIPTEN_BINDINGS(FissionOpt) {
   emscripten::class_<Fission::Opt>("FissionOpt")
     .constructor<const Fission::Settings&>()
     .function("stepBatch", &Fission::Opt::stepBatch)
-    .function("getBest", &Fission::Opt::getBest);
+    .function("getBest", &Fission::Opt::getBest)
+    .function("getNEpisode", &Fission::Opt::getNEpisode)
+    .function("getNStage", &Fission::Opt::getNStage)
+    .function("getNIteration", &Fission::Opt::getNIteration);
 }

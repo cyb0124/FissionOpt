@@ -15,7 +15,7 @@ namespace Fission {
     Evaluator evaluator;
     Coords allowedCoords;
     std::vector<int> allowedTiles;
-    bool isFirstIteration;
+    int nEpisode, nStage, nIteration;
     int nConverge, maxConverge;
     double infeasibilityPenalty;
     Sample parent, best;
@@ -33,6 +33,9 @@ namespace Fission {
     bool step();
     bool stepBatch(int nBatch);
     const Sample &getBest() const { return best; }
+    int getNEpisode() const { return nEpisode; }
+    int getNStage() const { return nStage; }
+    int getNIteration() const { return nIteration; }
   };
 }
 

@@ -312,12 +312,14 @@ $(() => { FissionOpt().then((FissionOpt) => {
     design.append(block);
   };
 
+  const progress = $('#progress');
   function runBatch() {
     scheduleBatch();
     const maxBatch = 1024;
     const nBatch = Math.min(maxBatch, Math.ceil(327680 / (settings.sizeZ * settings.sizeY * settings.sizeZ)));
     if (opt.stepBatch(nBatch))
       bestChanged = true;
+    progress.text('Episode ' + opt.getNEpisode() + ', stage ' + opt.getNStage() + ', iteration ' + opt.getNIteration());
     nIterationsSinceLastRedraw += nBatch;
     if (bestChanged && nIterationsSinceLastRedraw >= maxBatch) {
       nIterationsSinceLastRedraw = 0;

@@ -24,7 +24,8 @@ namespace Fission {
   }
 
   Opt::Opt(const Settings &settings)
-    :settings(settings), evaluator(settings), isFirstIteration(true),
+    :settings(settings), evaluator(settings),
+    nEpisode(), nStage(), nIteration(),
     maxConverge(settings.sizeX * settings.sizeY * settings.sizeZ * 16) {
     for (int x(settings.symX ? settings.sizeX / 2 : 0); x < settings.sizeX; ++x)
       for (int y(settings.symY ? settings.sizeY / 2 : 0); y < settings.sizeY; ++y)
@@ -107,9 +108,13 @@ namespace Fission {
 
   bool Opt::step() {
     if (nConverge == maxConverge) {
+      nIteration = 0;
       if (feasible(parent.value) || infeasibilityPenalty > 1e8) {
+        nStage = 0;
+        ++nEpisode;
         restart();
       } else {
+        ++nStage;
         if (infeasibilityPenalty)
           infeasibilityPenalty *= 2;
         else
@@ -117,7 +122,7 @@ namespace Fission {
         nConverge = 0;
       }
     }
-    bool bestChanged(isFirstIteration && feasible(best.value));
+    bool bestChanged(!nEpisode && !nStage && !nIteration && feasible(best.value));
     std::uniform_int_distribution<>
       xDist(0, settings.sizeX - 1),
       yDist(0, settings.sizeY - 1),
@@ -142,7 +147,7 @@ namespace Fission {
       std::swap(parent, child);
     }
     ++nConverge;
-    isFirstIteration = false;
+    ++nIteration;
     if (bestChanged)
       for (auto &[x, y, z] : best.value.invalidTiles)
         best.state(x, y, z) = Air;
