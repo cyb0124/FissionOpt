@@ -107,7 +107,7 @@ namespace Fission {
 
   bool Opt::step() {
     if (nConverge == maxConverge) {
-      if (feasible(parent.value)) {
+      if (feasible(parent.value) || infeasibilityPenalty > 1e8) {
         restart();
       } else {
         if (infeasibilityPenalty)
