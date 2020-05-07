@@ -1,4 +1,3 @@
-#include <iostream>
 #include "OptFission.h"
 
 namespace Fission {
@@ -20,9 +19,7 @@ namespace Fission {
       setTileWithSym(parent, x, y, z, newTile);
     }
     evaluator.run(parent.state, parent.value);
-    localUtopia = parent.value;
-    localPareto = parent.value;
-    infeasibilityPenalty = false;
+    infeasibilityPenalty = 0.0;
     nConverge = 0;
   }
 
@@ -34,7 +31,7 @@ namespace Fission {
         for (int z(settings.symZ ? settings.sizeZ / 2 : 0); z < settings.sizeZ; ++z)
           allowedCoords.emplace_back(x, y, z);
     restart();
-    globalPareto = parent;
+    best = parent;
   }
 
   bool Opt::feasible(const Evaluation &x) {
@@ -47,8 +44,8 @@ namespace Fission {
 
   double Opt::penalizedFitness(const Evaluation &x) {
     double result(rawFitness(x));
-    if (infeasibilityPenalty && !feasible(x))
-      result -= (rawFitness(localUtopia) - rawFitness(localPareto)) * x.netHeat / (x.breed * settings.fuelBaseHeat) * 2.0;
+    if (!feasible(x))
+      result -= x.netHeat / settings.fuelBaseHeat * infeasibilityPenalty;
     return result;
   }
 
@@ -110,13 +107,17 @@ namespace Fission {
 
   bool Opt::step() {
     if (nConverge == maxConverge) {
-      if (!infeasibilityPenalty && !feasible(localUtopia)) {
-        infeasibilityPenalty = true;
-        nConverge = 0;
-      } else {
+      if (feasible(parent.value)) {
         restart();
+      } else {
+        if (infeasibilityPenalty)
+          infeasibilityPenalty *= 2;
+        else
+          infeasibilityPenalty = std::uniform_real_distribution<>()(rng);
+        nConverge = 0;
       }
     }
+    bool bestChanged(isFirstIteration && feasible(best.value));
     std::uniform_int_distribution<>
       xDist(0, settings.sizeX - 1),
       yDist(0, settings.sizeY - 1),
@@ -129,32 +130,22 @@ namespace Fission {
       mutateAndEvaluate(child, xDist(rng), yDist(rng), zDist(rng));
       if (i && penalizedFitness(child.value) > penalizedFitness(children[bestChild].value))
         bestChild = i;
+      if (feasible(child.value) && rawFitness(child.value) > rawFitness(best.value)) {
+        best = child;
+        bestChanged = true;
+      }
     }
-    bool bestChanged{};
     auto &child(children[bestChild]);
-    bool globalParetoChanged(isFirstIteration && feasible(globalPareto.value));
     if (penalizedFitness(child.value) + 1e-8 >= penalizedFitness(parent.value)) {
       if (penalizedFitness(child.value) > penalizedFitness(parent.value))
         nConverge = 0;
       std::swap(parent, child);
-      if (rawFitness(parent.value) > rawFitness(localUtopia)) {
-        nConverge = 0;
-        localUtopia = parent.value;
-      }
-      if (feasible(parent.value) && rawFitness(parent.value) > rawFitness(localPareto)) {
-        nConverge = 0;
-        localPareto = parent.value;
-        if (rawFitness(parent.value) > rawFitness(globalPareto.value)) {
-          globalPareto = parent;
-          globalParetoChanged = true;
-        }
-      }
     }
     ++nConverge;
     isFirstIteration = false;
-    if (globalParetoChanged)
-      for (auto &[x, y, z] : globalPareto.value.invalidTiles)
-        globalPareto.state(x, y, z) = Air;
-    return globalParetoChanged;
+    if (bestChanged)
+      for (auto &[x, y, z] : best.value.invalidTiles)
+        best.state(x, y, z) = Air;
+    return bestChanged;
   }
 }

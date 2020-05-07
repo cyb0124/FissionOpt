@@ -17,9 +17,8 @@ namespace Fission {
     std::vector<int> allowedTiles;
     bool isFirstIteration;
     int nConverge, maxConverge;
-    bool infeasibilityPenalty;
-    Evaluation localUtopia, localPareto;
-    Sample parent, globalPareto;
+    double infeasibilityPenalty;
+    Sample parent, best;
     std::array<Sample, 4> children;
     std::mt19937 rng;
     void restart();
@@ -32,7 +31,7 @@ namespace Fission {
   public:
     Opt(const Settings &settings);
     bool step();
-    const Sample &getBest() const { return globalPareto; }
+    const Sample &getBest() const { return best; }
   };
 }
 
