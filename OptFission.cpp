@@ -141,7 +141,7 @@ namespace Fission {
       }
     }
     auto &child(children[bestChild]);
-    if (penalizedFitness(child.value) + 1e-8 >= penalizedFitness(parent.value)) {
+    if (penalizedFitness(child.value) >= penalizedFitness(parent.value)) {
       if (penalizedFitness(child.value) > penalizedFitness(parent.value))
         nConverge = 0;
       std::swap(parent, child);
