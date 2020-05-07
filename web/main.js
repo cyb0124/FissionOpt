@@ -316,9 +316,8 @@ $(() => { FissionOpt().then((FissionOpt) => {
     scheduleBatch();
     const maxBatch = 1024;
     const nBatch = Math.min(maxBatch, Math.ceil(327680 / (settings.sizeZ * settings.sizeY * settings.sizeZ)));
-    for (let i = 0; i < nBatch; ++i)
-      if (opt.step())
-        bestChanged = true;
+    if (opt.stepBatch(nBatch))
+      bestChanged = true;
     nIterationsSinceLastRedraw += nBatch;
     if (bestChanged && nIterationsSinceLastRedraw >= maxBatch) {
       nIterationsSinceLastRedraw = 0;

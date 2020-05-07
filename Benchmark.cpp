@@ -486,11 +486,8 @@ int main() {
   std::string results;
   for (auto &entry : benchmarks) {
     std::cout << entry.first << std::endl;
-    bool success{};
     Fission::Opt opt(entry.second);
-    for (int i{}; i < 1024 * 256; ++i)
-      if (opt.step())
-        success = true;
+    bool success(opt.stepBatch(1024 * 256));
     printSample(opt.getBest());
     results += entry.first + ": ";
     if (success)

@@ -31,6 +31,7 @@ namespace Fission {
   public:
     Opt(const Settings &settings);
     bool step();
+    bool stepBatch(int nBatch);
     const Sample &getBest() const { return best; }
   };
 }

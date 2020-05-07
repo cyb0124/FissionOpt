@@ -148,4 +148,12 @@ namespace Fission {
         best.state(x, y, z) = Air;
     return bestChanged;
   }
+
+  bool Opt::stepBatch(int nBatch) {
+    bool bestChanged{};
+    for (int i{}; i < nBatch; ++i)
+      if (step())
+        bestChanged = true;
+    return bestChanged;
+  }
 }
