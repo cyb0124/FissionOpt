@@ -6,7 +6,7 @@ namespace Fission {
     for (int i{}; i < Air; ++i)
       if (opt.settings.limit[i])
         tileMap.emplace(i, tileMap.size());
-    nFeatures = 3 + tileMap.size();
+    nFeatures = 3 + tileMap.size() * 2;
     wHidden = xt::random::randn({nHidden, nFeatures}, 0.0, 1.0 / std::sqrt(nFeatures), opt.rng);
     gwHidden = xt::empty_like(wHidden);
     mwHidden = xt::zeros_like(wHidden);
@@ -28,6 +28,8 @@ namespace Fission {
       for (int y{}; y < opt.settings.sizeY; ++y)
         for (int z{}; z < opt.settings.sizeZ; ++z)
           ++vInput[tileMap[sample.state(x, y, z)]];
+    for (auto &[x, y, z] : sample.value.invalidTiles)
+      ++vInput[tileMap.size() + tileMap[sample.state(x, y, z)]];
     vInput.periodic(-1) = sample.value.powerMult;
     vInput.periodic(-2) = sample.value.heatMult;
     vInput.periodic(-3) = sample.value.cooling / opt.settings.fuelBaseHeat;
