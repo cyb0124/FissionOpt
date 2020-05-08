@@ -1,6 +1,7 @@
 #ifndef _OPT_FISSION_H_
 #define _OPT_FISSION_H_
 #include <random>
+#include <memory>
 #include "Fission.h"
 
 namespace Fission {
@@ -10,7 +11,15 @@ namespace Fission {
     Evaluation value;
   };
 
+  enum {
+    StageTrain = -2,
+    StageInfer
+  };
+
+  class Net;
+
   class Opt {
+    friend Net;
     const Settings &settings;
     Evaluator evaluator;
     Coords allowedCoords;
@@ -18,9 +27,13 @@ namespace Fission {
     int nEpisode, nStage, nIteration;
     int nConverge, maxConverge;
     double infeasibilityPenalty;
+    double parentFitness;
     Sample parent, best;
     std::array<Sample, 4> children;
     std::mt19937 rng;
+    std::unique_ptr<Net> net;
+    std::vector<Sample> trajectory;
+    bool inferenceFailed;
     void restart();
     bool feasible(const Evaluation &x);
     double rawFitness(const Evaluation &x);
@@ -29,7 +42,7 @@ namespace Fission {
     void setTileWithSym(Sample &sample, int x, int y, int z, int tile);
     void mutateAndEvaluate(Sample &sample, int x, int y, int z);
   public:
-    Opt(const Settings &settings);
+    Opt(const Settings &settings, bool useNet);
     bool step();
     bool stepBatch(int nBatch);
     const Sample &getBest() const { return best; }

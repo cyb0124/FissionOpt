@@ -1,4 +1,4 @@
-#include "OptFission.h"
+#include "FissionNet.h"
 
 namespace Fission {
   void Opt::restart() {
@@ -19,20 +19,24 @@ namespace Fission {
       setTileWithSym(parent, x, y, z, newTile);
     }
     evaluator.run(parent.state, parent.value);
-    infeasibilityPenalty = 0.0;
-    nConverge = 0;
   }
 
-  Opt::Opt(const Settings &settings)
+  Opt::Opt(const Settings &settings, bool useNet)
     :settings(settings), evaluator(settings),
-    nEpisode(), nStage(), nIteration(),
-    maxConverge(settings.sizeX * settings.sizeY * settings.sizeZ * 16) {
+    nEpisode(), nStage(), nIteration(), nConverge(),
+    maxConverge(settings.sizeX * settings.sizeY * settings.sizeZ * 16),
+    infeasibilityPenalty() {
     for (int x(settings.symX ? settings.sizeX / 2 : 0); x < settings.sizeX; ++x)
       for (int y(settings.symY ? settings.sizeY / 2 : 0); y < settings.sizeY; ++y)
         for (int z(settings.symZ ? settings.sizeZ / 2 : 0); z < settings.sizeZ; ++z)
           allowedCoords.emplace_back(x, y, z);
     restart();
     best = parent;
+    parentFitness = penalizedFitness(parent.value);
+    if (useNet) {
+      net = std::make_unique<Net>(*this);
+      trajectory.emplace_back(parent);
+    }
   }
 
   bool Opt::feasible(const Evaluation &x) {
@@ -107,44 +111,87 @@ namespace Fission {
   }
 
   bool Opt::step() {
+    if (nStage == StageTrain) {
+      if (trajectory.empty()) {
+        nStage = StageInfer;
+        nIteration = 0;
+        nConverge = 0;
+        inferenceFailed = true;
+        parentFitness = net->forward(parent);
+      } else {
+        double inferred(net->forward(trajectory.back()));
+        double target(rawFitness(parent.value));
+        net->backward(2.0 * (inferred - target), trajectory.back());
+        net->adam();
+        trajectory.pop_back();
+        ++nIteration;
+        return false;
+      }
+    }
+
     if (nConverge == maxConverge) {
       nIteration = 0;
-      if (feasible(parent.value) || infeasibilityPenalty > 1e8) {
+      nConverge = 0;
+      if (nStage == StageInfer) {
         nStage = 0;
         ++nEpisode;
-        restart();
+        if (inferenceFailed)
+          restart();
+        trajectory.emplace_back(parent);
+      } else if (feasible(parent.value) || infeasibilityPenalty > 1e8) {
+        infeasibilityPenalty = 0.0;
+        if (net) {
+          nStage = StageTrain;
+          std::shuffle(trajectory.begin(), trajectory.end(), rng);
+          return false;
+        } else {
+          nStage = 0;
+          ++nEpisode;
+          restart();
+        }
       } else {
         ++nStage;
         if (infeasibilityPenalty)
           infeasibilityPenalty *= 2;
         else
           infeasibilityPenalty = std::uniform_real_distribution<>()(rng);
-        nConverge = 0;
       }
+      parentFitness = penalizedFitness(parent.value);
     }
+
     bool bestChanged(!nEpisode && !nStage && !nIteration && feasible(best.value));
     std::uniform_int_distribution<>
       xDist(0, settings.sizeX - 1),
       yDist(0, settings.sizeY - 1),
       zDist(0, settings.sizeZ - 1);
-    int bestChild{};
+    int bestChild;
+    double bestFitness;
     for (int i{}; i < children.size(); ++i) {
       auto &child(children[i]);
       child.state = parent.state;
       std::copy(parent.limit, parent.limit + Air, child.limit);
       mutateAndEvaluate(child, xDist(rng), yDist(rng), zDist(rng));
-      if (i && penalizedFitness(child.value) > penalizedFitness(children[bestChild].value))
+      double fitness(nStage == StageInfer ? net->forward(child) : penalizedFitness(child.value));
+      if (!i || fitness > bestFitness) {
         bestChild = i;
+        bestFitness = fitness;
+      }
       if (feasible(child.value) && rawFitness(child.value) > rawFitness(best.value)) {
         best = child;
         bestChanged = true;
       }
     }
     auto &child(children[bestChild]);
-    if (penalizedFitness(child.value) >= penalizedFitness(parent.value)) {
-      if (penalizedFitness(child.value) > penalizedFitness(parent.value))
+    if (bestFitness >= parentFitness) {
+      if (bestFitness > parentFitness) {
+        parentFitness = bestFitness;
+        if (nStage == StageInfer)
+          inferenceFailed = false;
         nConverge = 0;
+      }
       std::swap(parent, child);
+      if (net && nStage != StageInfer)
+        trajectory.emplace_back(parent);
     }
     ++nConverge;
     ++nIteration;

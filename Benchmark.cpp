@@ -1,5 +1,5 @@
 #include <iostream>
-#include "OptFission.h"
+#include "FissionNet.h"
 
 namespace {
   std::string tileToString(int tile) {
@@ -516,7 +516,7 @@ int main() {
   std::string results;
   for (auto &entry : benchmarks) {
     std::cout << entry.first << std::endl;
-    Fission::Opt opt(entry.second);
+    Fission::Opt opt(entry.second, true);
     bool success(opt.stepBatch(1024 * 256));
     printSample(opt.getBest());
     results += entry.first + ": ";

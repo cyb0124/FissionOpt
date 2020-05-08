@@ -7,6 +7,8 @@ add_executable(FissionOpt
   Fission.cpp
   OptFission.h
   OptFission.cpp
+  FissionNet.h
+  FissionNet.cpp
   Benchmark.cpp
 )
 

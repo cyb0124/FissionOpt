@@ -1,5 +1,5 @@
 #include <emscripten/bind.h>
-#include "../OptFission.h"
+#include "../FissionNet.h"
 
 static void setLimit(Fission::Settings &x, int index, int limit) {
   x.limit[index] = limit;
@@ -82,7 +82,7 @@ EMSCRIPTEN_BINDINGS(FissionOpt) {
     .function("getAvgBreed", &getAvgBreed)
     .function("getEfficiency", &getEfficiency);
   emscripten::class_<Fission::Opt>("FissionOpt")
-    .constructor<const Fission::Settings&>()
+    .constructor<const Fission::Settings&, bool>()
     .function("stepBatch", &Fission::Opt::stepBatch)
     .function("getBest", &Fission::Opt::getBest)
     .function("getNEpisode", &Fission::Opt::getNEpisode)

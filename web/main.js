@@ -319,7 +319,13 @@ $(() => { FissionOpt().then((FissionOpt) => {
     const nBatch = Math.min(maxBatch, Math.ceil(327680 / (settings.sizeZ * settings.sizeY * settings.sizeZ)));
     if (opt.stepBatch(nBatch))
       bestChanged = true;
-    progress.text('Episode ' + opt.getNEpisode() + ', stage ' + opt.getNStage() + ', iteration ' + opt.getNIteration());
+    const nStage = opt.getNStage();
+    if (nStage == -2)
+      progress.text('Episode ' + opt.getNEpisode() + ', training iteration ' + opt.getNIteration());
+    else if (nStage == -1)
+      progress.text('Episode ' + opt.getNEpisode() + ', inference iteration ' + opt.getNIteration());
+    else
+      progress.text('Episode ' + opt.getNEpisode() + ', stage ' + nStage + ', iteration ' + opt.getNIteration());
     nIterationsSinceLastRedraw += nBatch;
     if (bestChanged && nIterationsSinceLastRedraw >= maxBatch) {
       nIterationsSinceLastRedraw = 0;
@@ -367,7 +373,7 @@ $(() => { FissionOpt().then((FissionOpt) => {
         return;
       }
       design.empty();
-      opt = new FissionOpt.FissionOpt(settings);
+      opt = new FissionOpt.FissionOpt(settings, $('#useNet').is(':checked'));
       bestChanged = false;
       nIterationsSinceLastRedraw = 0;
     }
