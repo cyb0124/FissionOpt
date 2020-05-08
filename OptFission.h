@@ -32,7 +32,7 @@ namespace Fission {
     std::array<Sample, 4> children;
     std::mt19937 rng;
     std::unique_ptr<Net> net;
-    std::vector<Sample> trajectory;
+    std::vector<xt::xtensor<double, 1>> trajectory;
     bool inferenceFailed;
     void restart();
     bool feasible(const Evaluation &x);

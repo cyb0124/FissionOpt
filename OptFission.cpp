@@ -35,7 +35,7 @@ namespace Fission {
     parentFitness = penalizedFitness(parent.value);
     if (useNet) {
       net = std::make_unique<Net>(*this);
-      trajectory.emplace_back(parent);
+      trajectory.emplace_back(net->assembleInput(parent));
     }
   }
 
@@ -117,11 +117,11 @@ namespace Fission {
         nIteration = 0;
         nConverge = 0;
         inferenceFailed = true;
-        parentFitness = net->forward(parent);
+        parentFitness = net->forward(net->assembleInput(parent));
       } else {
         double inferred(net->forward(trajectory.back()));
         double target(rawFitness(parent.value));
-        net->backward(2.0 * (inferred - target), trajectory.back());
+        net->backward(trajectory.back(), 2.0 * (inferred - target));
         net->adam();
         trajectory.pop_back();
         ++nIteration;
@@ -137,7 +137,7 @@ namespace Fission {
         ++nEpisode;
         if (inferenceFailed)
           restart();
-        trajectory.emplace_back(parent);
+        trajectory.emplace_back(net->assembleInput(parent));
       } else if (feasible(parent.value) || infeasibilityPenalty > 1e8) {
         infeasibilityPenalty = 0.0;
         if (net) {
@@ -171,7 +171,7 @@ namespace Fission {
       child.state = parent.state;
       std::copy(parent.limit, parent.limit + Air, child.limit);
       mutateAndEvaluate(child, xDist(rng), yDist(rng), zDist(rng));
-      double fitness(nStage == StageInfer ? net->forward(child) : penalizedFitness(child.value));
+      double fitness(nStage == StageInfer ? net->forward(net->assembleInput(child)) : penalizedFitness(child.value));
       if (!i || fitness > bestFitness) {
         bestChild = i;
         bestFitness = fitness;
@@ -191,7 +191,7 @@ namespace Fission {
       }
       std::swap(parent, child);
       if (net && nStage != StageInfer)
-        trajectory.emplace_back(parent);
+        trajectory.emplace_back(net->assembleInput(parent));
     }
     ++nConverge;
     ++nIteration;
