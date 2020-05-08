@@ -37,25 +37,36 @@ namespace Fission {
     return vInput;
   }
 
-  double Net::forward(const xt::xtensor<double, 1> &vInput) {
-    vHidden = bHidden + xt::sum(wHidden * vInput, -1);
-    vPwlHidden = vHidden * 0.1 + xt::clip(vHidden, -1.0, 1.0);
-    vOutput = bOutput + xt::sum(wOutput * vPwlHidden)();
-    return vOutput;
+  double Net::infer(const xt::xtensor<double, 1> &vInput) {
+    xt::xtensor<double, 1> vHidden(bHidden + xt::sum(wHidden * vInput, -1));
+    xt::xtensor<double, 1> vPwlHidden(vHidden * 0.1 + xt::clip(vHidden, -1.0, 1.0));
+    return bOutput + xt::sum(wOutput * vPwlHidden)();
   }
 
-  void Net::backward(const xt::xtensor<double, 1> &vInput, double g) {
-    gbOutput = g;
-    gwOutput = g * vPwlHidden;
-    auto gvPwlHidden(g * wOutput);
-    auto gvHidden(gvPwlHidden * (0.1 + (xt::abs(vHidden) < 1.0)));
+  double Net::train(const xt::xtensor<double, 2> &vInput, double target) {
+    // Forward
+    xt::xtensor<double, 2> vHidden(bHidden + xt::sum(wHidden * xt::view(vInput, xt::all(), xt::newaxis(), xt::all()), -1));
+    xt::xtensor<double, 2> vPwlHidden(vHidden * 0.1 + xt::clip(vHidden, -1.0, 1.0));
+    xt::xtensor<double, 1> vOutput(bOutput + xt::sum(wOutput * vPwlHidden, -1));
+    xt::xtensor<double, 1> losses(xt::square(vOutput - target));
+    double loss(xt::mean(losses)());
+
+    // Backward
+    xt::xtensor<double, 1> gvOutput((vOutput - target) * 2 / nMiniBatch);
+    double gbOutput(xt::sum(gvOutput)());
+    xt::xtensor<double, 1> gwOutput(xt::sum(xt::view(gvOutput, xt::all(), xt::newaxis()) * vPwlHidden, 0));
+    xt::xtensor<double, 2> gvPwlHidden(xt::empty_like(vPwlHidden));
+    for (int i{}; i < nMiniBatch; ++i)
+      for (int j{}; j < nHidden; ++j)
+        gvPwlHidden(i, j) = gvOutput(i) * wOutput(j);
+    xt::xtensor<double, 2> gvHidden(gvPwlHidden * (0.1 + (xt::abs(vHidden) < 1.0)));
+    xt::xtensor<double, 1> gbHidden(xt::sum(gvHidden, 0));
+    xt::xtensor<double, 2> gwHidden(xt::empty_like(wHidden));
     for (int i{}; i < nHidden; ++i)
       for (int j{}; j < nFeatures; ++j)
-        gwHidden(i, j) = gvHidden(i) * vInput(j);
-    gbHidden = gvHidden;
-  }
+        gwHidden(i, j) = xt::sum(xt::view(gvHidden, xt::all(), i) * xt::view(vInput, xt::all(), j))();
 
-  void Net::adam() {
+    // Adam
     mCorrector *= mRate;
     mwHidden = mRate * mwHidden + (1 - mRate) * gwHidden;
     mbHidden = mRate * mbHidden + (1 - mRate) * gbHidden;
@@ -72,5 +83,7 @@ namespace Fission {
     bHidden -= mbHidden / ((1 - mCorrector) * (xt::sqrt(rbHidden / (1 - rCorrector)) + 1e-8));
     wOutput -= mwOutput / ((1 - mCorrector) * (xt::sqrt(rwOutput / (1 - rCorrector)) + 1e-8));
     bOutput -= mbOutput / ((1 - mCorrector) * (std::sqrt(rbOutput / (1 - rCorrector)) + 1e-8));
+
+    return loss;
   }
 }

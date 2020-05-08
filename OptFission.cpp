@@ -1,3 +1,4 @@
+#include <xtensor/xview.hpp>
 #include "FissionNet.h"
 
 namespace Fission {
@@ -35,6 +36,7 @@ namespace Fission {
     parentFitness = penalizedFitness(parent.value);
     if (useNet) {
       net = std::make_unique<Net>(*this);
+      miniBatch = xt::empty<double>({nMiniBatch, net->getNFeatures()});
       trajectory.emplace_back(net->assembleInput(parent));
     }
   }
@@ -112,18 +114,19 @@ namespace Fission {
 
   bool Opt::step() {
     if (nStage == StageTrain) {
-      if (trajectory.empty()) {
+      if (trajectory.size() < nMiniBatch) {
+        trajectory.clear();
         nStage = StageInfer;
         nIteration = 0;
         nConverge = 0;
         inferenceFailed = true;
-        parentFitness = net->forward(net->assembleInput(parent));
+        parentFitness = net->infer(net->assembleInput(parent));
       } else {
-        double inferred(net->forward(trajectory.back()));
-        double target(rawFitness(parent.value));
-        net->backward(trajectory.back(), 2.0 * (inferred - target));
-        net->adam();
-        trajectory.pop_back();
+        for (int i{}; i < nMiniBatch; ++i) {
+          xt::view(miniBatch, i, xt::all()) = trajectory.back();
+          trajectory.pop_back();
+        }
+        net->train(miniBatch, rawFitness(parent.value));
         ++nIteration;
         return false;
       }
@@ -171,7 +174,7 @@ namespace Fission {
       child.state = parent.state;
       std::copy(parent.limit, parent.limit + Air, child.limit);
       mutateAndEvaluate(child, xDist(rng), yDist(rng), zDist(rng));
-      double fitness(nStage == StageInfer ? net->forward(net->assembleInput(child)) : penalizedFitness(child.value));
+      double fitness(nStage == StageInfer ? net->infer(net->assembleInput(child)) : penalizedFitness(child.value));
       if (!i || fitness > bestFitness) {
         bestChild = i;
         bestFitness = fitness;
