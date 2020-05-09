@@ -83,7 +83,9 @@ EMSCRIPTEN_BINDINGS(FissionOpt) {
     .function("getEfficiency", &getEfficiency);
   emscripten::class_<Fission::Opt>("FissionOpt")
     .constructor<const Fission::Settings&, bool>()
-    .function("stepBatch", &Fission::Opt::stepBatch)
+    .function("stepInteractive", &Fission::Opt::stepInteractive)
+    .function("needsRedraw", &Fission::Opt::needsRedraw)
+    .function("clearRedraw", &Fission::Opt::clearRedraw)
     .function("getBest", &Fission::Opt::getBest)
     .function("getNEpisode", &Fission::Opt::getNEpisode)
     .function("getNStage", &Fission::Opt::getNStage)

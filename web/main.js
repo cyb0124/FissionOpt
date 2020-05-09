@@ -1,6 +1,6 @@
 $(() => { FissionOpt().then((FissionOpt) => {
   const run = $('#run'), pause = $('#pause'), stop = $('#stop');
-  let opt = null, timeout = null, bestChanged, nIterationsSinceLastRedraw;
+  let opt = null, timeout = null;
   
   const updateDisables = () => {
     $('#settings input').prop('disabled', opt !== null);
@@ -216,8 +216,8 @@ $(() => { FissionOpt().then((FissionOpt) => {
     50, 1600, 20000, 4000, 2700, 3200, 3500, 3300, 2700, 3200, 1200, 1800, 1300, 1500, 1800
   ]); });
 
-  const scheduleBatch = () => {
-    timeout = window.setTimeout(runBatch, 0);
+  const schedule = () => {
+    timeout = window.setTimeout(step, 0);
   };
 
   const design = $('#design');
@@ -313,12 +313,9 @@ $(() => { FissionOpt().then((FissionOpt) => {
   };
 
   const progress = $('#progress');
-  function runBatch() {
-    scheduleBatch();
-    const maxBatch = 1024;
-    const nBatch = Math.min(maxBatch, Math.ceil(327680 / (settings.sizeZ * settings.sizeY * settings.sizeZ)));
-    if (opt.stepBatch(nBatch))
-      bestChanged = true;
+  function step() {
+    schedule();
+    opt.stepInteractive();
     const nStage = opt.getNStage();
     if (nStage == -2)
       progress.text('Episode ' + opt.getNEpisode() + ', training iteration ' + opt.getNIteration());
@@ -326,11 +323,9 @@ $(() => { FissionOpt().then((FissionOpt) => {
       progress.text('Episode ' + opt.getNEpisode() + ', inference iteration ' + opt.getNIteration());
     else
       progress.text('Episode ' + opt.getNEpisode() + ', stage ' + nStage + ', iteration ' + opt.getNIteration());
-    nIterationsSinceLastRedraw += nBatch;
-    if (bestChanged && nIterationsSinceLastRedraw >= maxBatch) {
-      nIterationsSinceLastRedraw = 0;
-      bestChanged = false;
+    if (opt.needsRedraw()) {
       displaySample(opt.getBest());
+      opt.clearRedraw();
     }
   };
 
@@ -374,10 +369,8 @@ $(() => { FissionOpt().then((FissionOpt) => {
       }
       design.empty();
       opt = new FissionOpt.FissionOpt(settings, $('#useNet').is(':checked'));
-      bestChanged = false;
-      nIterationsSinceLastRedraw = 0;
     }
-    scheduleBatch();
+    schedule();
     updateDisables();
   });
 

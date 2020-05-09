@@ -26,7 +26,7 @@ namespace Fission {
     :settings(settings), evaluator(settings),
     nEpisode(), nStage(), nIteration(), nConverge(),
     maxConverge(settings.sizeX * settings.sizeY * settings.sizeZ * 16),
-    infeasibilityPenalty() {
+    infeasibilityPenalty(), bestChanged(true), redrawNagle() {
     for (int x(settings.symX ? settings.sizeX / 2 : 0); x < settings.sizeX; ++x)
       for (int y(settings.symY ? settings.sizeY / 2 : 0); y < settings.sizeY; ++y)
         for (int z(settings.symZ ? settings.sizeZ / 2 : 0); z < settings.sizeZ; ++z)
@@ -121,7 +121,7 @@ namespace Fission {
     evaluator.run(sample.state, sample.value);
   }
 
-  bool Opt::step() {
+  void Opt::step() {
     if (nStage == StageTrain) {
       if (!nIteration) {
         nStage = StageInfer;
@@ -130,7 +130,7 @@ namespace Fission {
       } else {
         net->train();
         --nIteration;
-        return false;
+        return;
       }
     }
 
@@ -150,7 +150,7 @@ namespace Fission {
           nStage = StageTrain;
           net->finishTrajectory(feasible(parent.value) ? rawFitness(parent.value) : 0.0);
           nIteration = (net->getTrajectoryLength() * nEpoch + nMiniBatch - 1) / nMiniBatch;
-          return false;
+          return;
         } else {
           nStage = 0;
           ++nEpisode;
@@ -166,8 +166,8 @@ namespace Fission {
       parentFitness = currentFitness(parent);
     }
 
-    bool bestChanged(!nEpisode && !nStage && !nIteration);
-    if (bestChanged && feasible(parent.value))
+    bool bestChangedLocal(!nEpisode && !nStage && !nIteration && feasible(parent.value));
+    if (bestChangedLocal)
       best = parent;
     std::uniform_int_distribution<>
       xDist(0, settings.sizeX - 1),
@@ -186,8 +186,8 @@ namespace Fission {
         bestFitness = fitness;
       }
       if (feasible(child.value) && rawFitness(child.value) > rawFitness(best.value)) {
+        bestChangedLocal = true;
         best = child;
-        bestChanged = true;
       }
     }
     auto &child(children[bestChild]);
@@ -204,20 +204,21 @@ namespace Fission {
     }
     ++nConverge;
     ++nIteration;
-    if (bestChanged)
+    if (bestChangedLocal) {
       for (auto &[x, y, z] : best.value.invalidTiles)
         best.state(x, y, z) = Air;
-    return bestChanged;
+      bestChanged = true;
+    }
   }
 
-  bool Opt::stepBatch(int nBatch) {
-    bool bestChanged{};
-    for (int i{}; i < nBatch; ++i) {
-      if (step())
-        bestChanged = true;
+  void Opt::stepInteractive() {
+    int dim(settings.sizeX * settings.sizeY * settings.sizeZ);
+    int n(std::min(interactiveMin, (interactiveScale + dim - 1) / dim));
+    for (int i{}; i < n; ++i) {
+      step();
+      ++redrawNagle;
       if (nStage == StageTrain)
         break;
     }
-    return bestChanged;
   }
 }

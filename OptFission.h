@@ -19,6 +19,8 @@ namespace Fission {
   class Net;
   class DataPool;
 
+  constexpr int interactiveMin(1024), interactiveScale(327680);
+
   class Opt {
     friend Net;
     const Settings &settings;
@@ -34,6 +36,8 @@ namespace Fission {
     std::mt19937 rng;
     std::unique_ptr<Net> net;
     bool inferenceFailed;
+    bool bestChanged;
+    int redrawNagle;
     void restart();
     bool feasible(const Evaluation &x);
     double rawFitness(const Evaluation &x);
@@ -43,8 +47,10 @@ namespace Fission {
     void mutateAndEvaluate(Sample &sample, int x, int y, int z);
   public:
     Opt(const Settings &settings, bool useNet);
-    bool step();
-    bool stepBatch(int nBatch);
+    void step();
+    void stepInteractive();
+    bool needsRedraw() const { return bestChanged && redrawNagle >= interactiveMin; }
+    void clearRedraw() { bestChanged = false; redrawNagle = 0; }
     const Sample &getBest() const { return best; }
     int getNEpisode() const { return nEpisode; }
     int getNStage() const { return nStage; }
