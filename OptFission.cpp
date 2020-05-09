@@ -36,10 +36,7 @@ namespace Fission {
     parentFitness = penalizedFitness(parent.value);
     if (useNet) {
       net = std::make_unique<Net>(*this);
-      batchInput = xt::empty<double>({nMiniBatch, net->getNFeatures()});
-      batchTarget = xt::empty<double>({nMiniBatch});
-      dataPool.emplace_back(net->assembleInput(parent), 0.0);
-      startOfTrajectory = 0;
+      net->appendTrajectory(parent);
     }
   }
 
@@ -116,20 +113,14 @@ namespace Fission {
 
   bool Opt::step() {
     if (nStage == StageTrain) {
-      if (static_cast<size_t>(nIteration * nMiniBatch) >= dataPool.size() - startOfTrajectory) {
+      if (nIteration * nMiniBatch >= net->getTrajectoryLength()) {
         nStage = StageInfer;
         nIteration = 0;
         nConverge = 0;
         inferenceFailed = true;
-        parentFitness = net->infer(net->assembleInput(parent));
+        parentFitness = net->infer(parent);
       } else {
-        std::uniform_int_distribution<size_t> dist(0, dataPool.size() - 1);
-        for (int i{}; i < nMiniBatch; ++i) {
-          auto &data(dataPool[dist(rng)]);
-          xt::view(batchInput, i, xt::all()) = data.first;
-          batchTarget(i) = data.second;
-        }
-        std::cout << "loss=" << net->train(batchInput, batchTarget) << std::endl;
+        std::cout << "loss=" << net->train() << std::endl;
         ++nIteration;
         return false;
       }
@@ -143,15 +134,13 @@ namespace Fission {
         ++nEpisode;
         if (inferenceFailed)
           restart();
-        startOfTrajectory = dataPool.size();
-        dataPool.emplace_back(net->assembleInput(parent), 0.0);
+        net->newTrajectory();
+        net->appendTrajectory(parent);
       } else if (feasible(parent.value) || infeasibilityPenalty > 1e8) {
         infeasibilityPenalty = 0.0;
         if (net) {
           nStage = StageTrain;
-          double target(rawFitness(parent.value));
-          for (size_t i(startOfTrajectory); i < dataPool.size(); ++i)
-            dataPool[i].second = target;
+          net->finishTrajectory(rawFitness(parent.value));
           return false;
         } else {
           nStage = 0;
@@ -180,7 +169,7 @@ namespace Fission {
       child.state = parent.state;
       std::copy(parent.limit, parent.limit + Air, child.limit);
       mutateAndEvaluate(child, xDist(rng), yDist(rng), zDist(rng));
-      double fitness(nStage == StageInfer ? net->infer(net->assembleInput(child)) : penalizedFitness(child.value));
+      double fitness(nStage == StageInfer ? net->infer(child) : penalizedFitness(child.value));
       if (!i || fitness > bestFitness) {
         bestChild = i;
         bestFitness = fitness;
@@ -200,7 +189,7 @@ namespace Fission {
       }
       std::swap(parent, child);
       if (net && nStage != StageInfer)
-        dataPool.emplace_back(net->assembleInput(parent), 0.0);
+        net->appendTrajectory(parent);
     }
     ++nConverge;
     ++nIteration;

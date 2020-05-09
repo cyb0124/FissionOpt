@@ -17,6 +17,7 @@ namespace Fission {
   };
 
   class Net;
+  class DataPool;
 
   class Opt {
     friend Net;
@@ -32,10 +33,6 @@ namespace Fission {
     std::array<Sample, 4> children;
     std::mt19937 rng;
     std::unique_ptr<Net> net;
-    xt::xtensor<double, 2> batchInput;
-    xt::xtensor<double, 1> batchTarget;
-    std::vector<std::pair<xt::xtensor<double, 1>, double>> dataPool;
-    size_t startOfTrajectory;
     bool inferenceFailed;
     void restart();
     bool feasible(const Evaluation &x);
