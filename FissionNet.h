@@ -4,7 +4,7 @@
 #include "OptFission.h"
 
 namespace Fission {
-  constexpr int nLayer1(256), nLayer2(256), nMiniBatch(32), nData(1'000'000);
+  constexpr int nLayer1(64), nLayer2(64), nMiniBatch(256), nEpoch(2), nData(1'000'000);
   constexpr double lRate(0.001), mRate(0.9), rRate(0.999);
 
   class Net {
@@ -33,7 +33,7 @@ namespace Fission {
     void appendTrajectory(const Sample &sample);
     void finishTrajectory(double target);
     int getTrajectoryLength() const { return trajectoryLength; }
-    double train();
+    void train();
   };
 }
 

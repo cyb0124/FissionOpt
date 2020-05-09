@@ -31,14 +31,18 @@ namespace Fission {
       for (int y(settings.symY ? settings.sizeY / 2 : 0); y < settings.sizeY; ++y)
         for (int z(settings.symZ ? settings.sizeZ / 2 : 0); z < settings.sizeZ; ++z)
           allowedCoords.emplace_back(x, y, z);
+
     restart();
     if (useNet) {
       net = std::make_unique<Net>(*this);
       net->appendTrajectory(parent);
-      nStage = StageRollout;
     }
-    best = parent;
     parentFitness = currentFitness(parent);
+
+    std::copy(settings.limit, settings.limit + Air, best.limit);
+    best.state = xt::broadcast<int>(Air,
+      {settings.sizeX, settings.sizeY, settings.sizeZ});
+    evaluator.run(best.state, best.value);
   }
 
   bool Opt::feasible(const Evaluation &x) {
@@ -50,18 +54,14 @@ namespace Fission {
   }
 
   double Opt::currentFitness(const Sample &x) {
-    if (nStage == StageRollout) {
-      return feasible(x.value)
-        ? rawFitness(x.value)
-        : -x.value.netHeat / settings.fuelBaseHeat;
-    } else if (nStage == StageInfer) {
+    if (nStage == StageInfer) {
       return net->infer(x);
     } else if (nStage == StageTrain) {
       return 0.0;
+    } else if (feasible(x.value)) {
+      return rawFitness(x.value);
     } else {
-      return feasible(x.value)
-        ? rawFitness(x.value)
-        : rawFitness(x.value) - x.value.netHeat / settings.fuelBaseHeat * infeasibilityPenalty;
+      return rawFitness(x.value) - x.value.netHeat / settings.fuelBaseHeat * infeasibilityPenalty;
     }
   }
 
@@ -123,15 +123,13 @@ namespace Fission {
 
   bool Opt::step() {
     if (nStage == StageTrain) {
-      if (nIteration * nMiniBatch >= net->getTrajectoryLength()) {
+      if (!nIteration) {
         nStage = StageInfer;
-        nIteration = 0;
-        nConverge = 0;
-        inferenceFailed = true;
         parentFitness = net->infer(parent);
+        inferenceFailed = true;
       } else {
-        std::cout << "loss=" << net->train() << std::endl;
-        ++nIteration;
+        net->train();
+        --nIteration;
         return false;
       }
     }
@@ -140,21 +138,24 @@ namespace Fission {
       nIteration = 0;
       nConverge = 0;
       if (nStage == StageInfer) {
-        nStage = StageRollout;
+        nStage = 0;
         ++nEpisode;
         if (inferenceFailed)
           restart();
         net->newTrajectory();
         net->appendTrajectory(parent);
-      } else if (nStage == StageRollout) {
-        nStage = StageTrain;
-        net->finishTrajectory(rawFitness(parent.value));
-        return false;
       } else if (feasible(parent.value) || infeasibilityPenalty > 1e8) {
         infeasibilityPenalty = 0.0;
-        nStage = 0;
-        ++nEpisode;
-        restart();
+        if (net) {
+          nStage = StageTrain;
+          net->finishTrajectory(rawFitness(parent.value));
+          nIteration = (net->getTrajectoryLength() * nEpoch + nMiniBatch - 1) / nMiniBatch;
+          return false;
+        } else {
+          nStage = 0;
+          ++nEpisode;
+          restart();
+        }
       } else {
         ++nStage;
         if (infeasibilityPenalty)
@@ -165,7 +166,9 @@ namespace Fission {
       parentFitness = currentFitness(parent);
     }
 
-    bool bestChanged(!nEpisode && !nStage && !nIteration && feasible(best.value));
+    bool bestChanged(!nEpisode && !nStage && !nIteration);
+    if (bestChanged && feasible(parent.value))
+      best = parent;
     std::uniform_int_distribution<>
       xDist(0, settings.sizeX - 1),
       yDist(0, settings.sizeY - 1),
@@ -191,9 +194,9 @@ namespace Fission {
     if (bestFitness >= parentFitness) {
       if (bestFitness > parentFitness) {
         parentFitness = bestFitness;
+        nConverge = 0;
         if (nStage == StageInfer)
           inferenceFailed = false;
-        nConverge = 0;
       }
       std::swap(parent, child);
       if (net && nStage != StageInfer)
@@ -209,9 +212,12 @@ namespace Fission {
 
   bool Opt::stepBatch(int nBatch) {
     bool bestChanged{};
-    for (int i{}; i < nBatch; ++i)
+    for (int i{}; i < nBatch; ++i) {
       if (step())
         bestChanged = true;
+      if (nStage == StageTrain)
+        break;
+    }
     return bestChanged;
   }
 }

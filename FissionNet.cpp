@@ -76,7 +76,7 @@ namespace Fission {
     return bOutput + xt::sum(wOutput * vPwlLayer2)();
   }
 
-  double Net::train() {
+  void Net::train() {
     // Assemble batch
     std::uniform_int_distribution<size_t> dist(0, data.size() - 1);
     for (int i{}; i < nMiniBatch; ++i) {
@@ -92,7 +92,8 @@ namespace Fission {
     xt::xtensor<double, 2> vPwlLayer2(vLayer2 * 0.1 + xt::clip(vLayer2, -1.0, 1.0));
     xt::xtensor<double, 1> vOutput(bOutput + xt::sum(wOutput * vPwlLayer2, -1));
     xt::xtensor<double, 1> losses(xt::square(vOutput - batchTarget));
-    double loss(xt::mean(losses)());
+    double loss(xt::sum(losses)());
+    std::cout << "loss=" << loss << std::endl;
 
     // Backward
     xt::xtensor<double, 1> gvOutput((vOutput - batchTarget) * 2 / nMiniBatch);
@@ -139,7 +140,5 @@ namespace Fission {
     bLayer2 -= mbLayer2 / ((1 - mCorrector) * (xt::sqrt(rbLayer2 / (1 - rCorrector)) + 1e-8));
     wOutput -= mwOutput / ((1 - mCorrector) * (xt::sqrt(rwOutput / (1 - rCorrector)) + 1e-8));
     bOutput -= mbOutput / ((1 - mCorrector) * (std::sqrt(rbOutput / (1 - rCorrector)) + 1e-8));
-
-    return loss;
   }
 }

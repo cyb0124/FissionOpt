@@ -12,8 +12,7 @@ namespace Fission {
   };
 
   enum {
-    StageRollout = -3,
-    StageTrain,
+    StageTrain = -2,
     StageInfer
   };
 
