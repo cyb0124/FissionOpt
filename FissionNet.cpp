@@ -43,16 +43,16 @@ namespace Fission {
     return bOutput + xt::sum(wOutput * vPwlHidden)();
   }
 
-  double Net::train(const xt::xtensor<double, 2> &vInput, double target) {
+  double Net::train(const xt::xtensor<double, 2> &vInput, const xt::xtensor<double, 1> &vTarget) {
     // Forward
     xt::xtensor<double, 2> vHidden(bHidden + xt::sum(wHidden * xt::view(vInput, xt::all(), xt::newaxis(), xt::all()), -1));
     xt::xtensor<double, 2> vPwlHidden(vHidden * 0.1 + xt::clip(vHidden, -1.0, 1.0));
     xt::xtensor<double, 1> vOutput(bOutput + xt::sum(wOutput * vPwlHidden, -1));
-    xt::xtensor<double, 1> losses(xt::square(vOutput - target));
+    xt::xtensor<double, 1> losses(xt::square(vOutput - vTarget));
     double loss(xt::mean(losses)());
 
     // Backward
-    xt::xtensor<double, 1> gvOutput((vOutput - target) * 2 / nMiniBatch);
+    xt::xtensor<double, 1> gvOutput((vOutput - vTarget) * 2 / nMiniBatch);
     double gbOutput(xt::sum(gvOutput)());
     xt::xtensor<double, 1> gwOutput(xt::sum(xt::view(gvOutput, xt::all(), xt::newaxis()) * vPwlHidden, 0));
     xt::xtensor<double, 2> gvPwlHidden(xt::empty_like(vPwlHidden));

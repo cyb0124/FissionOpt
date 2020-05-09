@@ -21,7 +21,7 @@ namespace Fission {
     int getNFeatures() const { return nFeatures; }
     xt::xtensor<double, 1> assembleInput(const Sample &sample);
     double infer(const xt::xtensor<double, 1> &vInput);
-    double train(const xt::xtensor<double, 2> &vInput, double target);
+    double train(const xt::xtensor<double, 2> &vInput, const xt::xtensor<double, 1> &vTarget);
   };
 }
 
