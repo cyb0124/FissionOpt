@@ -4,7 +4,7 @@
 #include "OptFission.h"
 
 namespace Fission {
-  constexpr int nHidden(256), nMiniBatch(32), nData(1'000'000);
+  constexpr int nLayer1(256), nLayer2(256), nMiniBatch(32), nData(1'000'000);
   constexpr double lRate(0.001), mRate(0.9), rRate(0.999);
 
   class Net {
@@ -12,10 +12,12 @@ namespace Fission {
     double mCorrector, rCorrector;
     std::unordered_map<int, int> tileMap;
     int nFeatures;
-    xt::xtensor<double, 2> wHidden, gwHidden, mwHidden, rwHidden;
-    xt::xtensor<double, 1> bHidden, gbHidden, mbHidden, rbHidden;
-    xt::xtensor<double, 1> wOutput, gwOutput, mwOutput, rwOutput;
-    double bOutput, gbOutput, mbOutput, rbOutput;
+    xt::xtensor<double, 2> wLayer1, mwLayer1, rwLayer1;
+    xt::xtensor<double, 1> bLayer1, mbLayer1, rbLayer1;
+    xt::xtensor<double, 2> wLayer2, mwLayer2, rwLayer2;
+    xt::xtensor<double, 1> bLayer2, mbLayer2, rbLayer2;
+    xt::xtensor<double, 1> wOutput, mwOutput, rwOutput;
+    double bOutput, mbOutput, rbOutput;
 
     // Data Pool
     xt::xtensor<double, 2> batchInput;
