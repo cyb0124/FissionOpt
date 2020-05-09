@@ -32,12 +32,13 @@ namespace Fission {
         for (int z(settings.symZ ? settings.sizeZ / 2 : 0); z < settings.sizeZ; ++z)
           allowedCoords.emplace_back(x, y, z);
     restart();
-    best = parent;
-    parentFitness = penalizedFitness(parent.value);
     if (useNet) {
       net = std::make_unique<Net>(*this);
       net->appendTrajectory(parent);
+      nStage = StageRollout;
     }
+    best = parent;
+    parentFitness = currentFitness(parent);
   }
 
   bool Opt::feasible(const Evaluation &x) {
@@ -48,11 +49,20 @@ namespace Fission {
     return settings.breeder ? x.avgBreed : x.avgMult;
   }
 
-  double Opt::penalizedFitness(const Evaluation &x) {
-    double result(rawFitness(x));
-    if (!feasible(x))
-      result -= x.netHeat / settings.fuelBaseHeat * infeasibilityPenalty;
-    return result;
+  double Opt::currentFitness(const Sample &x) {
+    if (nStage == StageRollout) {
+      return feasible(x.value)
+        ? rawFitness(x.value)
+        : -x.value.netHeat / settings.fuelBaseHeat;
+    } else if (nStage == StageInfer) {
+      return net->infer(x);
+    } else if (nStage == StageTrain) {
+      return 0.0;
+    } else {
+      return feasible(x.value)
+        ? rawFitness(x.value)
+        : rawFitness(x.value) - x.value.netHeat / settings.fuelBaseHeat * infeasibilityPenalty;
+    }
   }
 
   int Opt::getNSym(int x, int y, int z) {
@@ -130,23 +140,21 @@ namespace Fission {
       nIteration = 0;
       nConverge = 0;
       if (nStage == StageInfer) {
-        nStage = 0;
+        nStage = StageRollout;
         ++nEpisode;
         if (inferenceFailed)
           restart();
         net->newTrajectory();
         net->appendTrajectory(parent);
+      } else if (nStage == StageRollout) {
+        nStage = StageTrain;
+        net->finishTrajectory(rawFitness(parent.value));
+        return false;
       } else if (feasible(parent.value) || infeasibilityPenalty > 1e8) {
         infeasibilityPenalty = 0.0;
-        if (net) {
-          nStage = StageTrain;
-          net->finishTrajectory(rawFitness(parent.value));
-          return false;
-        } else {
-          nStage = 0;
-          ++nEpisode;
-          restart();
-        }
+        nStage = 0;
+        ++nEpisode;
+        restart();
       } else {
         ++nStage;
         if (infeasibilityPenalty)
@@ -154,7 +162,7 @@ namespace Fission {
         else
           infeasibilityPenalty = std::uniform_real_distribution<>()(rng);
       }
-      parentFitness = penalizedFitness(parent.value);
+      parentFitness = currentFitness(parent);
     }
 
     bool bestChanged(!nEpisode && !nStage && !nIteration && feasible(best.value));
@@ -169,7 +177,7 @@ namespace Fission {
       child.state = parent.state;
       std::copy(parent.limit, parent.limit + Air, child.limit);
       mutateAndEvaluate(child, xDist(rng), yDist(rng), zDist(rng));
-      double fitness(nStage == StageInfer ? net->infer(child) : penalizedFitness(child.value));
+      double fitness(currentFitness(child));
       if (!i || fitness > bestFitness) {
         bestChild = i;
         bestFitness = fitness;

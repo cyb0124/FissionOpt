@@ -12,7 +12,8 @@ namespace Fission {
   };
 
   enum {
-    StageTrain = -2,
+    StageRollout = -3,
+    StageTrain,
     StageInfer
   };
 
@@ -37,7 +38,7 @@ namespace Fission {
     void restart();
     bool feasible(const Evaluation &x);
     double rawFitness(const Evaluation &x);
-    double penalizedFitness(const Evaluation &x);
+    double currentFitness(const Sample &x);
     int getNSym(int x, int y, int z);
     void setTileWithSym(Sample &sample, int x, int y, int z, int tile);
     void mutateAndEvaluate(Sample &sample, int x, int y, int z);

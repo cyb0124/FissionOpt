@@ -320,7 +320,9 @@ $(() => { FissionOpt().then((FissionOpt) => {
     if (opt.stepBatch(nBatch))
       bestChanged = true;
     const nStage = opt.getNStage();
-    if (nStage == -2)
+    if (nStage == -3)
+      progress.text('Episode ' + opt.getNEpisode() + ', rollout iteration ' + opt.getNIteration());
+    else if (nStage == -2)
       progress.text('Episode ' + opt.getNEpisode() + ', training iteration ' + opt.getNIteration());
     else if (nStage == -1)
       progress.text('Episode ' + opt.getNEpisode() + ', inference iteration ' + opt.getNIteration());
