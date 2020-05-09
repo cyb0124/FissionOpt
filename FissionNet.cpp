@@ -6,7 +6,7 @@ namespace Fission {
     for (int i{}; i < Air; ++i)
       if (opt.settings.limit[i])
         tileMap.emplace(i, tileMap.size());
-    nFeatures = 3 + tileMap.size() * 2;
+    nFeatures = 5 + tileMap.size() * 2;
 
     wLayer1 = xt::random::randn({nLayer1, nFeatures}, 0.0, 1.0 / std::sqrt(nFeatures), opt.rng);
     mwLayer1 = xt::zeros_like(wLayer1);
@@ -64,6 +64,8 @@ namespace Fission {
     vInput.periodic(-2) = sample.value.heatMult;
     vInput.periodic(-3) = sample.value.cooling / opt.settings.fuelBaseHeat;
     vInput /= opt.settings.sizeX * opt.settings.sizeY * opt.settings.sizeZ;
+    vInput.periodic(-4) = sample.value.dutyCycle;
+    vInput.periodic(-5) = sample.value.efficiency;
     return vInput;
   }
 

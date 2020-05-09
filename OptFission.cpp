@@ -148,7 +148,7 @@ namespace Fission {
         infeasibilityPenalty = 0.0;
         if (net) {
           nStage = StageTrain;
-          net->finishTrajectory(rawFitness(parent.value));
+          net->finishTrajectory(feasible(parent.value) ? rawFitness(parent.value) : 0.0);
           nIteration = (net->getTrajectoryLength() * nEpoch + nMiniBatch - 1) / nMiniBatch;
           return false;
         } else {
