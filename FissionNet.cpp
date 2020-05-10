@@ -135,12 +135,12 @@ namespace Fission {
     rwOutput = rRate * rwOutput + (1 - rRate) * xt::square(gwOutput);
     rbOutput = rRate * rbOutput + (1 - rRate) * (gbOutput * gbOutput);
 
-    wLayer1 -= mwLayer1 / ((1 - mCorrector) * (xt::sqrt(rwLayer1 / (1 - rCorrector)) + 1e-8));
-    bLayer1 -= mbLayer1 / ((1 - mCorrector) * (xt::sqrt(rbLayer1 / (1 - rCorrector)) + 1e-8));
-    wLayer2 -= mwLayer2 / ((1 - mCorrector) * (xt::sqrt(rwLayer2 / (1 - rCorrector)) + 1e-8));
-    bLayer2 -= mbLayer2 / ((1 - mCorrector) * (xt::sqrt(rbLayer2 / (1 - rCorrector)) + 1e-8));
-    wOutput -= mwOutput / ((1 - mCorrector) * (xt::sqrt(rwOutput / (1 - rCorrector)) + 1e-8));
-    bOutput -= mbOutput / ((1 - mCorrector) * (std::sqrt(rbOutput / (1 - rCorrector)) + 1e-8));
+    wLayer1 -= lRate * mwLayer1 / ((1 - mCorrector) * (xt::sqrt(rwLayer1 / (1 - rCorrector)) + 1e-8));
+    bLayer1 -= lRate * mbLayer1 / ((1 - mCorrector) * (xt::sqrt(rbLayer1 / (1 - rCorrector)) + 1e-8));
+    wLayer2 -= lRate * mwLayer2 / ((1 - mCorrector) * (xt::sqrt(rwLayer2 / (1 - rCorrector)) + 1e-8));
+    bLayer2 -= lRate * mbLayer2 / ((1 - mCorrector) * (xt::sqrt(rbLayer2 / (1 - rCorrector)) + 1e-8));
+    wOutput -= lRate * mwOutput / ((1 - mCorrector) * (xt::sqrt(rwOutput / (1 - rCorrector)) + 1e-8));
+    bOutput -= lRate * mbOutput / ((1 - mCorrector) * (std::sqrt(rbOutput / (1 - rCorrector)) + 1e-8));
 
     return loss;
   }
