@@ -39,7 +39,6 @@ namespace Fission {
     bool bestChanged;
     int redrawNagle;
     std::vector<double> lossHistory;
-    int lossPos;
     bool lossChanged;
     void restart();
     bool feasible(const Evaluation &x);

@@ -26,7 +26,7 @@ namespace Fission {
     :settings(settings), evaluator(settings),
     nEpisode(), nStage(), nIteration(), nConverge(),
     maxConverge(settings.sizeX * settings.sizeY * settings.sizeZ * 16),
-    infeasibilityPenalty(), bestChanged(true), redrawNagle(), lossPos(), lossChanged() {
+    infeasibilityPenalty(), bestChanged(true), redrawNagle(), lossHistory(nLossHistory), lossChanged() {
     for (int x(settings.symX ? settings.sizeX / 2 : 0); x < settings.sizeX; ++x)
       for (int y(settings.symY ? settings.sizeY / 2 : 0); y < settings.sizeY; ++y)
         for (int z(settings.symZ ? settings.sizeZ / 2 : 0); z < settings.sizeZ; ++z)
@@ -128,13 +128,9 @@ namespace Fission {
         parentFitness = net->infer(parent);
         inferenceFailed = true;
       } else {
-        double loss(net->train());
-        if (lossHistory.size() == nLossHistory)
-          lossHistory[lossPos] = loss;
-        else
-          lossHistory.emplace_back(loss);
-        if (++lossPos == nLossHistory)
-          lossPos = 0;
+        for (int i{}; i < nLossHistory - 1; ++i)
+          lossHistory[i] = lossHistory[i + 1];
+        lossHistory[nLossHistory - 1] = net->train();
         lossChanged = true;
         --nIteration;
         return;
