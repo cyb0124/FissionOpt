@@ -26,7 +26,7 @@ namespace Fission {
     :settings(settings), evaluator(settings),
     nEpisode(), nStage(), nIteration(), nConverge(),
     maxConverge(settings.sizeX * settings.sizeY * settings.sizeZ * 16),
-    infeasibilityPenalty(), bestChanged(true), redrawNagle() {
+    infeasibilityPenalty(), bestChanged(true), redrawNagle(), lossPos(), lossChanged() {
     for (int x(settings.symX ? settings.sizeX / 2 : 0); x < settings.sizeX; ++x)
       for (int y(settings.symY ? settings.sizeY / 2 : 0); y < settings.sizeY; ++y)
         for (int z(settings.symZ ? settings.sizeZ / 2 : 0); z < settings.sizeZ; ++z)
@@ -128,7 +128,14 @@ namespace Fission {
         parentFitness = net->infer(parent);
         inferenceFailed = true;
       } else {
-        net->train();
+        double loss(net->train());
+        if (lossHistory.size() == nLossHistory)
+          lossHistory[lossPos] = loss;
+        else
+          lossHistory.emplace_back(loss);
+        if (++lossPos == nLossHistory)
+          lossPos = 0;
+        lossChanged = true;
         --nIteration;
         return;
       }
@@ -220,5 +227,21 @@ namespace Fission {
       if (nStage == StageTrain)
         break;
     }
+  }
+
+  bool Opt::needsRedrawBest() {
+    bool result(bestChanged && redrawNagle >= interactiveMin);
+    if (result) {
+      bestChanged = false;
+      redrawNagle = 0;
+    }
+    return result;
+  }
+
+  bool Opt::needsReplotLoss() {
+    bool result(lossChanged);
+    if (result)
+      lossChanged = false;
+    return result;
   }
 }

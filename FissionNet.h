@@ -33,7 +33,7 @@ namespace Fission {
     void appendTrajectory(const Sample &sample);
     void finishTrajectory(double target);
     int getTrajectoryLength() const { return trajectoryLength; }
-    void train();
+    double train();
   };
 }
 

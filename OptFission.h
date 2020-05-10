@@ -19,7 +19,7 @@ namespace Fission {
   class Net;
   class DataPool;
 
-  constexpr int interactiveMin(1024), interactiveScale(327680);
+  constexpr int interactiveMin(1024), interactiveScale(327680), nLossHistory(256);
 
   class Opt {
     friend Net;
@@ -38,6 +38,9 @@ namespace Fission {
     bool inferenceFailed;
     bool bestChanged;
     int redrawNagle;
+    std::vector<double> lossHistory;
+    int lossPos;
+    bool lossChanged;
     void restart();
     bool feasible(const Evaluation &x);
     double rawFitness(const Evaluation &x);
@@ -49,8 +52,9 @@ namespace Fission {
     Opt(const Settings &settings, bool useNet);
     void step();
     void stepInteractive();
-    bool needsRedraw() const { return bestChanged && redrawNagle >= interactiveMin; }
-    void clearRedraw() { bestChanged = false; redrawNagle = 0; }
+    bool needsRedrawBest();
+    bool needsReplotLoss();
+    const std::vector<double> &getLossHistory() const { return lossHistory; }
     const Sample &getBest() const { return best; }
     int getNEpisode() const { return nEpisode; }
     int getNStage() const { return nStage; }

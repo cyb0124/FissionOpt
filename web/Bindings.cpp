@@ -53,6 +53,11 @@ static double getEfficiency(const Fission::Sample &x) {
   return x.value.efficiency;
 }
 
+static emscripten::val getLossHistory(const Fission::Opt &opt) {
+  auto &data(opt.getLossHistory());
+  return emscripten::val(emscripten::typed_memory_view(data.size(), data.data()));
+}
+
 EMSCRIPTEN_BINDINGS(FissionOpt) {
   emscripten::class_<Fission::Settings>("FissionSettings")
     .constructor<>()
@@ -84,8 +89,9 @@ EMSCRIPTEN_BINDINGS(FissionOpt) {
   emscripten::class_<Fission::Opt>("FissionOpt")
     .constructor<const Fission::Settings&, bool>()
     .function("stepInteractive", &Fission::Opt::stepInteractive)
-    .function("needsRedraw", &Fission::Opt::needsRedraw)
-    .function("clearRedraw", &Fission::Opt::clearRedraw)
+    .function("needsRedrawBest", &Fission::Opt::needsRedrawBest)
+    .function("needsReplotLoss", &Fission::Opt::needsReplotLoss)
+    .function("getLossHistory", &getLossHistory)
     .function("getBest", &Fission::Opt::getBest)
     .function("getNEpisode", &Fission::Opt::getNEpisode)
     .function("getNStage", &Fission::Opt::getNStage)

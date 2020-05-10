@@ -313,6 +313,7 @@ $(() => { FissionOpt().then((FissionOpt) => {
   };
 
   const progress = $('#progress');
+  let lossElement, lossPlot;
   function step() {
     schedule();
     opt.stepInteractive();
@@ -323,11 +324,17 @@ $(() => { FissionOpt().then((FissionOpt) => {
       progress.text('Episode ' + opt.getNEpisode() + ', inference iteration ' + opt.getNIteration());
     else
       progress.text('Episode ' + opt.getNEpisode() + ', stage ' + nStage + ', iteration ' + opt.getNIteration());
-    if (opt.needsRedraw()) {
+    if (opt.needsRedrawBest())
       displaySample(opt.getBest());
-      opt.clearRedraw();
+    if (opt.needsReplotLoss()) {
+      const data = opt.getLossHistory();
+      while (lossPlot.data.labels.length < data.length)
+        lossPlot.data.labels.push(lossPlot.data.labels.length);
+      lossPlot.data.datasets[0].data = data;
+      lossPlot.update({duration: 0});
     }
   };
+
 
   const settings = new FissionOpt.FissionSettings();
   run.click(() => {
@@ -368,7 +375,18 @@ $(() => { FissionOpt().then((FissionOpt) => {
         return;
       }
       design.empty();
-      opt = new FissionOpt.FissionOpt(settings, $('#useNet').is(':checked'));
+      if (lossElement !== undefined)
+        lossElement.remove();
+      const useNet = $('#useNet').is(':checked');
+      if (useNet) {
+        lossElement = $('<canvas></canvas>').attr('width', 1000).attr('height', 400).insertAfter(progress);
+        lossPlot = new Chart(lossElement[0].getContext('2d'), {
+          type: 'bar',
+          options: {responsive: false, animation: {duration: 0}, hover: {animationDuration: 0}, scales: {xAxes: [{display: false}]}},
+          data: {labels: [], datasets: [{label: 'Loss', backgroundColor: 'red', data: []}]}
+        });
+      }
+      opt = new FissionOpt.FissionOpt(settings, useNet);
     }
     schedule();
     updateDisables();
