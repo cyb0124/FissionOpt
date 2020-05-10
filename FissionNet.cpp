@@ -6,7 +6,7 @@ namespace Fission {
     for (int i{}; i < Air; ++i)
       if (opt.settings.limit[i])
         tileMap.emplace(i, tileMap.size());
-    nFeatures = 5 + tileMap.size() * 2;
+    nFeatures = static_cast<int>(5 + tileMap.size() * 2);
 
     wLayer1 = xt::random::randn({nLayer1, nFeatures}, 0.0, 1.0 / std::sqrt(nFeatures), opt.rng);
     mwLayer1 = xt::zeros_like(wLayer1);
@@ -94,7 +94,7 @@ namespace Fission {
     xt::xtensor<double, 2> vPwlLayer2(vLayer2 * 0.1 + xt::clip(vLayer2, -1.0, 1.0));
     xt::xtensor<double, 1> vOutput(bOutput + xt::sum(wOutput * vPwlLayer2, -1));
     xt::xtensor<double, 1> losses(xt::square(vOutput - batchTarget));
-    double loss(xt::sum(losses)());
+    double loss(xt::mean(losses)());
 
     // Backward
     xt::xtensor<double, 1> gvOutput((vOutput - batchTarget) * 2 / nMiniBatch);
