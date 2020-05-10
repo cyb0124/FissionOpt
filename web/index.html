@@ -23,8 +23,8 @@
       <div>
         Core Size:
         <input type="text" id="sizeZ"> &times;
-        <input type="text" id="sizeY"> &times;
-        <input type="text" id="sizeX">
+        <input type="text" id="sizeX"> &times;
+        <input type="text" id="sizeY">
       </div>
       <div>Fuel Base Power: <input type="text" id="fuelBasePower"> RF/t</div>
       <div>Fuel Base Heat: <input text="text" id="fuelBaseHeat"> H/t</div>
@@ -283,10 +283,10 @@
         <label><input type="checkbox" id="ensureActiveCoolerAccessible" checked>Ensure active coolers are accessible by piping.</label><br>
         <label><input type="checkbox" id="ensureHeatNeutral" checked>Only generate heat neutral reactor.</label><br>
         <label><input type="checkbox" id="breeder">Optimize for breeding speed instead of power.</label><br>
-        <label><input type="checkbox" id="symZ" checked>Width symmetry</label>
-        <label><input type="checkbox" id="symY" checked>Height symmetry</label>
-        <label><input type="checkbox" id="symX" checked>Depth symmetry</label><br>
-        <label><input type="checkbox" id="useNet">Use experimental algorithm</label><br>
+        <label><input type="checkbox" id="symZ" checked>X symmetry</label>
+        <label><input type="checkbox" id="symX" checked>Y symmetry</label>
+        <label><input type="checkbox" id="symY" checked>Z symmetry</label><br>
+        <label><input type="checkbox" id="useNet">Use experimental algorithm (WIP)</label><br>
         Enabling symmetry and/or limiting block counts (especially the cell count) often yields better results.<br>
         To optimize for efficiency, you need to limit the cell count, which can be done using the &ldquo;Max Allowed&rdquo; box for <span class="row cell" title="Reactor Cell">[]</span>.<br>
         The algorithm uses fixed seed: different runs will always yield the same results unless there is an update to the algorithm. Last update: 5/9/2020<br>
