@@ -19,7 +19,7 @@ namespace Fission {
   class Net;
   class DataPool;
 
-  constexpr int interactiveMin(1024), interactiveScale(327680), interactiveTrain(2), nLossHistory(256);
+  constexpr int interactiveMin(1024), interactiveScale(327680), interactiveTrain(4), nLossHistory(256);
 
   class Opt {
     friend Net;
