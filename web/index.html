@@ -282,13 +282,14 @@
         <a href="javascript:;" id="PO3Rate">PO3</a><br>
         <label><input type="checkbox" id="ensureActiveCoolerAccessible" checked>Ensure active coolers are accessible by piping.</label><br>
         <label><input type="checkbox" id="ensureHeatNeutral" checked>Only generate heat neutral reactor.</label><br>
-        <label><input type="checkbox" id="breeder">Optimize for breeding speed instead of power.</label><br>
+        <label><input type="checkbox" id="breeder">Optimize for breeding (maximize fuel consumption rate) instead of power.</label><br>
         <label><input type="checkbox" id="symZ" checked>X symmetry</label>
         <label><input type="checkbox" id="symX" checked>Y symmetry</label>
         <label><input type="checkbox" id="symY" checked>Z symmetry</label><br>
-        <label><input type="checkbox" id="useNet">Use experimental algorithm (WIP)</label><br>
-        Enabling symmetry and/or limiting block counts (especially the cell count) often yields better results.<br>
+        <label><input type="checkbox" id="useNet">Use reinforcement learning (slower but may produce better result)</label><br>
         To optimize for efficiency, you need to limit the cell count, which can be done using the &ldquo;Max Allowed&rdquo; box for <span class="row cell" title="Reactor Cell">[]</span>.<br>
+        To get the ideal cell count, divide the fuel's base processing time by the time you want a fuel to last<br>
+        Enabling symmetry and/or limiting block counts (especially the cell count) often yields better results.<br>
         The algorithm uses fixed seed: different runs will always yield the same results unless there is an update to the algorithm. Last update: 5/9/2020<br>
         <span style="color:red;">Note: in Chrome, this tab won't run in background! If you want to switch to other tabs, drag this tab out as a dedicated window and don't minimize it.</span>
       </div>

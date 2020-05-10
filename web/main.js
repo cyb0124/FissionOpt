@@ -263,7 +263,7 @@ $(() => { FissionOpt().then((FissionOpt) => {
     appendInfo('Cooling', sample.getCooling(), 'H/t');
     appendInfo('Net Heat', sample.getNetHeat(), 'H/t');
     appendInfo('Duty Cycle', sample.getDutyCycle() * 100, '%');
-    appendInfo('Avg Breed Spd', sample.getAvgBreed(), '&times;');
+    appendInfo('Fuel Use Rate', sample.getAvgBreed(), '&times;');
     appendInfo('Efficiency', sample.getEfficiency() * 100, '%');
     appendInfo('Avg Power', sample.getAvgPower(), 'RF/t');
     design.append(block);
