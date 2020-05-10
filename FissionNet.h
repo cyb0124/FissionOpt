@@ -5,7 +5,7 @@
 
 namespace Fission {
   constexpr int nLayer1(128), nLayer2(64), nMiniBatch(256), nEpoch(2), nData(1'000'000);
-  constexpr double lRate(0.001), mRate(0.9), rRate(0.999);
+  constexpr double lRate(1e-5), mRate(0.9), rRate(0.999);
 
   class Net {
     Opt &opt;
