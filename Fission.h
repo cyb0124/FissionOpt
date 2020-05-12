@@ -18,6 +18,12 @@ namespace Fission {
     Cell = Active * 2, Moderator, Air
   };
 
+  enum {
+    GoalPower,
+    GoalBreeder,
+    GoalEfficiency
+  };
+
   struct Settings {
     int sizeX, sizeY, sizeZ;
     double fuelBasePower, fuelBaseHeat;
@@ -25,7 +31,7 @@ namespace Fission {
     double coolingRates[Cell];
     bool ensureActiveCoolerAccessible;
     bool ensureHeatNeutral;
-    bool breeder;
+    int goal;
     bool symX, symY, symZ;
   };
 

@@ -70,7 +70,7 @@ EMSCRIPTEN_BINDINGS(FissionOpt) {
     .function("setRate", &setRate)
     .property("ensureActiveCoolerAccessible", &Fission::Settings::ensureActiveCoolerAccessible)
     .property("ensureHeatNeutral", &Fission::Settings::ensureHeatNeutral)
-    .property("breeder", &Fission::Settings::breeder)
+    .property("goal", &Fission::Settings::goal)
     .property("symX", &Fission::Settings::symX)
     .property("symY", &Fission::Settings::symY)
     .property("symZ", &Fission::Settings::symZ);

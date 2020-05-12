@@ -16,7 +16,7 @@
         by cyb0124, <a href="https://github.com/cyb0124/FissionOpt">source</a>
       </div>
       <div>
-        This program generates a fission reactor design that maximizes effective power output or breeding speed.
+        This program generates a fission reactor design that maximizes effective power output, breeding speed or efficiency.
       </div>
     </header>
     <section id="settings">
@@ -282,15 +282,17 @@
         <a href="javascript:;" id="PO3Rate">PO3</a><br>
         <label><input type="checkbox" id="ensureActiveCoolerAccessible" checked>Ensure active coolers are accessible by piping.</label><br>
         <label><input type="checkbox" id="ensureHeatNeutral" checked>Only generate heat neutral reactor.</label><br>
-        <label><input type="checkbox" id="breeder">Optimize for breeding (maximize fuel consumption rate) instead of power.</label><br>
+        <label><input type="radio" name="goal" value="0" checked>Optimize for power.</label><br>
+        <label><input type="radio" name="goal" value="1">Optimize for breeding (maximize fuel consumption rate).</label><br>
+        <label><input type="radio" name="goal" value="2">Optimize for efficiency.</label><br>
         <label><input type="checkbox" id="symZ" checked>X symmetry</label>
         <label><input type="checkbox" id="symX" checked>Y symmetry</label>
         <label><input type="checkbox" id="symY" checked>Z symmetry</label><br>
-        <label><input type="checkbox" id="useNet">Use reinforcement learning (slower but may produce better result)</label><br>
-        To optimize for efficiency, you need to limit the cell count, which can be done using the &ldquo;Max Allowed&rdquo; box for <span class="row cell" title="Reactor Cell">[]</span>.<br>
+        <label><input type="checkbox" id="useNet">Use reinforcement learning (experimental)</label><br>
+        The most efficient reactor doesn't produce the most power. It's better to optimize for power while limiting the cell count using the &ldquo;Max Allowed&rdquo; box for <span class="row cell" title="Reactor Cell">[]</span>.<br>
         To get the ideal cell count, divide the fuel's base processing time by the time you want a fuel to last<br>
         Enabling symmetry and/or limiting block counts (especially the cell count) often yields better results.<br>
-        The algorithm uses fixed seed: different runs will always yield the same results unless there is an update to the algorithm. Last update: 5/9/2020<br>
+        The algorithm uses fixed seed: different runs will always yield the same results unless there is an update to the algorithm. Last update: 5/11/2020<br>
         <span style="color:red;">Note: in Chrome, this tab won't run in background! If you want to switch to other tabs, drag this tab out as a dedicated window and don't minimize it.</span>
       </div>
     </section>

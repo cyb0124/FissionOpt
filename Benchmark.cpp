@@ -86,7 +86,7 @@ namespace {
         60, 90, 90, 120, 130, 120, 150, 140, 120, 160, 80, 160, 80, 120, 110,
         150, 3200, 3000, 4800, 4000, 2800, 7000, 6600, 5400, 6400, 2400, 3600, 2600, 3000, 3600
       },
-      true, true, false,
+      true, true, Fission::GoalPower,
       false, false, false
     }},
     {"Default, HECf-251-OX, 19*11*5, Power, Passive Symmetry", {
@@ -101,7 +101,7 @@ namespace {
         60, 90, 90, 120, 130, 120, 150, 140, 120, 160, 80, 160, 80, 120, 110,
         150, 3200, 3000, 4800, 4000, 2800, 7000, 6600, 5400, 6400, 2400, 3600, 2600, 3000, 3600
       },
-      true, true, false,
+      true, true, Fission::GoalPower,
       true, true, true
     }},
     {"Default, HECf-251-OX, 5*5*5, Breeder, Passive", {
@@ -116,7 +116,7 @@ namespace {
         60, 90, 90, 120, 130, 120, 150, 140, 120, 160, 80, 160, 80, 120, 110,
         150, 3200, 3000, 4800, 4000, 2800, 7000, 6600, 5400, 6400, 2400, 3600, 2600, 3000, 3600
       },
-      true, true, true,
+      true, true, Fission::GoalBreeder,
       false, false, false
     }},
     {"Default, HECf-251-OX, 5*5*5, Breeder, Passive Symmetry", {
@@ -131,7 +131,7 @@ namespace {
         60, 90, 90, 120, 130, 120, 150, 140, 120, 160, 80, 160, 80, 120, 110,
         150, 3200, 3000, 4800, 4000, 2800, 7000, 6600, 5400, 6400, 2400, 3600, 2600, 3000, 3600
       },
-      true, true, true,
+      true, true, Fission::GoalBreeder,
       true, true, true
     }},
     {"Default, HECf-251-OX, 5*5*5, Power, Passive", {
@@ -146,7 +146,7 @@ namespace {
         60, 90, 90, 120, 130, 120, 150, 140, 120, 160, 80, 160, 80, 120, 110,
         150, 3200, 3000, 4800, 4000, 2800, 7000, 6600, 5400, 6400, 2400, 3600, 2600, 3000, 3600
       },
-      true, true, false,
+      true, true, Fission::GoalPower,
       false, false, false
     }},
     {"Default, HECf-251-OX, 5*5*5, Power, Passive Symmetry", {
@@ -161,7 +161,7 @@ namespace {
         60, 90, 90, 120, 130, 120, 150, 140, 120, 160, 80, 160, 80, 120, 110,
         150, 3200, 3000, 4800, 4000, 2800, 7000, 6600, 5400, 6400, 2400, 3600, 2600, 3000, 3600
       },
-      true, true, false,
+      true, true, Fission::GoalPower,
       true, true, true
     }},
     {"E2E, LEU-235-OX, 5*5*5, Power, Passive No TE", {
@@ -176,7 +176,7 @@ namespace {
         20, 80, 80, 120, 120, 100, 120, 120, 140, 140, 60, 140, 60, 80, 100,
         50, 1000, 1500, 1750, 2000, 2250, 3500, 3300, 2750, 3250, 1700, 2750, 1125, 1250, 2000
       },
-      true, true, false,
+      true, true, Fission::GoalPower,
       false, false, false
     }},
     {"E2E, LEU-235-OX, 9*9*9, Power, Passive No TE", {
@@ -191,37 +191,37 @@ namespace {
         20, 80, 80, 120, 120, 100, 120, 120, 140, 140, 60, 140, 60, 80, 100,
         50, 1000, 1500, 1750, 2000, 2250, 3500, 3300, 2750, 3250, 1700, 2750, 1125, 1250, 2000
       },
-      true, true, false,
+      true, true, Fission::GoalPower,
       false, false, false
     }},
-    {"E2E, LEU-235-OX, 9*9*9, Efficiency (Max 8 Cells), Passive No TE", {
+    {"E2E, LEU-235-OX, 9*9*9, Efficiency, Passive No TE", {
       9, 9, 9,
       1008, 75,
       {
         -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, -1, -1, -1, -1, -1,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        8, -1
+        -1, -1
       },
       {
         20, 80, 80, 120, 120, 100, 120, 120, 140, 140, 60, 140, 60, 80, 100,
         50, 1000, 1500, 1750, 2000, 2250, 3500, 3300, 2750, 3250, 1700, 2750, 1125, 1250, 2000
       },
-      true, true, false,
+      true, true, Fission::GoalEfficiency,
       false, false, false
     }},
-    {"E2E, LEU-235-OX, 11*11*11, Efficiency (Max 8 Cells), Passive", {
+    {"E2E, LEU-235-OX, 11*11*11, Efficiency, Passive", {
       11, 11, 11,
       1008, 75,
       {
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        8, -1
+        -1, -1
       },
       {
         20, 80, 80, 120, 120, 100, 120, 120, 140, 140, 60, 140, 60, 80, 100,
         50, 1000, 1500, 1750, 2000, 2250, 3500, 3300, 2750, 3250, 1700, 2750, 1125, 1250, 2000
       },
-      true, true, false,
+      true, true, Fission::GoalEfficiency,
       false, false, false
     }},
     {"E2E, LEU-235-OX, 5*5*5, Power, Active Glowstone", {
@@ -236,7 +236,7 @@ namespace {
         20, 80, 80, 120, 120, 100, 120, 120, 140, 140, 60, 140, 60, 80, 100,
         50, 1000, 1500, 1750, 2000, 2250, 3500, 3300, 2750, 3250, 1700, 2750, 1125, 1250, 2000
       },
-      true, true, false,
+      true, true, Fission::GoalPower,
       false, false, false
     }},
     {"E2E, LEU-235-OX, 1*5*5, Power, Active Glowstone", {
@@ -251,7 +251,7 @@ namespace {
         20, 80, 80, 120, 120, 100, 120, 120, 140, 140, 60, 140, 60, 80, 100,
         50, 1000, 1500, 1750, 2000, 2250, 3500, 3300, 2750, 3250, 1700, 2750, 1125, 1250, 2000
       },
-      true, true, false,
+      true, true, Fission::GoalPower,
       false, false, false
     }},
     {"E2E, LEU-235-OX, 5*5*5, Power, Limited Active Glowstone", {
@@ -266,7 +266,7 @@ namespace {
         20, 80, 80, 120, 120, 100, 120, 120, 140, 140, 60, 140, 60, 80, 100,
         50, 1000, 1500, 1750, 2000, 2250, 3500, 3300, 2750, 3250, 1700, 2750, 1125, 1250, 2000
       },
-      true, true, false,
+      true, true, Fission::GoalPower,
       false, false, false
     }},
     {"E2E, LEU-235-OX, 5*5*5, Power, Limited Active Helium", {
@@ -281,7 +281,7 @@ namespace {
         20, 80, 80, 120, 120, 100, 120, 120, 140, 140, 60, 140, 60, 80, 100,
         50, 1000, 1500, 1750, 2000, 2250, 3500, 3300, 2750, 3250, 1700, 2750, 1125, 1250, 2000
       },
-      true, true, false,
+      true, true, Fission::GoalPower,
       false, false, false
     }},
     {"E2E, LEU-233-OX, 5*5*5, Breeder, Passive", {
@@ -296,7 +296,7 @@ namespace {
         20, 80, 80, 120, 120, 100, 120, 120, 140, 140, 60, 140, 60, 80, 100,
         50, 1000, 1500, 1750, 2000, 2250, 3500, 3300, 2750, 3250, 1700, 2750, 1125, 1250, 2000
       },
-      true, true, true,
+      true, true, Fission::GoalBreeder,
       false, false, false
     }},
     {"E2E, LEU-233-OX, 7*7*7, Breeder, Passive", {
@@ -311,7 +311,7 @@ namespace {
         20, 80, 80, 120, 120, 100, 120, 120, 140, 140, 60, 140, 60, 80, 100,
         50, 1000, 1500, 1750, 2000, 2250, 3500, 3300, 2750, 3250, 1700, 2750, 1125, 1250, 2000
       },
-      true, true, true,
+      true, true, Fission::GoalBreeder,
       false, false, false
     }},
     {"E2E, HECf-249, 5*5*5, Breeder, Passive", {
@@ -326,7 +326,7 @@ namespace {
         20, 80, 80, 120, 120, 100, 120, 120, 140, 140, 60, 140, 60, 80, 100,
         50, 1000, 1500, 1750, 2000, 2250, 3500, 3300, 2750, 3250, 1700, 2750, 1125, 1250, 2000
       },
-      true, true, true,
+      true, true, Fission::GoalBreeder,
       false, false, false
     }},
     {"E2E, HECf-251, 5*5*5, Breeder, Passive", {
@@ -341,7 +341,7 @@ namespace {
         20, 80, 80, 120, 120, 100, 120, 120, 140, 140, 60, 140, 60, 80, 100,
         50, 1000, 1500, 1750, 2000, 2250, 3500, 3300, 2750, 3250, 1700, 2750, 1125, 1250, 2000
       },
-      true, true, true,
+      true, true, Fission::GoalBreeder,
       false, false, false
     }},
     {"E2E, HECf-251, 7*7*7, Breeder, Passive", {
@@ -356,7 +356,7 @@ namespace {
         20, 80, 80, 120, 120, 100, 120, 120, 140, 140, 60, 140, 60, 80, 100,
         50, 1000, 1500, 1750, 2000, 2250, 3500, 3300, 2750, 3250, 1700, 2750, 1125, 1250, 2000
       },
-      true, true, true,
+      true, true, Fission::GoalBreeder,
       false, false, false
     }},
     {"E2E, HECf-249, 5*5*5, Power, Passive", {
@@ -371,7 +371,7 @@ namespace {
         20, 80, 80, 120, 120, 100, 120, 120, 140, 140, 60, 140, 60, 80, 100,
         50, 1000, 1500, 1750, 2000, 2250, 3500, 3300, 2750, 3250, 1700, 2750, 1125, 1250, 2000
       },
-      true, true, false,
+      true, true, Fission::GoalPower,
       false, false, false
     }},
     {"E2E, HECf-251, 5*5*5, Power, Passive", {
@@ -386,7 +386,7 @@ namespace {
         20, 80, 80, 120, 120, 100, 120, 120, 140, 140, 60, 140, 60, 80, 100,
         50, 1000, 1500, 1750, 2000, 2250, 3500, 3300, 2750, 3250, 1700, 2750, 1125, 1250, 2000
       },
-      true, true, false,
+      true, true, Fission::GoalPower,
       false, false, false
     }},
     {"E2E, HECf-251, 7*7*7, Power, Passive", {
@@ -401,7 +401,7 @@ namespace {
         20, 80, 80, 120, 120, 100, 120, 120, 140, 140, 60, 140, 60, 80, 100,
         50, 1000, 1500, 1750, 2000, 2250, 3500, 3300, 2750, 3250, 1700, 2750, 1125, 1250, 2000
       },
-      true, true, false,
+      true, true, Fission::GoalPower,
       false, false, false
     }},
     {"E2E, HECf-249, 7*7*7, Breeder, Passive", {
@@ -416,7 +416,7 @@ namespace {
         20, 80, 80, 120, 120, 100, 120, 120, 140, 140, 60, 140, 60, 80, 100,
         50, 1000, 1500, 1750, 2000, 2250, 3500, 3300, 2750, 3250, 1700, 2750, 1125, 1250, 2000
       },
-      true, true, true,
+      true, true, Fission::GoalBreeder,
       false, false, false
     }},
     {"Default, HEDl-339, 3*3*3, Power, Passive Symmetry", {
@@ -431,7 +431,7 @@ namespace {
         60, 90, 90, 120, 130, 120, 150, 140, 120, 160, 80, 160, 80, 120, 110,
         150, 3200, 3000, 4800, 4000, 2800, 7000, 6600, 5400, 6400, 2400, 3600, 2600, 3000, 3600
       },
-      true, true, false,
+      true, true, Fission::GoalPower,
       true, true, true
     }},
     {"Default, HEDl-339, 5*5*5, Power, Passive Symmetry", {
@@ -446,25 +446,25 @@ namespace {
         60, 90, 90, 120, 130, 120, 150, 140, 120, 160, 80, 160, 80, 120, 110,
         150, 3200, 3000, 4800, 4000, 2800, 7000, 6600, 5400, 6400, 2400, 3600, 2600, 3000, 3600
       },
-      true, true, false,
+      true, true, Fission::GoalPower,
       true, true, true
     }},
-    {"Default, HEDl-339, 5*5*5, Efficiency (Max 1 Cell), Passive Symmetry", {
+    {"Default, HEDl-339, 5*5*5, Efficiency, Passive Symmetry", {
       5, 5, 5,
       2500, 2000,
       {
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        1, -1
+        0, -1
       },
       {
         60, 90, 90, 120, 130, 120, 150, 140, 120, 160, 80, 160, 80, 120, 110,
         150, 3200, 3000, 4800, 4000, 2800, 7000, 6600, 5400, 6400, 2400, 3600, 2600, 3000, 3600
       },
-      true, true, false,
+      true, true, Fission::GoalEfficiency,
       true, true, true
     }},
-    {"Default, HEDl-339, 5*5*5, Efficiency (Max 2 Cell), Passive Symmetry", {
+    {"Default, HEDl-339, 5*5*5, Power (Max 2 Cell), Passive Symmetry", {
       5, 5, 5,
       2500, 2000,
       {
@@ -476,7 +476,7 @@ namespace {
         60, 90, 90, 120, 130, 120, 150, 140, 120, 160, 80, 160, 80, 120, 110,
         150, 3200, 3000, 4800, 4000, 2800, 7000, 6600, 5400, 6400, 2400, 3600, 2600, 3000, 3600
       },
-      true, true, false,
+      true, true, Fission::GoalPower,
       true, true, true
     }},
     {"Default, HEDl-339, 6*6*6, Power, Passive Symmetry", {
@@ -491,7 +491,7 @@ namespace {
         60, 90, 90, 120, 130, 120, 150, 140, 120, 160, 80, 160, 80, 120, 110,
         150, 3200, 3000, 4800, 4000, 2800, 7000, 6600, 5400, 6400, 2400, 3600, 2600, 3000, 3600
       },
-      true, true, false,
+      true, true, Fission::GoalPower,
       true, true, true
     }},
     {"Default, HEDl-339, 7*7*7, Power, Passive Symmetry", {
@@ -506,7 +506,7 @@ namespace {
         60, 90, 90, 120, 130, 120, 150, 140, 120, 160, 80, 160, 80, 120, 110,
         150, 3200, 3000, 4800, 4000, 2800, 7000, 6600, 5400, 6400, 2400, 3600, 2600, 3000, 3600
       },
-      true, true, false,
+      true, true, Fission::GoalPower,
       true, true, true
     }}
   };
@@ -520,9 +520,18 @@ int main() {
     for (int i{}; i < 1024 * 256; ++i)
       opt.step();
     printSample(opt.getBest());
-    results += entry.first + ": "
-      + std::to_string(entry.second.breeder ? opt.getBest().value.avgBreed : opt.getBest().value.avgPower)
-      + '\n';
+    results += entry.first + ": ";
+    switch (entry.second.goal) {
+      default: // GoalPower
+        results += std::to_string(opt.getBest().value.avgPower);
+        break;
+      case Fission::GoalBreeder:
+        results += std::to_string(opt.getBest().value.avgBreed);
+        break;
+      case Fission::GoalEfficiency:
+        results += std::to_string(opt.getBest().value.efficiency);
+    }
+    results += '\n';
   }
   std::cout << "Results:" << std::endl;
   std::cout << results << std::flush;

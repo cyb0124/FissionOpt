@@ -25,7 +25,7 @@ namespace Fission {
   Opt::Opt(const Settings &settings, bool useNet)
     :settings(settings), evaluator(settings),
     nEpisode(), nStage(), nIteration(), nConverge(),
-    maxConverge(settings.sizeX * settings.sizeY * settings.sizeZ * 16),
+    maxConverge(std::min(7 * 7 * 7, settings.sizeX * settings.sizeY * settings.sizeZ) * 16),
     infeasibilityPenalty(), bestChanged(true), redrawNagle(), lossHistory(nLossHistory), lossChanged() {
     for (int x(settings.symX ? settings.sizeX / 2 : 0); x < settings.sizeX; ++x)
       for (int y(settings.symY ? settings.sizeY / 2 : 0); y < settings.sizeY; ++y)
@@ -50,7 +50,14 @@ namespace Fission {
   }
 
   double Opt::rawFitness(const Evaluation &x) {
-    return settings.breeder ? x.avgBreed : x.avgMult;
+    switch (settings.goal) {
+      default: // GoalPower
+        return x.avgMult;
+      case GoalBreeder:
+        return x.avgBreed;
+      case GoalEfficiency:
+        return settings.ensureHeatNeutral ? (x.efficiency - 1) * x.dutyCycle : x.efficiency - 1;
+    }
   }
 
   double Opt::currentFitness(const Sample &x) {
