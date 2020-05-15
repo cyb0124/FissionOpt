@@ -64,7 +64,7 @@ namespace Fission {
     int countCasingNeighbors(int x, int y, int z) const;
     bool checkAccessibility(int compatibleTile, int x, int y, int z);
     bool checkAccessibility(int x, int y, int z);
-public:
+  public:
     Evaluator(const Settings &settings);
     void run(const xt::xtensor<int, 3> &state, Evaluation &result);
   };

@@ -220,7 +220,9 @@ $(() => { FissionOpt().then((FissionOpt) => {
     timeout = window.setTimeout(step, 0);
   };
 
+  const settings = new FissionOpt.FissionSettings();
   const design = $('#design');
+  const save = $('#save');
   const nCoolerTypes = 15, air = nCoolerTypes * 2 + 2;
   const tileNames = ['Wt', 'Rs', 'Qz', 'Au', 'Gs', 'Lp', 'Dm', 'He', 'Ed', 'Cr', 'Fe', 'Em', 'Cu', 'Sn', 'Mg', '[]', '##', '..'];
   const tileTitles = ['Water', 'Redstone', 'Quartz', 'Gold', 'Glowstone', 'Lapis', 'Diamond', 'Liquid Helium',
@@ -230,6 +232,10 @@ $(() => { FissionOpt().then((FissionOpt) => {
   tileClasses[15] = 'cell';
   tileClasses[16] = 'mod';
   tileClasses[17] = 'air';
+  const tileSaveNames = tileTitles.slice(0, 17);
+  tileSaveNames[7] = 'Helium';
+  tileSaveNames[15] = 'FuelCell';
+  tileSaveNames[16] = 'Graphite';
 
   const displayTile = (tile) => {
     let active = false;
@@ -246,6 +252,16 @@ $(() => { FissionOpt().then((FissionOpt) => {
       result.attr('title', tileTitles[tile]);
     }
     return result;
+  };
+
+  const saveTile = (tile) => {
+    if (tile >= nCoolerTypes) {
+      tile -= nCoolerTypes;
+      if (tile < nCoolerTypes) {
+        return "Active " + tileSaveNames[tile];
+      }
+    }
+    return tileSaveNames[tile];
   };
 
   const displaySample = (sample) => {
@@ -274,6 +290,12 @@ $(() => { FissionOpt().then((FissionOpt) => {
       strides.push(sample.getStride(i));
     }
     let resourceMap = {};
+    const saved = {
+      UsedFuel: {name: '', FuelTime: 0.0, BasePower: settings.fuelBasePower, BaseHeat: settings.fuelBaseHeat},
+      SaveVersion: {Major: 1, Minor: 2, Build: 24, Revision: 0, MajorRevision: 0, MinorRevision: 0},
+      InteriorDimensions: {X: shapes[2], Y: shapes[0], Z: shapes[1]},
+      CompressedReactor: {}
+    };
     resourceMap[-1] = (shapes[0] * shapes[1] + shapes[1] * shapes[2] + shapes[2] * shapes[0]) * 2;
     for (let x = 0; x < shapes[0]; ++x) {
       block = $('<div></div>');
@@ -288,12 +310,28 @@ $(() => { FissionOpt().then((FissionOpt) => {
             resourceMap[tile] = 1;
           else
             ++resourceMap[tile];
+          const savedTile = saveTile(tile);
+          if (savedTile !== undefined) {
+            if (!saved.CompressedReactor.hasOwnProperty(savedTile))
+              saved.CompressedReactor[savedTile] = [];
+            saved.CompressedReactor[savedTile].push({X: z + 1, Y: x + 1, Z: y + 1});
+          }
           row.append(displayTile(tile));
         }
         block.append(row);
       }
       design.append(block);
     }
+
+    save.removeClass('disabledLink');
+    save.off('click').click(() => {
+      const elem = document.createElement('a');
+      const url = window.URL.createObjectURL(new Blob([JSON.stringify(saved)], {type: 'text/json'}));
+      elem.setAttribute('href', url);
+      elem.setAttribute('download', 'reactor.json');
+      elem.click();
+      window.URL.revokeObjectURL(url);
+    });
 
     block = $('<div></div>');
     block.append('<div>Total number of blocks used</div>')
@@ -335,8 +373,6 @@ $(() => { FissionOpt().then((FissionOpt) => {
     }
   };
 
-
-  const settings = new FissionOpt.FissionSettings();
   run.click(() => {
     if (timeout !== null)
       return;
@@ -375,6 +411,8 @@ $(() => { FissionOpt().then((FissionOpt) => {
         return;
       }
       design.empty();
+      save.off('click');
+      save.addClass('disabledLink');
       if (lossElement !== undefined)
         lossElement.remove();
       const useNet = $('#useNet').is(':checked');
