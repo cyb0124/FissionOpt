@@ -2,11 +2,12 @@
 #include "FissionNet.h"
 
 namespace Fission {
-  Net::Net(Opt &opt) :opt(opt), mCorrector(1), rCorrector(1), tileMap{{Air, 0}}, trajectoryLength(), writePos() {
+  Net::Net(Opt &opt) :opt(opt), mCorrector(1), rCorrector(1), trajectoryLength(), writePos() {
     for (int i{}; i < Air; ++i)
       if (opt.settings.limit[i])
         tileMap.emplace(i, tileMap.size());
-    nFeatures = static_cast<int>(5 + tileMap.size() * 2);
+    tileMap.emplace(Air, tileMap.size());
+    nFeatures = static_cast<int>(tileMap.size() * 2 - 1 + nStatisticalFeatures);
 
     wLayer1 = xt::random::randn({nLayer1, nFeatures}, 0.0, 1.0 / std::sqrt(nFeatures), opt.rng);
     mwLayer1 = xt::zeros_like(wLayer1);

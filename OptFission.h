@@ -16,10 +16,9 @@ namespace Fission {
     StageInfer
   };
 
-  class Net;
-  class DataPool;
-
   constexpr int interactiveMin(1024), interactiveScale(327680), interactiveTrain(4), nLossHistory(256);
+
+  class Net;
 
   class Opt {
     friend Net;
