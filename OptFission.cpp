@@ -133,6 +133,7 @@ namespace Fission {
       if (!nIteration) {
         nStage = StageInfer;
         parentFitness = net->infer(parent);
+        std::cout << "from: " << parentFitness << std::endl;
         inferenceFailed = true;
       } else {
         for (int i{}; i < nLossHistory - 1; ++i)
@@ -150,15 +151,22 @@ namespace Fission {
       if (nStage == StageInfer) {
         nStage = 0;
         ++nEpisode;
-        if (inferenceFailed)
+        std::cout << "to: " << parentFitness;
+        if (inferenceFailed) {
+          std::cout << ", retry" << std::endl;
           restart();
+        } else {
+          std::cout << ", continue" << std::endl;
+        }
         net->newTrajectory();
         net->appendTrajectory(parent);
       } else if (feasible(parent.value) || infeasibilityPenalty > 1e8) {
         infeasibilityPenalty = 0.0;
         if (net) {
           nStage = StageTrain;
-          net->finishTrajectory(feasible(parent.value) ? rawFitness(parent.value) : 0.0);
+          double ret(feasible(parent.value) ? rawFitness(parent.value) : 0.0);
+          std::cout << "return: " << ret << std::endl;
+          net->finishTrajectory(ret);
           nIteration = (net->getTrajectoryLength() * nEpoch + nMiniBatch - 1) / nMiniBatch;
           return;
         } else {
