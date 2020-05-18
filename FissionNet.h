@@ -4,28 +4,52 @@
 #include "OptFission.h"
 
 namespace Fission {
-  constexpr int nStatisticalFeatures(5), nLayer1(128), nLayer2(64), nMiniBatch(64), nEpoch(2), nData(1'000'000);
-  constexpr double lRate(0.01), mRate(0.9), rRate(0.999);
+  constexpr int nChannels(16), nConvs(4), nFeatures(64);
+  constexpr int nMiniBatch(64), nEpoch(2), nData(1'000'000);
+  constexpr double lRate(0.01), mRate(0.9), rRate(0.999), leak(0.1);
 
   class Net {
     Opt &opt;
-    double mCorrector, rCorrector;
+    int sizeX, sizeY, sizeZ, nBatch;
     std::unordered_map<int, int> tileMap;
-    int nFeatures;
-    xt::xtensor<double, 2> wLayer1, mwLayer1, rwLayer1;
-    xt::xtensor<double, 1> bLayer1, mbLayer1, rbLayer1;
-    xt::xtensor<double, 2> wLayer2, mwLayer2, rwLayer2;
-    xt::xtensor<double, 1> bLayer2, mbLayer2, rbLayer2;
+    double mCorrector, rCorrector;
+
+    // nCategories * nChannels
+    xt::xtensor<double, 2> wEmbeddings, mwEmbeddings, rwEmbeddings;
+    // nConvs * 3 * 3 * 3 * nChannels * nChannels
+    xt::xtensor<double, 6> wConvs, mwConvs, rwConvs;
+    // nConvs * nChannels
+    xt::xtensor<double, 2> bConvs, mbConvs, rbConvs;
+    // nChannels
+    xt::xtensor<double, 1> wLocal, mwLocal, rwLocal;
+    double bLocal, mbLocal, rbLocal;
+    // nFeatures * sizeX * sizeY * sizeZ
+    xt::xtensor<double, 4> wGlobal, mwGlobal, rwGlobal;
+    // nFeatures
+    xt::xtensor<double, 1> bGlobal, mbGlobal, rbGlobal;
+    // nFeatures
     xt::xtensor<double, 1> wOutput, mwOutput, rwOutput;
     double bOutput, mbOutput, rbOutput;
 
+    // nBatch * sizeX * sizeY * sizeZ * nChannels
+    xt::xtensor<double, 5> vEmbeddings;
+    // nBatch * nConvs * sizeX * sizeY * sizeZ * nChannels
+    xt::xtensor<double, 6> vConvsPre, vConvsPost;
+    // nBatch * sizeX * sizeY * sizeZ
+    xt::xtensor<double, 4> vLocalPre, vLocalPost;
+    // nBatch * nFeatures
+    xt::xtensor<double, 2> vGlobalPre, vGlobalPost;
+    // nBatch
+    xt::xtensor<double, 1> vOutput;
+
     // Data Pool
-    xt::xtensor<double, 2> batchInput;
+    xt::xtensor<int, 4> batchInput;
     xt::xtensor<double, 1> batchTarget;
-    std::vector<std::pair<xt::xtensor<double, 1>, double>> data;
+    std::vector<std::pair<xt::xtensor<int, 3>, double>> data;
     int trajectoryLength, writePos;
 
-    xt::xtensor<double, 1> extractFeatures(const Sample &sample);
+    xt::xtensor<int, 3> assembleInput(const Sample &sample) const;
+    void forward(const xt::xtensor<int, 4> &vInput);
   public:
     Net(Opt &opt);
     double infer(const Sample &sample);
