@@ -110,7 +110,7 @@ namespace Fission {
         for (int y{}; y < sizeY; ++y) {
           for (int z{}; z < sizeZ; ++z) {
             auto pre(xt::view(vConvsPre, xt::all(), i, x, y, z, xt::all()));
-            pre = bConvs(i);
+            pre = xt::view(bConvs, i, xt::all());
             for (int u{}; u < 3; ++u) {
               for (int v{}; v < 3; ++v) {
                 for (int w{}; w < 3; ++w) {
