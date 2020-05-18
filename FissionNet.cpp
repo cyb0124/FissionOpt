@@ -6,11 +6,14 @@ namespace Fission {
     sizeX(opt.settings.symX ? (opt.settings.sizeX + 1) / 2 : opt.settings.sizeX),
     sizeY(opt.settings.symY ? (opt.settings.sizeY + 1) / 2 : opt.settings.sizeY),
     sizeZ(opt.settings.symZ ? (opt.settings.sizeZ + 1) / 2 : opt.settings.sizeZ),
-    nBatch(), mCorrector(1), rCorrector(1), trajectoryLength(), writePos() {
+    trajectoryLength(), writePos(), nLastBatch(), mCorrector(1), rCorrector(1) {
     for (int i{}; i < Air; ++i)
       if (opt.settings.limit[i])
         tileMap.emplace(i, tileMap.size());
     tileMap.emplace(Air, tileMap.size());
+
+    batchInput = xt::empty<double>({nMiniBatch, sizeX, sizeY, sizeZ});
+    batchTarget = xt::empty<double>({nMiniBatch});
 
     wEmbeddings = xt::random::randn({static_cast<int>(tileMap.size()), nChannels}, 0.0, 1.0, opt.rng);
     mwEmbeddings = xt::zeros_like(wEmbeddings);
@@ -47,9 +50,6 @@ namespace Fission {
     bOutput = 0.0;
     mbOutput = 0.0;
     rbOutput = 0.0;
-
-    batchInput = xt::empty<double>({nMiniBatch, sizeX, sizeY, sizeZ});
-    batchTarget = xt::empty<double>({nMiniBatch});
   }
 
   void Net::appendTrajectory(const Sample &sample) {
@@ -87,19 +87,19 @@ namespace Fission {
   }
 
   void Net::forward(const xt::xtensor<int, 4> &vInput) {
-    if (vInput.shape(0) != nBatch) {
-      nBatch = vInput.shape(0);
-      vEmbeddings = xt::empty<double>({nBatch, sizeX, sizeY, sizeZ, nChannels});
-      vConvsPre = xt::empty<double>({nBatch, nConvs, sizeX, sizeY, sizeZ, nChannels});
+    if (vInput.shape(0) != nLastBatch) {
+      nLastBatch = vInput.shape(0);
+      vEmbeddings = xt::empty<double>({nLastBatch, sizeX, sizeY, sizeZ, nChannels});
+      vConvsPre = xt::empty<double>({nLastBatch, nConvs, sizeX, sizeY, sizeZ, nChannels});
       vConvsPost = xt::empty_like(vConvsPre);
-      vLocalPre = xt::empty<double>({nBatch, sizeX, sizeY, sizeZ});
+      vLocalPre = xt::empty<double>({nLastBatch, sizeX, sizeY, sizeZ});
       vLocalPost = xt::empty_like(vLocalPre);
-      vGlobalPre = xt::empty<double>({nBatch, nFeatures});
+      vGlobalPre = xt::empty<double>({nLastBatch, nFeatures});
       vGlobalPost = xt::empty_like(vGlobalPre);
-      vOutput = xt::empty<double>({nBatch});
+      vOutput = xt::empty<double>({nLastBatch});
     }
 
-    for (int i{}; i < nBatch; ++i)
+    for (int i{}; i < nLastBatch; ++i)
       for (int x{}; x < sizeX; ++x)
         for (int y{}; y < sizeY; ++y)
           for (int z{}; z < sizeZ; ++z)

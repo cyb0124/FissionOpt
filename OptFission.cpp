@@ -232,7 +232,7 @@ namespace Fission {
   void Opt::stepInteractive() {
     int dim(settings.sizeX * settings.sizeY * settings.sizeZ);
     int n(std::min(interactiveMin, (interactiveScale + dim - 1) / dim));
-    for (int i{}; i < (nStage == StageTrain ? interactiveTrain : n); ++i) {
+    for (int i{}; i < (nStage == StageTrain ? interactiveNet : nStage == StageInfer ? interactiveNet * nMiniBatch : n); ++i) {
       step();
       ++redrawNagle;
     }
