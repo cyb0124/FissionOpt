@@ -5,7 +5,7 @@
 
 namespace Fission {
   constexpr int nChannels(8), nConvs(4), nFeatures(16);
-  constexpr int nMiniBatch(64), nEpoch(2), nData(1'000'000);
+  constexpr int nMiniBatch(64), nEpoch(1), nData(1'000'000);
   constexpr double lRate(0.01), mRate(0.9), rRate(0.999), leak(0.1);
 
   class Net {

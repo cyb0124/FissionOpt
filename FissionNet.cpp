@@ -103,7 +103,7 @@ namespace Fission {
       for (int x{}; x < sizeX; ++x)
         for (int y{}; y < sizeY; ++y)
           for (int z{}; z < sizeZ; ++z)
-            xt::view(vEmbeddings, i, x, y, z, xt::all()) = wEmbeddings(vInput(i, x, y, z));
+            xt::view(vEmbeddings, i, x, y, z, xt::all()) = xt::view(wEmbeddings, vInput(i, x, y, z), xt::all());
 
     for (int i{}; i < nConvs; ++i) {
       for (int x{}; x < sizeX; ++x) {
