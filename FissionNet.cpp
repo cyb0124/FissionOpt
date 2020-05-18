@@ -136,7 +136,7 @@ namespace Fission {
 
     vLocalPre = xt::sum(wLocal * xt::view(vConvsPost, xt::all(), nConvs - 1, xt::all(), xt::all(), xt::all(), xt::all()), -1) + bLocal;
     vLocalPost = vLocalPre * leak + xt::clip(vLocalPre, -1.0, 1.0);
-    vGlobalPre = xt::sum(wGlobal * xt::view(vLocalPost, xt::all(), xt::newaxis(), xt::all(), xt::all(), xt::all()), {-1, -2, -3}) + bGlobal;
+    vGlobalPre = xt::sum(wGlobal * xt::view(vLocalPost, xt::all(), xt::newaxis(), xt::all(), xt::all(), xt::all()), {2, 3, 4}) + bGlobal;
     vGlobalPost = vGlobalPre * leak + xt::clip(vGlobalPre, -1.0, 1.0);
     vOutput = xt::sum(wOutput * vGlobalPost, -1) + bOutput;
   }
@@ -165,7 +165,7 @@ namespace Fission {
         gvGlobalPost(i, j) = gvOutput(i) * wOutput(j);
     xt::xtensor<double, 2> gvGlobalPre(gvGlobalPost * (leak + (xt::abs(vGlobalPre) < 1.0)));
     xt::xtensor<double, 1> gbGlobal(xt::sum(gvGlobalPre, 0));
-    xt::xtensor<double, 2> gwGlobal(xt::empty_like(wGlobal));
+    xt::xtensor<double, 4> gwGlobal(xt::empty_like(wGlobal));
     for (int i{}; i < nFeatures; ++i)
       for (int x{}; x < sizeX; ++x)
         for (int y{}; y < sizeY; ++y)

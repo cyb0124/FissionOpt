@@ -16,7 +16,7 @@ namespace Fission {
     StageInfer
   };
 
-  constexpr int interactiveMin(1024), interactiveScale(327680), interactiveTrain(4), nLossHistory(256);
+  constexpr int interactiveMin(1024), interactiveScale(327680), interactiveTrain(1), nLossHistory(256);
 
   class Net;
 
