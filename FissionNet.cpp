@@ -118,10 +118,10 @@ namespace Fission {
                   if (vInput.in_bounds(0, xSrc, ySrc, zSrc)) {
                     if (i) {
                       auto in(xt::view(vConvsPost, xt::all(), i - 1, xSrc, ySrc, zSrc, xt::newaxis(), xt::all()));
-                      pre += xt::sum(wConvs(i, u, v, w) * in, -1);
+                      pre += xt::sum(xt::view(wConvs, i, u, v, w, xt::all(), xt::all()) * in, -1);
                     } else {
                       auto in(xt::view(vEmbeddings, xt::all(), xSrc, ySrc, zSrc, xt::newaxis(), xt::all()));
-                      pre += xt::sum(wConvs(i, u, v, w) * in, -1);
+                      pre += xt::sum(xt::view(wConvs, i, u, v, w, xt::all(), xt::all()) * in, -1);
                     }
                   }
                 }

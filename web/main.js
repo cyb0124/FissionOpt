@@ -420,8 +420,8 @@ $(() => { FissionOpt().then((FissionOpt) => {
         lossElement = $('<canvas></canvas>').attr('width', 1000).attr('height', 400).insertAfter(progress);
         lossPlot = new Chart(lossElement[0].getContext('2d'), {
           type: 'bar',
-          options: {responsive: false, animation: {duration: 0}, hover: {animationDuration: 0}, scales: {xAxes: [{display: false, categoryPercentage: 1.0, barPercentage: 1.0}]}},
-          data: {labels: [], datasets: [{label: 'Loss', backgroundColor: 'red', data: []}]}
+          options: {responsive: false, animation: {duration: 0}, hover: {animationDuration: 0}, scales: {xAxes: [{display: false}]}},
+          data: {labels: [], datasets: [{label: 'Loss', backgroundColor: 'red', data: [], categoryPercentage: 1.0, barPercentage: 1.0}]}
         });
       }
       opt = new FissionOpt.FissionOpt(settings, useNet);
