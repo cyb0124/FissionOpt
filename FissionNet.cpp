@@ -44,6 +44,7 @@ namespace Fission {
   }
 
   void Net::finishTrajectory(double target) {
+    std::cout << "pool: " << pool.size() << std::endl;
     int pos(writePos);
     for (int i{}; i < trajectoryLength; ++i) {
       if (--pos < 0)
@@ -79,7 +80,7 @@ namespace Fission {
     for (int i{}; i < nMiniBatch; ++i)
       for (int j{}; j < nLayer2; ++j)
         gvLayer2Post(i, j) = gvOutput(i) * wOutput(j);
-    xt::xtensor<double, 2> gvLayer2Pre(gvLayer2Post * (1 - xt::square(vLayer2Post)));
+    xt::xtensor<double, 2> gvLayer2Pre(gvLayer2Post * (leak + (xt::abs(vLayer2Pre) < 1.0)));
     xt::xtensor<double, 1> gbLayer2(xt::sum(gvLayer2Pre, 0));
     xt::xtensor<double, 2> gwLayer2(xt::empty_like(wLayer2));
     for (int i{}; i < nLayer2; ++i)
@@ -87,7 +88,7 @@ namespace Fission {
         gwLayer2(i, j) = xt::sum(xt::view(gvLayer2Pre, xt::all(), i) * xt::view(vLayer1Post, xt::all(), j))();
     xt::xtensor<double, 2> gvLayer1Post(xt::sum(
       xt::view(vLayer2Pre, xt::all(), xt::all(), xt::newaxis()) * wLayer2, 1));
-    xt::xtensor<double, 2> gvLayer1Pre(gvLayer1Post * (1 - xt::square(vLayer1Post)));
+    xt::xtensor<double, 2> gvLayer1Pre(gvLayer1Post * (leak + (xt::abs(vLayer1Pre) < 1.0)));
     xt::xtensor<double, 1> gbLayer1(xt::sum(gvLayer1Pre, 0));
     xt::xtensor<double, 2> gwLayer1(xt::empty_like(wLayer1));
     for (int i{}; i < nLayer1; ++i)
