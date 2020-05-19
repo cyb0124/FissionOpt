@@ -32,14 +32,18 @@ namespace Fission {
         for (int z(settings.symZ ? settings.sizeZ / 2 : 0); z < settings.sizeZ; ++z)
           allowedCoords.emplace_back(x, y, z);
 
+    parent.value.initializeFeatures(settings);
+    best.value.initializeFeatures(settings);
+    for (auto &i : children)
+      i.value.initializeFeatures(settings);
+
     restart();
     if (useNet) {
-      net = std::make_unique<Net>(*this);
+      net = std::make_unique<Net>(rng, parent);
       net->appendTrajectory(parent);
     }
     parentFitness = currentFitness(parent);
 
-    std::copy(settings.limit, settings.limit + Air, best.limit);
     best.state = xt::broadcast<int>(Air,
       {settings.sizeX, settings.sizeY, settings.sizeZ});
     evaluator.run(best.state, best.value);

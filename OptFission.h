@@ -16,12 +16,11 @@ namespace Fission {
     StageInfer
   };
 
-  constexpr int interactiveMin(1024), interactiveScale(327680), interactiveNet(1), nLossHistory(256);
+  constexpr int interactiveMin(1024), interactiveScale(327680), interactiveNet(4), nLossHistory(256);
 
   class Net;
 
   class Opt {
-    friend Net;
     const Settings &settings;
     Evaluator evaluator;
     Coords allowedCoords;

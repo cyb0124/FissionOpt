@@ -38,11 +38,13 @@ namespace Fission {
   struct Evaluation {
     // Raw
     Coords invalidTiles;
+    xt::xtensor<double, 4> features; // [powerMult, netHeatMult, breed]
     double powerMult, heatMult, cooling;
     int breed;
     // Computed
     double heat, netHeat, dutyCycle, avgMult, power, avgPower, avgBreed, efficiency;
 
+    void initializeFeatures(const Settings &settings);
     void compute(const Settings &settings);
   };
 

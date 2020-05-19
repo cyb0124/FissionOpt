@@ -1,60 +1,65 @@
 #ifndef _FISSION_NET_H_
 #define _FISSION_NET_H_
+#include <xtensor/xview.hpp>
 #include <unordered_map>
 #include "OptFission.h"
 
 namespace Fission {
-  constexpr int nChannels(4), nConvs(2), nFeatures(16);
-  constexpr int nMiniBatch(64), nEpoch(1), nData(1'000'000);
+  constexpr int nLayer1(128), nLayer2(64);
+  constexpr int nMiniBatch(64), nEpoch(1), nPool(1'000'000);
   constexpr double lRate(0.01), mRate(0.9), rRate(0.999), leak(0.1);
 
   class Net {
-    Opt &opt;
-    int sizeX, sizeY, sizeZ;
-    std::unordered_map<int, int> tileMap;
+    std::mt19937 &rng;
+    int nFeatures;
 
     // Data Pool
-    xt::xtensor<int, 4> batchInput;
+    xt::xtensor<double, 2> batchInput;
     xt::xtensor<double, 1> batchTarget;
-    std::vector<std::pair<xt::xtensor<int, 3>, double>> data;
+    std::vector<std::pair<xt::xtensor<double, 1>, double>> pool;
     int trajectoryLength, writePos;
 
     // Model
     int nLastBatch;
     double mCorrector, rCorrector;
-    // nCategories * nChannels
-    xt::xtensor<double, 2> wEmbeddings, mwEmbeddings, rwEmbeddings;
-    // nConvs * 3 * 3 * 3 * nChannels * nChannels
-    xt::xtensor<double, 6> wConvs, mwConvs, rwConvs;
-    // nConvs * nChannels
-    xt::xtensor<double, 2> bConvs, mbConvs, rbConvs;
-    // nChannels
-    xt::xtensor<double, 1> wLocal, mwLocal, rwLocal;
-    double bLocal, mbLocal, rbLocal;
-    // nFeatures * sizeX * sizeY * sizeZ
-    xt::xtensor<double, 4> wGlobal, mwGlobal, rwGlobal;
-    // nFeatures
-    xt::xtensor<double, 1> bGlobal, mbGlobal, rbGlobal;
-    // nFeatures
+    // nLayer1 * nFeatures
+    xt::xtensor<double, 2> wLayer1, mwLayer1, rwLayer1;
+    // nLayer1
+    xt::xtensor<double, 1> bLayer1, mbLayer1, rbLayer1;
+    // nLayer2 * nLayer1
+    xt::xtensor<double, 2> wLayer2, mwLayer2, rwLayer2;
+    // nLayer2
+    xt::xtensor<double, 1> bLayer2, mbLayer2, rbLayer2;
+    // nLayer2
     xt::xtensor<double, 1> wOutput, mwOutput, rwOutput;
     double bOutput, mbOutput, rbOutput;
 
     // Intermediates
-    // nBatch * sizeX * sizeY * sizeZ * nChannels
-    xt::xtensor<double, 5> vEmbeddings;
-    // nBatch * nConvs * sizeX * sizeY * sizeZ * nChannels
-    xt::xtensor<double, 6> vConvsPre, vConvsPost;
-    // nBatch * sizeX * sizeY * sizeZ
-    xt::xtensor<double, 4> vLocalPre, vLocalPost;
-    // nBatch * nFeatures
-    xt::xtensor<double, 2> vGlobalPre, vGlobalPost;
+    // nBatch * nLayer1
+    xt::xtensor<double, 2> vLayer1Pre, vLayer1Post;
+    // nBatch * nLayer2
+    xt::xtensor<double, 2> vLayer2Pre, vLayer2Post;
     // nBatch
     xt::xtensor<double, 1> vOutput;
 
-    void forward(const xt::xtensor<int, 4> &vInput);
-    xt::xtensor<int, 3> assembleInput(const Sample &sample) const;
+    template<typename T>
+    void forward(const T &vInput) {
+      if (vInput.shape(0) != nLastBatch) {
+        nLastBatch = vInput.shape(0);
+        vLayer1Pre = xt::empty<double>({nLastBatch, nLayer1});
+        vLayer1Post = xt::empty_like(vLayer1Pre);
+        vLayer2Pre = xt::empty<double>({nLastBatch, nLayer2});
+        vLayer2Post = xt::empty_like(vLayer2Pre);
+        vOutput = xt::empty<double>({nLastBatch});
+      }
+      vLayer1Pre = xt::sum(wLayer1 * xt::view(vInput, xt::all(), xt::newaxis(), xt::all()), 2) + bLayer1;
+      vLayer1Post = vLayer1Pre * leak + xt::clip(vLayer1Pre, -1.0, 1.0);
+      vLayer2Pre = xt::sum(wLayer2 * xt::view(vLayer1Post, xt::all(), xt::newaxis(), xt::all()), 2) + bLayer2;
+      vLayer2Post = vLayer2Pre * leak + xt::clip(vLayer2Pre, -1.0, 1.0);
+      vOutput = xt::sum(wOutput * vLayer2Post, -1) + bOutput;
+    }
   public:
-    Net(Opt &opt);
+    Net(std::mt19937 &rng, Sample &anyValidSample);
     double infer(const Sample &sample);
     void newTrajectory() { trajectoryLength = 0; }
     void appendTrajectory(const Sample &sample);
