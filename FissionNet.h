@@ -56,7 +56,7 @@ namespace Fission {
       vLayer1Post = vLayer1Pre * leak + xt::clip(vLayer1Pre, -1.0, 1.0);
       vLayer2Pre = xt::sum(wLayer2 * xt::view(vLayer1Post, xt::all(), xt::newaxis(), xt::all()), 2) + bLayer2;
       vLayer2Post = vLayer2Pre * leak + xt::clip(vLayer2Pre, -1.0, 1.0);
-      vOutput = xt::sum(wOutput * vLayer2Post, -1) + bOutput;
+      vOutput = xt::sum(wOutput * vLayer2Post, 1) + bOutput;
     }
   public:
     Net(std::mt19937 &rng, Sample &anyValidSample);
