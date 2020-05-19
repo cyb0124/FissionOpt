@@ -6,8 +6,8 @@
 
 namespace Fission {
   constexpr int nLayer1(128), nLayer2(64);
-  constexpr int nMiniBatch(64), nEpoch(1), nPool(1'000'000);
-  constexpr double lRate(0.01), mRate(0.9), rRate(0.999), leak(0.1);
+  constexpr int nMiniBatch(64), nEpoch(2), nPool(1'000'000);
+  constexpr double lRate(0.01), mRate(0.9), rRate(0.999);
 
   class Net {
     std::mt19937 &rng;
@@ -53,9 +53,9 @@ namespace Fission {
         vOutput = xt::empty<double>({nLastBatch});
       }
       vLayer1Pre = xt::sum(wLayer1 * xt::view(vInput, xt::all(), xt::newaxis(), xt::all()), 2) + bLayer1;
-      vLayer1Post = vLayer1Pre * leak + xt::clip(vLayer1Pre, -1.0, 1.0);
+      vLayer1Post = xt::tanh(vLayer1Pre);
       vLayer2Pre = xt::sum(wLayer2 * xt::view(vLayer1Post, xt::all(), xt::newaxis(), xt::all()), 2) + bLayer2;
-      vLayer2Post = vLayer2Pre * leak + xt::clip(vLayer2Pre, -1.0, 1.0);
+      vLayer2Post = xt::tanh(vLayer2Pre);
       vOutput = xt::sum(wOutput * vLayer2Post, 1) + bOutput;
     }
   public:

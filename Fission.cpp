@@ -295,9 +295,10 @@ namespace Fission {
               isActive(x, y, z) = countActiveNeighbors(Gold, x, y, z);
             }
             if (isActive(x, y, z)) {
-              result.cooling += settings.coolingRates[tile];
+              double cooling(settings.coolingRates[tile]);
+              result.cooling += cooling;
               if (result.features.in_bounds(x, y, z, 0)) {
-                result.features(x, y, z, 1) = -settings.coolingRates[tile] / settings.fuelBaseHeat;
+                result.features(x, y, z, 1) = -cooling / settings.fuelBaseHeat;
               }
             } else {
               result.invalidTiles.emplace_back(x, y, z);
