@@ -2,14 +2,6 @@
 #include "Fission.h"
 
 namespace Fission {
-  void Evaluation::initializeFeatures(const Settings &settings) {
-    features = xt::empty<double>({
-      settings.symX ? (settings.sizeX + 1) / 2 : settings.sizeX,
-      settings.symY ? (settings.sizeY + 1) / 2 : settings.sizeY,
-      settings.symZ ? (settings.sizeZ + 1) / 2 : settings.sizeZ, 3
-    });
-  }
-
   void Evaluation::compute(const Settings &settings) {
     heat = settings.fuelBaseHeat * heatMult;
     netHeat = heat - cooling;
@@ -153,13 +145,7 @@ namespace Fission {
             rules(x, y, z) = -1;
             ++result.breed;
             result.powerMult += mult;
-            double heatMult(mult * (mult + 1) / 2.0);
-            result.heatMult += heatMult;
-            if (result.features.in_bounds(x, y, z, 0)) {
-              result.features(x, y, z, 0) = mult;
-              result.features(x, y, z, 1) = heatMult;
-              result.features(x, y, z, 2) = 1.0;
-            }
+            result.heatMult += mult * (mult + 1) / 2.0;
           } else {
             mults(x, y, z) = 0;
             if (tile < Active) {
@@ -172,11 +158,6 @@ namespace Fission {
               }
             } else {
               rules(x, y, z) = -1;
-            }
-            if (result.features.in_bounds(x, y, z, 0)) {
-              result.features(x, y, z, 0) = 0.0;
-              result.features(x, y, z, 1) = 0.0;
-              result.features(x, y, z, 2) = 0.0;
             }
           }
         }
@@ -196,14 +177,8 @@ namespace Fission {
               + getMultSafe(x, y, z + 1));
             if (mult) {
               isActive(x, y, z) = true;
-              double powerMult(mult * (modPower / 6.0));
-              double heatMult(mult * (modHeat / 6.0));
-              result.powerMult += powerMult;
-              result.heatMult += heatMult;
-              if (result.features.in_bounds(x, y, z, 0)) {
-                result.features(x, y, z, 0) = powerMult;
-                result.features(x, y, z, 1) = heatMult;
-              }
+              result.powerMult += mult * (modPower / 6.0);
+              result.heatMult += mult * (modHeat / 6.0);
             } else if (!isModeratorInLine(x, y, z)) {
               result.invalidTiles.emplace_back(x, y, z);
             }
@@ -291,18 +266,12 @@ namespace Fission {
         for (int z{}; z < settings.sizeZ; ++z) {
           int tile((*this->state)(x, y, z));
           if (tile < Cell) {
-            if (rules(x, y, z) == Iron) {
+            if (rules(x, y, z) == Iron)
               isActive(x, y, z) = countActiveNeighbors(Gold, x, y, z);
-            }
-            if (isActive(x, y, z)) {
-              double cooling(settings.coolingRates[tile]);
-              result.cooling += cooling;
-              if (result.features.in_bounds(x, y, z, 0)) {
-                result.features(x, y, z, 1) = -cooling / settings.fuelBaseHeat;
-              }
-            } else {
+            if (isActive(x, y, z))
+              result.cooling += settings.coolingRates[tile];
+            else
               result.invalidTiles.emplace_back(x, y, z);
-            }
           }
         }
       }

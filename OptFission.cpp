@@ -32,14 +32,9 @@ namespace Fission {
         for (int z(settings.symZ ? settings.sizeZ / 2 : 0); z < settings.sizeZ; ++z)
           allowedCoords.emplace_back(x, y, z);
 
-    parent.value.initializeFeatures(settings);
-    best.value.initializeFeatures(settings);
-    for (auto &i : children)
-      i.value.initializeFeatures(settings);
-
     restart();
     if (useNet) {
-      net = std::make_unique<Net>(rng, parent);
+      net = std::make_unique<Net>(*this);
       net->appendTrajectory(parent);
     }
     parentFitness = currentFitness(parent);

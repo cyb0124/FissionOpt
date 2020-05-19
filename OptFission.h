@@ -21,6 +21,7 @@ namespace Fission {
   class Net;
 
   class Opt {
+    friend Net;
     const Settings &settings;
     Evaluator evaluator;
     Coords allowedCoords;
