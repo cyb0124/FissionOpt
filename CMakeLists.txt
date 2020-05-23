@@ -10,6 +10,8 @@ add_executable(FissionOpt
   FissionNet.h
   FissionNet.cpp
   Benchmark.cpp
+  OverhaulFission.h
+  OverhaulFission.cpp
 )
 
 target_include_directories(FissionOpt PRIVATE
