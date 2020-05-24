@@ -65,12 +65,11 @@ namespace OverhaulFission {
         bool stop{};
         std::visit(Overload {
           [&](Moderator &tile) {
-            edge.flux += moderatorFluxes[tile.type];
             edge.efficiency += moderatorEfficiencies[tile.type];
+            edge.flux += moderatorFluxes[tile.type];
           },
           [&](Shield &) {
             if (shieldOn) {
-              // TODO: mark functional?
               stop = true;
             } else {
               edge.efficiency += shieldEfficiency;
@@ -93,8 +92,9 @@ namespace OverhaulFission {
           [&](Reflector &tile) {
             stop = true;
             if (edge.nModerators && edge.nModerators <= neutronReach / 2) {
-              edge.flux = static_cast<int>(2.0 * edge.flux * reflectorFluxMults[tile.type]);
               edge.efficiency = reflectorEfficiencies[tile.type] * edge.efficiency / edge.nModerators;
+              edge.flux = static_cast<int>(2 * edge.flux * reflectorFluxMults[tile.type]);
+              edge.isReflected = true;
               success = true;
             }
           },
@@ -162,7 +162,7 @@ namespace OverhaulFission {
     }
   }
 
-  void Evaluation::activateAuxiliaries() {
+  void Evaluation::computeFluxActivation() {
     for (auto &[x, y, z] : cells) {
       Cell &cell(*std::get_if<Cell>(&tiles(x, y, z)));
       cell.isActive = cell.flux >= cell.fuel.criticality;
@@ -170,6 +170,8 @@ namespace OverhaulFission {
         if (!cell.fluxEdges[i].has_value())
           continue;
         FluxEdge &edge(*cell.fluxEdges[i]);
+        ++cell.heatMult;
+        cell.efficiency += edge.efficiency;
         auto &[dx, dy, dz] = directions[i];
         int cx(x), cy(y), cz(z);
         for (int j{}; j <= edge.nModerators; ++j) {
@@ -180,29 +182,30 @@ namespace OverhaulFission {
                 tile.isActive = true;
               tile.isFunctional = true;
             },
-            [&](Shield &) {
-              // TODO: mark functional and add heat
-              // TODO: make sure heat is only counted for one direction
+            [&](Shield &tile) {
+              if (edge.isReflected || i & 1)
+                tile.heat += edge.flux * shieldHeatPerFlux;
+              tile.isFunctional = true;
             },
-            [&](Cell &) {
-              // TODO: add efficiency
-            },
-            [&](Irradiator &) {
-              // TODO: mark active and add flux
+            [&](Irradiator &tile) {
+              tile.isActive = true;
+              tile.flux += edge.flux;
             },
             [&](Reflector &tile) {
-              // TODO: mark active
+              tile.isActive = true;
             },
             [&](...) { }
           }, tiles(cx, cy, cz));
         }
-        // TODO: increase heat multiplier
       }
     }
   }
 
   void Evaluation::run(const State &state) {
     cells.clear();
+    tier1s.clear();
+    tier2s.clear();
+    tier3s.clear();
     for (int x{}; x < settings->sizeX; ++x) {
       for (int y{}; y < settings->sizeY; ++y) {
         for (int z{}; z < settings->sizeZ; ++z) {
@@ -210,6 +213,35 @@ namespace OverhaulFission {
           int type(state(x, y, z));
           if (type < Tiles::M0) {
             tile.emplace<HeatSink>(type);
+            switch (type) {
+              case Tiles::Wt:
+              case Tiles::Fe:
+              case Tiles::Rs:
+              case Tiles::Gs:
+              case Tiles::Lp:
+              case Tiles::En:
+              case Tiles::Mg:
+              case Tiles::Mn:
+              case Tiles::As:
+              case Tiles::Ed:
+              case Tiles::Cr:
+                tier1s.emplace_back(x, y, z);
+                break;
+              case Tiles::Qz:
+              case Tiles::Ob:
+              case Tiles::Au:
+              case Tiles::Pm:
+              case Tiles::Pr:
+              case Tiles::Cu:
+              case Tiles::Sn:
+              case Tiles::Pb:
+              case Tiles::Vi:
+              case Tiles::He:
+                tier2s.emplace_back(x, y, z);
+                break;
+              default:
+                tier3s.emplace_back(x, y, z);
+            }
           } else if (type < Tiles::R0) {
             tile.emplace<Moderator>(type - Tiles::M0);
           } else if (type < Tiles::Shield) {
@@ -240,7 +272,8 @@ namespace OverhaulFission {
       computeFluxEdge(x, y, z);
     }
     propagateFlux();
-    activateAuxiliaries();
+    computeFluxActivation();
+    // TODO: activate heat sinks
     // TODO: form clusters & conductor groups
     // TODO: compute stats
   }

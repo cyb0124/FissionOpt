@@ -13,8 +13,8 @@ namespace OverhaulFission {
   constexpr double reflectorFluxMults[] { 1.0, 0.5 };
   constexpr int moderatorFluxes[] { 10, 22, 36 };
   constexpr int coolingEfficiencyLeniency(10);
-  constexpr double shieldHeatPerFlux(5.0);
   constexpr double shieldEfficiency(0.5);
+  constexpr int shieldHeatPerFlux(5);
   constexpr int neutronReach(4);
   constexpr int coolingRates[] {
     55, 50, 85, 75, 70, 105, 100, 95, 110, 115, 145, 65, 90, 195, 190, 80, 120,
@@ -70,9 +70,10 @@ namespace OverhaulFission {
 
   struct Cell {
     const Fuel &fuel;
+    double efficiency{};
     std::optional<struct FluxEdge> fluxEdges[6];
     int neutronSource;
-    int flux{};
+    int flux{}, heatMult{};
     bool isNeutronSourceBlocked{};
     bool isExcludedFromFluxRoots{};
     bool hasAlreadyPropagatedFlux;
@@ -92,6 +93,7 @@ namespace OverhaulFission {
   };
 
   struct Reflector {
+    bool isActive{};
     int type;
 
     Reflector(int type) :type(type) {}
@@ -99,9 +101,13 @@ namespace OverhaulFission {
 
   struct Shield {
     int heat{};
+    bool isFunctional{};
   };
 
-  struct Irradiator {};
+  struct Irradiator {
+    bool isActive{};
+    int flux{};
+  };
 
   struct Conductor {};
 
@@ -117,13 +123,14 @@ namespace OverhaulFission {
   template<typename ...T> Overload(T...) -> Overload<T...>;
 
   struct FluxEdge {
-    int flux{}, nModerators;
     double efficiency{};
+    int flux{}, nModerators;
+    bool isReflected{};
   };
 
   struct Evaluation {
     xt::xtensor<Tile, 3> tiles;
-    std::vector<Coord> cells, fluxRoots;
+    std::vector<Coord> cells, tier1s, tier2s, tier3s, fluxRoots;
     const Settings *settings;
     bool shieldOn;
   private:
@@ -131,13 +138,14 @@ namespace OverhaulFission {
     void computeFluxEdge(int x, int y, int z);
     void propagateFlux(int x, int y, int z);
     void propagateFlux();
-    void activateAuxiliaries();
+    void computeFluxActivation();
   public:
     void initialize(const Settings &settings, bool shieldOn);
     void run(const State &state);
   };
 
-  // TODO: remove nonfunctional blocks (careful with shields, clusters without casing connections)
+  // TODO: remove nonfunctional blocks
+  //  (careful with shields, clusters without casing connections and blocks that are inactive but transmit priming flux)
 }
 
 #endif
