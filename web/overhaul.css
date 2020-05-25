@@ -91,3 +91,36 @@ input {
 .cell {color: lime;}
 .air {color: white;}
 .other {color: gray;}
+
+#design>* {
+  float: left;
+  border: 1px solid black;
+  padding: 0.5em;
+  margin-bottom: 1em;
+  text-align: center;
+  font-family: sans-serif;
+}
+
+#design>:first-child {
+  min-width: 20em;
+}
+
+.info {
+  position: relative;
+}
+
+.info>:nth-child(1) {
+  position: absolute;
+  left: 0px;
+}
+
+.info>:nth-child(2) {
+  position: absolute;
+  right: 0px;
+}
+
+.row {
+  font-family: monospace;
+  font-weight: bold;
+  font-size: 120%;
+}

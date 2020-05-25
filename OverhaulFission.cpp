@@ -401,7 +401,7 @@ namespace OverhaulFission {
     if (!tiles.in_bounds(x, y, z))
       return true;
     Conductor *tile(std::get_if<Conductor>(&tiles(x, y, z)));
-    if (tile->group >= 0)
+    if (!tile || tile->group >= 0)
       return false;
     if (id < 0) {
       id = conductorGroups.size();

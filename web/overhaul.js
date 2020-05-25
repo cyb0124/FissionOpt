@@ -207,7 +207,7 @@ $(() => { FissionOpt().then((FissionOpt) => {
           if (z)
             row.append(' ');
           const tile = data[x * strides[0] + y * strides[1] + z * strides[2]];
-          row.append(displayTile(tile));
+          row.append(displayTile(tile, true));
         }
         block.append(row);
       }
@@ -262,7 +262,7 @@ $(() => { FissionOpt().then((FissionOpt) => {
           const fuel = fuels.eq(i);
           const selfPriming = fuel.find('.selfPriming').is(':checked');
           settings.addFuel(
-            parsePositiveFloat('Efficiency', fuel.find('.efficiency').val()),
+            parsePositiveFloat('Efficiency', fuel.find('.efficiency').val()) / 100,
             parseLimit(fuel.find('.limit').val()),
             parsePositiveInt('Criticality', fuel.find('.criticality').val()),
             parsePositiveInt('Heat', fuel.find('.heat').val()),
@@ -272,7 +272,7 @@ $(() => { FissionOpt().then((FissionOpt) => {
             tileNames.push(i + 1 + 'S');
             tileTitles.push('Cell for Fuel #' + (i + 1) + ', Self-Primed');
           } else {
-            tileNames.push(i + 1);
+            tileNames.push((i + 1).toString());
             tileTitles.push('Cell for Fuel #' + (i + 1));
             tileClasses.push('cell');
             tileNames.push(i + 1 + 'A');

@@ -30,7 +30,7 @@ namespace OverhaulFission {
       if (newTile < Tiles::Air) {
         parent.limits[newTile] -= nSym;
       } else {
-        auto &[fuel, source](settings.cellTypes[newTile]);
+        auto &[fuel, source](settings.cellTypes[newTile - Tiles::C0]);
         parent.cellLimits[fuel] -= nSym;
         if (source)
           parent.sourceLimits[source - 1] -= nSym;
@@ -140,7 +140,7 @@ namespace OverhaulFission {
     if (oldTile < Tiles::Air) {
       sample.limits[oldTile] += nSym;
     } else if (oldTile >= Tiles::C0) {
-      auto &[fuel, source](settings.cellTypes[oldTile]);
+      auto &[fuel, source](settings.cellTypes[oldTile - Tiles::C0]);
       sample.cellLimits[fuel] += nSym;
       if (source)
         sample.sourceLimits[source - 1] += nSym;
@@ -162,7 +162,7 @@ namespace OverhaulFission {
     if (newTile < Tiles::Air) {
       sample.limits[newTile] -= nSym;
     } else if (newTile >= Tiles::C0) {
-      auto &[fuel, source](settings.cellTypes[newTile]);
+      auto &[fuel, source](settings.cellTypes[newTile - Tiles::C0]);
       sample.cellLimits[fuel] -= nSym;
       if (source)
         sample.sourceLimits[source - 1] -= nSym;
@@ -206,7 +206,7 @@ namespace OverhaulFission {
       child.state = parent.state;
       std::copy(parent.limits, parent.limits + Tiles::Air, child.limits);
       std::copy(parent.sourceLimits, parent.sourceLimits + 3, child.sourceLimits);
-      parent.cellLimits = child.cellLimits;
+      child.cellLimits = parent.cellLimits;
       mutateAndEvaluate(child, xDist(rng), yDist(rng), zDist(rng));
       double fitness(currentFitness(child));
       if (!i || fitness > bestFitness) {
