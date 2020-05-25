@@ -72,8 +72,7 @@ namespace OverhaulFission {
     const Fuel &fuel;
     std::optional<struct FluxEdge> fluxEdges[6];
     double efficiency{};
-    int neutronSource;
-    int flux, heatMult{};
+    int neutronSource, flux, heatMult{}, cluster{-1};
     bool isNeutronSourceBlocked{};
     bool isExcludedFromFluxRoots{};
     bool hasAlreadyPropagatedFlux;
@@ -100,7 +99,7 @@ namespace OverhaulFission {
   };
 
   struct Shield {
-    int heat{};
+    int heat{}, cluster{-1};
     bool isFunctional{};
   };
 
@@ -109,10 +108,12 @@ namespace OverhaulFission {
     bool isActive{};
   };
 
-  struct Conductor {};
+  struct Conductor {
+    int group{-1};
+  };
 
   struct HeatSink {
-    int type;
+    int type, cluster{-1};
     bool isActive;
 
     HeatSink(int type)
@@ -129,9 +130,16 @@ namespace OverhaulFission {
     bool isReflected{};
   };
 
+  struct Cluster {
+    std::vector<Coord> tiles;
+    bool hasCasingConnection{};
+  };
+
   struct Evaluation {
     xt::xtensor<Tile, 3> tiles;
-    std::vector<Coord> cells, tier1s, tier2s, tier3s, fluxRoots;
+    std::vector<Coord> cells, tier1s, tier2s, tier3s, shields, conductors, fluxRoots;
+    std::vector<bool> conductorGroups;
+    std::vector<Cluster> clusters;
     const Settings *settings;
     bool shieldOn;
   private:
@@ -148,13 +156,15 @@ namespace OverhaulFission {
     bool hasAxialAdjacentHeatSinks(int type, int x, int y, int z);
     bool hasAxialAdjacentReflectors(int x, int y, int z);
     void computeHeatSinkActivation(int x, int y, int z);
+    bool propagateConductorGroup(int id, int x, int y, int z);
+    bool propagateCluster(int id, int x, int y, int z);
   public:
     void initialize(const Settings &settings, bool shieldOn);
     void run(const State &state);
   };
 
   // TODO: remove nonfunctional blocks
-  //  (careful with shields and clusters without casing connections)
+  //  (careful with shields, conductors, clusters without casing connections and neutron source redirection)
 }
 
 #endif

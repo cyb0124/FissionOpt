@@ -103,9 +103,8 @@ namespace OverhaulFission {
             stop = true;
           }
         }, tiles(cx, cy, cz));
-        if (stop) {
+        if (stop)
           break;
-        }
       }
       if (!success) {
         cell.fluxEdges[i].reset();
@@ -130,9 +129,8 @@ namespace OverhaulFission {
       if (!to)
         continue;
       to->flux += edge.flux;
-      if (to->flux >= to->fuel.criticality) {
+      if (to->flux >= to->fuel.criticality)
         propagateFlux(cx, cy, cz);
-      }
     }
   }
 
@@ -142,10 +140,7 @@ namespace OverhaulFission {
       fluxRoots.clear();
       for (auto &[x, y, z] : cells) {
         Cell &cell(*std::get_if<Cell>(&tiles(x, y, z)));
-        // Note: neutron source redirection is not supported as it will cause non-functioning blocks
-        // to have an effect on the reactor's behavior, causing the canonicalization to incorrectly
-        // remove blocks.
-        if (!cell.isExcludedFromFluxRoots && (cell.fuel.selfPriming || cell.neutronSource))
+        if (!cell.isExcludedFromFluxRoots && (cell.fuel.selfPriming || cell.neutronSource || cell.flux >= cell.fuel.criticality))
           fluxRoots.emplace_back(x, y, z);
         cell.hasAlreadyPropagatedFlux = false;
         cell.flux = 0;
@@ -399,11 +394,65 @@ namespace OverhaulFission {
     }
   }
 
+  bool Evaluation::propagateConductorGroup(int id, int x, int y, int z) {
+    if (!tiles.in_bounds(x, y, z))
+      return true;
+    Conductor *tile(std::get_if<Conductor>(&tiles(x, y, z)));
+    if (tile->group >= 0)
+      return false;
+    if (id < 0) {
+      id = conductorGroups.size();
+      conductorGroups.emplace_back();
+    }
+    tile->group = id;
+    std::vector<bool>::reference group(conductorGroups[tile->group]);
+    for (auto &[dx, dy, dz] : directions)
+      if (propagateConductorGroup(id, x + dx, y + dy, z + dz))
+        group = true;
+    return false;
+  }
+
+  bool Evaluation::propagateCluster(int id, int x, int y, int z) {
+    if (!tiles.in_bounds(x, y, z))
+      return true;
+    bool valid{}, hasCasingConnection{};
+    Tile &tile(tiles(x, y, z));
+    std::visit(Overload {
+      [&](Cell &tile) { valid = tile.isActive && tile.cluster < 0; },
+      [&](Shield &tile) { valid = shieldOn && tile.isFunctional && tile.cluster < 0; },
+      [&](HeatSink &tile) { valid = tile.isActive && tile.cluster < 0; },
+      [&](Conductor &tile) { hasCasingConnection = conductorGroups[tile.group]; },
+      [](...) {}
+    }, tile);
+    if (!valid)
+      return hasCasingConnection;
+    if (id < 0) {
+      id = clusters.size();
+      clusters.emplace_back();
+    }
+    std::visit(Overload {
+      [&](Cell &tile) { tile.cluster = id; },
+      [&](Shield &tile) { tile.cluster = id; },
+      [&](HeatSink &tile) { tile.cluster = id; },
+      [](...) { throw; }
+    }, tile);
+    Cluster &cluster(clusters[id]);
+    cluster.tiles.emplace_back(x, y, z);
+    for (auto &[dx, dy, dz] : directions)
+      if (propagateCluster(id, x + dx, y + dy, z + dz))
+        cluster.hasCasingConnection = true;
+    return false;
+  }
+
   void Evaluation::run(const State &state) {
     cells.clear();
     tier1s.clear();
     tier2s.clear();
     tier3s.clear();
+    shields.clear();
+    conductors.clear();
+    conductorGroups.clear();
+    clusters.clear();
     for (int x{}; x < settings->sizeX; ++x) {
       for (int y{}; y < settings->sizeY; ++y) {
         for (int z{}; z < settings->sizeZ; ++z) {
@@ -447,9 +496,11 @@ namespace OverhaulFission {
           } else switch (type) {
             case Tiles::Shield:
               tile.emplace<Shield>();
+              shields.emplace_back(x, y, z);
               break;
             case Tiles::Conductor:
               tile.emplace<Conductor>();
+              conductors.emplace_back(x, y, z);
               break;
             case Tiles::Irradiator:
               tile.emplace<Irradiator>();
@@ -477,7 +528,13 @@ namespace OverhaulFission {
       computeHeatSinkActivation(x, y, z);
     for (auto &[x, y, z] : tier3s)
       computeHeatSinkActivation(x, y, z);
-    // TODO: form clusters & conductor groups
+    for (auto &[x, y, z] : conductors)
+      propagateConductorGroup(-1, x, y, z);
+    for (auto &[x, y, z] : cells)
+      propagateCluster(-1, x, y, z);
+    if (shieldOn)
+      for (auto &[x, y, z] : shields)
+        propagateCluster(-1, x, y, z);
     // TODO: compute stats
   }
 }
