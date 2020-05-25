@@ -8,9 +8,10 @@
 namespace OverhaulFission {
   constexpr double moderatorEfficiencies[] { 1.1, 1.05, 1.0 };
   constexpr double sourceEfficiencies[] { 0.9, 0.95, 1.0 };
-  constexpr double sparsityPenaltyParams[] { 0.5, 0.75 };
   constexpr double reflectorEfficiencies[] { 0.5, 0.25 };
   constexpr double reflectorFluxMults[] { 1.0, 0.5 };
+  constexpr double sparsityPenaltyThreshold(0.75);
+  constexpr double maxSparsityPenaltyMult(0.5);
   constexpr int moderatorFluxes[] { 10, 22, 36 };
   constexpr int coolingEfficiencyLeniency(10);
   constexpr double shieldEfficiency(0.5);
@@ -71,7 +72,7 @@ namespace OverhaulFission {
   struct Cell {
     const Fuel &fuel;
     std::optional<struct FluxEdge> fluxEdges[6];
-    double efficiency{};
+    double positionalEfficiency{}, fluxEfficiency, efficiency;
     int neutronSource, flux, heatMult{}, cluster{-1};
     bool isNeutronSourceBlocked{};
     bool isExcludedFromFluxRoots{};
@@ -104,7 +105,7 @@ namespace OverhaulFission {
   };
 
   struct Irradiator {
-    int flux{};
+    int flux{}, cluster{-1};
     bool isActive{};
   };
 
@@ -132,15 +133,20 @@ namespace OverhaulFission {
 
   struct Cluster {
     std::vector<Coord> tiles;
+    double rawOutput{}, coolingPenaltyMult, output, rawEfficiency{}, efficiency;
+    // Note: not having fuelDurationMult as the generator doesn't generate heat-positive reactor.
+    int heat{}, cooling{}, netHeat;
     bool hasCasingConnection{};
   };
 
   struct Evaluation {
     xt::xtensor<Tile, 3> tiles;
-    std::vector<Coord> cells, tier1s, tier2s, tier3s, shields, conductors, fluxRoots;
+    std::vector<Coord> cells, tier1s, tier2s, tier3s, shields, irradiators, conductors, fluxRoots;
     std::vector<bool> conductorGroups;
     std::vector<Cluster> clusters;
     const Settings *settings;
+    double rawEfficiency, efficiency, rawOutput, output, density, sparsityPenalty;
+    int nFunctionalBlocks, totalPositiveNetHeat, irradiatorFlux, nActiveCells;
     bool shieldOn;
   private:
     void checkNeutronSource(int x, int y, int z);
@@ -158,6 +164,9 @@ namespace OverhaulFission {
     void computeHeatSinkActivation(int x, int y, int z);
     bool propagateConductorGroup(int id, int x, int y, int z);
     bool propagateCluster(int id, int x, int y, int z);
+    void computeClusterStats(Cluster &cluster);
+    void computeSparsity();
+    void computeStats();
   public:
     void initialize(const Settings &settings, bool shieldOn);
     void run(const State &state);

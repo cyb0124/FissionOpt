@@ -159,15 +159,18 @@ namespace OverhaulFission {
   }
 
   void Evaluation::computeFluxActivation() {
+    nActiveCells = 0;
     for (auto &[x, y, z] : cells) {
       Cell &cell(*std::get_if<Cell>(&tiles(x, y, z)));
       cell.isActive = cell.flux >= cell.fuel.criticality;
+      if (cell.isActive)
+        ++nActiveCells;
       for (int i{}; i < 6; ++i) {
         if (!cell.fluxEdges[i].has_value())
           continue;
         FluxEdge &edge(*cell.fluxEdges[i]);
         ++cell.heatMult;
-        cell.efficiency += edge.efficiency;
+        cell.positionalEfficiency += edge.efficiency;
         auto &[dx, dy, dz] = directions[i];
         int cx(x), cy(y), cz(z);
         for (int j{}; j <= edge.nModerators; ++j) {
@@ -421,6 +424,7 @@ namespace OverhaulFission {
       [&](Cell &tile) { valid = tile.isActive && tile.cluster < 0; },
       [&](Shield &tile) { valid = shieldOn && tile.isFunctional && tile.cluster < 0; },
       [&](HeatSink &tile) { valid = tile.isActive && tile.cluster < 0; },
+      [&](Irradiator &tile) { valid = tile.isActive && tile.cluster < 0; },
       [&](Conductor &tile) { hasCasingConnection = conductorGroups[tile.group]; },
       [](...) {}
     }, tile);
@@ -434,6 +438,7 @@ namespace OverhaulFission {
       [&](Cell &tile) { tile.cluster = id; },
       [&](Shield &tile) { tile.cluster = id; },
       [&](HeatSink &tile) { tile.cluster = id; },
+      [&](Irradiator &tile) { tile.cluster = id; },
       [](...) { throw; }
     }, tile);
     Cluster &cluster(clusters[id]);
@@ -444,15 +449,92 @@ namespace OverhaulFission {
     return false;
   }
 
+  void Evaluation::computeClusterStats(Cluster &cluster) {
+    for (auto &[x, y, z] : cluster.tiles) {
+      std::visit(Overload {
+        [&](HeatSink &tile) {
+          cluster.cooling += coolingRates[tile.type];
+        },
+        [&](Cell &tile) {
+          tile.fluxEfficiency = 1 / (1 + std::exp(2 * (tile.flux - 2 * tile.fuel.criticality)));
+          tile.efficiency = tile.positionalEfficiency * tile.fuel.efficiency * tile.fluxEfficiency;
+          if (tile.neutronSource)
+            tile.efficiency *= sourceEfficiencies[tile.neutronSource - 1];
+          cluster.rawEfficiency += tile.efficiency;
+          cluster.rawOutput += tile.efficiency * tile.fuel.heat;
+          cluster.heat += tile.heatMult * tile.fuel.heat;
+        },
+        [&](Shield &tile) {
+          cluster.heat += tile.heat;
+        },
+        // Note: Irradiators are ignored as they're all currently zero heats.
+        [](...) {}
+      }, tiles(x, y, z));
+    }
+    cluster.netHeat = cluster.heat - cluster.cooling;
+    cluster.coolingPenaltyMult = std::min(1.0, static_cast<double>(cluster.heat + coolingEfficiencyLeniency) / cluster.cooling);
+    cluster.output = cluster.rawOutput * cluster.coolingPenaltyMult;
+    cluster.efficiency = cluster.rawEfficiency * cluster.coolingPenaltyMult;
+  }
+
+  void Evaluation::computeSparsity() {
+    nFunctionalBlocks = 0;
+    for (int x{}; x < settings->sizeX; ++x) {
+      for (int y{}; y < settings->sizeY; ++y) {
+        for (int z{}; z < settings->sizeZ; ++z) {
+          std::visit(Overload {
+            [&](Cell &tile) { nFunctionalBlocks += tile.isActive; },
+            [&](Moderator &tile) { nFunctionalBlocks += tile.isFunctional; },
+            [&](Reflector &tile) { nFunctionalBlocks += tile.isActive; },
+            [&](Shield &tile) { nFunctionalBlocks += tile.isFunctional; },
+            [&](Irradiator &tile) { nFunctionalBlocks += tile.isActive; },
+            [&](HeatSink &tile) { nFunctionalBlocks += tile.isActive; },
+            [](...) {}
+          }, tiles(x, y, z));
+        }
+      }
+    }
+    density = nFunctionalBlocks / (settings->sizeX * settings->sizeY * settings->sizeZ);
+    if (density >= sparsityPenaltyThreshold)
+      sparsityPenalty = 1.0;
+    else
+      sparsityPenalty = maxSparsityPenaltyMult + (1 - maxSparsityPenaltyMult)
+        * std::sin(density * std::acos(-1.0) / (2 * sparsityPenaltyThreshold));
+  }
+
+  void Evaluation::computeStats() {
+    totalPositiveNetHeat = 0;
+    rawEfficiency = 0.0;
+    rawOutput = 0.0;
+    for (Cluster &cluster : clusters) {
+      if (cluster.hasCasingConnection) {
+        totalPositiveNetHeat += cluster.netHeat;
+        rawEfficiency += cluster.efficiency;
+        rawOutput += cluster.output;
+      } else {
+        totalPositiveNetHeat += cluster.heat;
+      }
+    }
+    if (nActiveCells)
+      rawEfficiency /= nActiveCells;
+    efficiency = rawEfficiency * sparsityPenalty;
+    output = rawOutput * sparsityPenalty;
+    irradiatorFlux = 0;
+    for (auto &[x, y, z] : irradiators) {
+      Irradiator &tile(*std::get_if<Irradiator>(&tiles(x, y, z)));
+      if (tile.isActive)
+        irradiatorFlux += tile.flux;
+    }
+  }
+
   void Evaluation::run(const State &state) {
     cells.clear();
     tier1s.clear();
     tier2s.clear();
     tier3s.clear();
     shields.clear();
+    irradiators.clear();
     conductors.clear();
-    conductorGroups.clear();
-    clusters.clear();
     for (int x{}; x < settings->sizeX; ++x) {
       for (int y{}; y < settings->sizeY; ++y) {
         for (int z{}; z < settings->sizeZ; ++z) {
@@ -504,6 +586,7 @@ namespace OverhaulFission {
               break;
             case Tiles::Irradiator:
               tile.emplace<Irradiator>();
+              irradiators.emplace_back(x, y, z);
               break;
             case Tiles::Air:
               tile.emplace<Air>();
@@ -528,13 +611,20 @@ namespace OverhaulFission {
       computeHeatSinkActivation(x, y, z);
     for (auto &[x, y, z] : tier3s)
       computeHeatSinkActivation(x, y, z);
+    conductorGroups.clear();
     for (auto &[x, y, z] : conductors)
       propagateConductorGroup(-1, x, y, z);
+    clusters.clear();
     for (auto &[x, y, z] : cells)
       propagateCluster(-1, x, y, z);
     if (shieldOn)
       for (auto &[x, y, z] : shields)
         propagateCluster(-1, x, y, z);
-    // TODO: compute stats
+    for (auto &[x, y, z] : irradiators)
+      propagateCluster(-1, x, y, z);
+    for (auto &i : clusters)
+      computeClusterStats(i);
+    computeSparsity();
+    computeStats();
   }
 }
