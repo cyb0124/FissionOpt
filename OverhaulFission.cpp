@@ -129,7 +129,7 @@ namespace OverhaulFission {
       if (!to)
         continue;
       to->flux += edge.flux;
-      if (to->flux >= to->fuel.criticality)
+      if (to->flux >= to->fuel->criticality)
         propagateFlux(cx, cy, cz);
     }
   }
@@ -140,7 +140,7 @@ namespace OverhaulFission {
       fluxRoots.clear();
       for (auto &[x, y, z] : cells) {
         Cell &cell(*std::get_if<Cell>(&tiles(x, y, z)));
-        if (!cell.isExcludedFromFluxRoots && (cell.fuel.selfPriming || cell.neutronSource || cell.flux >= cell.fuel.criticality))
+        if (!cell.isExcludedFromFluxRoots && (cell.fuel->selfPriming || cell.neutronSource || cell.flux >= cell.fuel->criticality))
           fluxRoots.emplace_back(x, y, z);
         cell.hasAlreadyPropagatedFlux = false;
         cell.flux = 0;
@@ -150,7 +150,7 @@ namespace OverhaulFission {
       converged = true;
       for (auto &[x, y, z] : fluxRoots) {
         Cell &cell(*std::get_if<Cell>(&tiles(x, y, z)));
-        if (cell.flux < cell.fuel.criticality) {
+        if (cell.flux < cell.fuel->criticality) {
           cell.isExcludedFromFluxRoots = true;
           converged = false;
         }
@@ -162,7 +162,7 @@ namespace OverhaulFission {
     nActiveCells = 0;
     for (auto &[x, y, z] : cells) {
       Cell &cell(*std::get_if<Cell>(&tiles(x, y, z)));
-      cell.isActive = cell.flux >= cell.fuel.criticality;
+      cell.isActive = cell.flux >= cell.fuel->criticality;
       if (cell.isActive)
         ++nActiveCells;
       for (int i{}; i < 6; ++i) {
@@ -456,13 +456,13 @@ namespace OverhaulFission {
           cluster.cooling += coolingRates[tile.type];
         },
         [&](Cell &tile) {
-          tile.fluxEfficiency = 1 / (1 + std::exp(2 * (tile.flux - 2 * tile.fuel.criticality)));
-          tile.efficiency = tile.positionalEfficiency * tile.fuel.efficiency * tile.fluxEfficiency;
+          tile.fluxEfficiency = 1 / (1 + std::exp(2 * (tile.flux - 2 * tile.fuel->criticality)));
+          tile.efficiency = tile.positionalEfficiency * tile.fuel->efficiency * tile.fluxEfficiency;
           if (tile.neutronSource)
             tile.efficiency *= sourceEfficiencies[tile.neutronSource - 1];
           cluster.rawEfficiency += tile.efficiency;
-          cluster.rawOutput += tile.efficiency * tile.fuel.heat;
-          cluster.heat += tile.heatMult * tile.fuel.heat;
+          cluster.rawOutput += tile.efficiency * tile.fuel->heat;
+          cluster.heat += tile.heatMult * tile.fuel->heat;
         },
         [&](Shield &tile) {
           cluster.heat += tile.heat;
@@ -508,7 +508,7 @@ namespace OverhaulFission {
     rawOutput = 0.0;
     for (Cluster &cluster : clusters) {
       if (cluster.hasCasingConnection) {
-        totalPositiveNetHeat += cluster.netHeat;
+        totalPositiveNetHeat += std::max(0, cluster.netHeat);
         rawEfficiency += cluster.efficiency;
         rawOutput += cluster.output;
       } else {
@@ -593,7 +593,7 @@ namespace OverhaulFission {
               break;
             default:
               auto &cellType(settings->cellTypes[type - Tiles::C0]);
-              tile.emplace<Cell>(settings->fuels[cellType.first], cellType.second);
+              tile.emplace<Cell>(&settings->fuels[cellType.first], cellType.second);
               cells.emplace_back(x, y, z);
           }
         }

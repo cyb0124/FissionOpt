@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>NuclearCraft Overhaul Fission Optimizer</title>
+    <link rel="stylesheet" href="overhaul.css"/>
+    <script src="https://code.jquery.com/jquery-3.5.0.slim.min.js"></script>
+    <script src="FissionOpt.js"></script>
+    <script src="overhaul.js"></script>
+  </head>
+  <body>
+    <header>
+      <div>
+        <h2>NuclearCraft Overhaul Fission Optimizer</h2>
+        by cyb0124
+      </div>
+      <div>This tool is still being actively worked on: expect frequent major changes to this page.</div>
+    </header>
+    <section id="settings">
+      <div>
+        Interior Size:
+        <input type="text" id="sizeZ"> &times;
+        <input type="text" id="sizeX"> &times;
+        <input type="text" id="sizeY">
+      </div>
+      <table>
+        <thead><tr><th>Fuel ID</th><th>Efficiency (%)</th><th>Heat (H/t)</th><th>Criticality (N)</th><th>Self Priming</th><th>Max Cells Allowed</th><th>Manage</th></tr></thead>
+        <tbody id="fuelTable">
+          <tr id="newFuelRow"><td colspan="7"><a href="javascript:;" id="newFuel">New Fuel</a></td></tr>
+        </tbody>
+      </table>
+      <div>Fuel Presets</div>
+      <div id="fuelPresets"><table>
+        <thead><tr></tr></thead>
+        <tr></tr>
+      </table></div>
+      <div>Neutron source settings</div>
+      <table>
+        <thead><tr><th>Source Type</th><th>Cf-252</th><th>Po-Be</th><th>Ra-Be</th></tr></thead>
+        <tbody><tr><th>Max Allowed</th>
+          <td><input id="sourceLimit0" type="text" class="limit"></td>
+          <td><input id="sourceLimit1" type="text" class="limit" value="0"></td>
+          <td><input id="sourceLimit2" type="text" class="limit" value="0"></td>
+        </tr></tbody>
+      </table>
+      <div>Block-specific settings</div>
+      <div id="blockSettings"><table>
+        <thead><tr id="blockTypes"><th>Block Type</th></tr></thead>
+        <tbody><tr id="blockLimits"><th>Max Allowed</th></tr></tbody>
+      </table></div>
+      <div>
+        <label><input type="checkbox" id="controllable" checked>Only generate reactor that can be turned-off.</label><br>
+        <label><input type="radio" name="goal" value="0" checked>Optimize for output.</label><br>
+        <label><input type="radio" name="goal" value="1">Optimize for breeding (maximize fuel consumption rate).</label><br>
+        <label><input type="radio" name="goal" value="2">Optimize for efficiency.</label><br>
+        <label><input type="radio" name="goal" value="3">Optimize for irradiation.</label><br>
+        <label><input type="checkbox" id="symZ" checked>X symmetry</label>
+        <label><input type="checkbox" id="symX" checked>Y symmetry</label>
+        <label><input type="checkbox" id="symY" checked>Z symmetry</label><br>
+        The algorithm uses fixed seed: different runs will always yield the same results unless there is an update to the algorithm. Last update: 5/25/2020<br>
+        <span style="color:red;">Note: in Chrome, this tab won't run in background! If you want to switch to other tabs, drag this tab out as a dedicated window and don't minimize it.</span>
+      </div>
+    </section>
+    <main>
+      <div>
+        <a href="javascript:;" id="run">Run</a>
+        <a href="javascript:;" id="pause" class="disabledLink">Pause</a>
+        <a href="javascript:;" id="stop" class="disabledLink">Stop</a>
+      </div>
+      <div id="progress"></div>
+      <div id="design"></div>
+    </main>
+  </body>
+</html>

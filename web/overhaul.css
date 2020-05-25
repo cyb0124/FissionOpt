@@ -1,0 +1,93 @@
+body {
+  line-height: 150%;
+}
+
+table {
+  border-spacing: 1px;
+  background-color: black;
+  white-space: nowrap;
+}
+
+td, th {
+  text-align: center;
+  font-weight: normal;
+  padding: 4px;
+  background-color: white;
+}
+
+h2 {
+  display: inline;
+  margin-right: 1ch;
+}
+
+input {
+  text-align: center;
+}
+
+#settings>*, main>* {
+  margin-top: 0.3em;
+}
+
+.disabledLink {
+  color: gray;
+  cursor: not-allowed;
+}
+
+#sizeX, #sizeY, #sizeZ {
+  width: 2.5ch;
+}
+
+#fuelPresets, #blockSettings {
+  overflow-x: auto;
+}
+
+#fuelTable input[type=text], .limit {
+  width: 5.5ch;
+}
+
+#blockTypes>:not(:first-child) {
+  font-family: monospace;
+  font-weight: bold;
+  font-size: 135%;
+}
+
+.Wt {color: dodgerblue;}
+.Fe {color: wheat;}
+.Rs {color: red;}
+.Qz {color: lightgray;}
+.Ob {color: indigo;}
+.Nr {color: maroon;}
+.Gs {color: #dc0;}
+.Lp {color: blue;}
+.Au {color: gold;}
+.Pm {color: mediumaquamarine;}
+.Sm {color: lightgreen;}
+.En {color: #ecf8b4;}
+.Pr {color: mediumorchid;}
+.Dm {color: powderblue;}
+.Em {color: green;}
+.Cu {color: brown;}
+.Sn {color: lightsteelblue;}
+.Pb {color: darkslategray;}
+.B  {color: silver;}
+.Li {color: lavender;}
+.Mg {color: pink;}
+.Mn {color: #aaafcc;}
+.Al {color: #d4f4e9;}
+.Ag {color: lavenderblush;}
+.Fl {color: #8dae99;}
+.Vi {color: #9a7161;}
+.Cb {color: #9ea654;}
+.As {color: #8f9284;}
+.N  {color: #42a649;}
+.He {color: lightcoral;}
+.Ed {color: teal;}
+.Cr {color: deepskyBlue;}
+.M0 {color: black;}
+.M1 {color: #cdd7bc;}
+.M2 {color: #6647d4;}
+.R0 {color: #c2996d;}
+.R1 {color: #90673b;}
+.cell {color: lime;}
+.air {color: white;}
+.other {color: gray;}

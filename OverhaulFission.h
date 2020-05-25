@@ -42,11 +42,11 @@ namespace OverhaulFission {
   };
 
   struct Fuel {
+    double efficiency;
     int limit;
     int criticality;
     int heat;
     bool selfPriming;
-    double efficiency;
   };
 
   struct Settings {
@@ -59,7 +59,7 @@ namespace OverhaulFission {
     bool symX, symY, symZ;
     // Computed
     std::vector<std::pair<int, int>> cellTypes;
-
+    
     void compute();
   };
 
@@ -67,11 +67,17 @@ namespace OverhaulFission {
   using Coord = std::tuple<int, int, int>;
   extern const Coord directions[6];
 
+  struct FluxEdge {
+    double efficiency{};
+    int flux{}, nModerators;
+    bool isReflected{};
+  };
+
   struct Air {};
 
   struct Cell {
-    const Fuel &fuel;
-    std::optional<struct FluxEdge> fluxEdges[6];
+    const Fuel *fuel;
+    std::optional<FluxEdge> fluxEdges[6];
     double positionalEfficiency{}, fluxEfficiency, efficiency;
     int neutronSource, flux, heatMult{}, cluster{-1};
     bool isNeutronSourceBlocked{};
@@ -79,7 +85,7 @@ namespace OverhaulFission {
     bool hasAlreadyPropagatedFlux;
     bool isActive;
 
-    Cell(const Fuel &fuel, int neutronSource)
+    Cell(const Fuel *fuel, int neutronSource)
       :fuel(fuel), neutronSource(neutronSource) {}
   };
 
@@ -125,12 +131,6 @@ namespace OverhaulFission {
   template<typename ...T> struct Overload : T... { using T::operator()...; };
   template<typename ...T> Overload(T...) -> Overload<T...>;
 
-  struct FluxEdge {
-    double efficiency{};
-    int flux{}, nModerators;
-    bool isReflected{};
-  };
-
   struct Cluster {
     std::vector<Coord> tiles;
     double rawOutput{}, coolingPenaltyMult, output, rawEfficiency{}, efficiency;
@@ -172,7 +172,7 @@ namespace OverhaulFission {
     void run(const State &state);
   };
 
-  // TODO: remove nonfunctional blocks
+  // TODO: remove redundant blocks
   //  (careful with shields, conductors, clusters without casing connections and neutron source redirection)
 }
 
