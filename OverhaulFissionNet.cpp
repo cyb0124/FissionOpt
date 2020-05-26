@@ -86,7 +86,7 @@ namespace OverhaulFission {
     vInput.periodic(-5) = static_cast<double>(sample.value.totalPositiveNetHeat) / opt.settings.minHeat;
     vInput.periodic(-6) = sample.value.output / opt.settings.maxOutput;
     vInput.periodic(-7) = sample.value.efficiency;
-    vInput.periodic(-8) = sample.value.irradiatorFlux;
+    vInput.periodic(-8) = static_cast<double>(sample.value.irradiatorFlux) / opt.settings.minCriticality;
     return vInput;
   }
 

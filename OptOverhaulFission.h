@@ -13,7 +13,8 @@ namespace OverhaulFission {
   };
 
   enum {
-    StageTrain = -2,
+    StageRollout,
+    StageTrain,
     StageInfer
   };
 
@@ -29,7 +30,7 @@ namespace OverhaulFission {
     int nEpisode, nStage, nIteration;
     int nConverge, maxConverge;
     double infeasibilityPenalty;
-    double parentFitness;
+    double parentFitness, localBest;
     Sample parent, best;
     std::array<Sample, 4> children;
     std::mt19937 rng;
