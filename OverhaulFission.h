@@ -146,7 +146,7 @@ namespace OverhaulFission {
     std::vector<Cluster> clusters;
     const Settings *settings;
     double rawEfficiency, efficiency, rawOutput, output, density, sparsityPenalty;
-    int nFunctionalBlocks, totalPositiveNetHeat, irradiatorFlux, nActiveCells;
+    int nFunctionalBlocks, totalPositiveNetHeat, irradiatorFlux, nActiveCells, totalRawFlux;
     bool shieldOn;
   private:
     void checkNeutronSource(int x, int y, int z);
@@ -170,10 +170,8 @@ namespace OverhaulFission {
   public:
     void initialize(const Settings &settings, bool shieldOn);
     void run(const State &state);
+    void canonicalize(State &state);
   };
-
-  // TODO: remove redundant blocks
-  //  (careful with shields, conductors, clusters without casing connections and neutron source redirection)
 }
 
 #endif

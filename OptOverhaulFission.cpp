@@ -92,7 +92,11 @@ namespace OverhaulFission {
   }
 
   double Opt::currentFitness(const Sample &x) {
-    return rawFitness(x.value) - infeasibility(x) * infeasibilityPenalty;
+    double raw(rawFitness(x.value));
+    if (!nStage)
+      return raw + x.value.totalRawFlux;
+    else
+      return raw - infeasibility(x) * infeasibilityPenalty;
   }
 
   int Opt::getNSym(int x, int y, int z) {
@@ -177,7 +181,9 @@ namespace OverhaulFission {
     if (nConverge == maxConverge) {
       nIteration = 0;
       nConverge = 0;
-      if (!infeasibility(parent) || infeasibilityPenalty > 1e8) {
+      if (!nStage) {
+        nStage = 1;
+      } else if (!infeasibility(parent) || infeasibilityPenalty > 1e8) {
         infeasibilityPenalty = 0.0;
         nStage = 0;
         ++nEpisode;
@@ -229,7 +235,7 @@ namespace OverhaulFission {
     ++nConverge;
     ++nIteration;
     if (bestChangedLocal) {
-      // TODO: remove redundant blocks
+      best.value.canonicalize(best.state);
       bestChanged = true;
     }
   }

@@ -106,9 +106,10 @@ namespace OverhaulFission {
         if (stop)
           break;
       }
-      if (!success) {
+      if (!success)
         cell.fluxEdges[i].reset();
-      }
+      else
+        totalRawFlux += edge.flux;
     }
   }
 
@@ -122,9 +123,9 @@ namespace OverhaulFission {
         continue;
       FluxEdge &edge(*cell.fluxEdges[i]);
       auto &[dx, dy, dz] = directions[i];
-      int cx(x + dx * edge.nModerators);
-      int cy(y + dy * edge.nModerators);
-      int cz(z + dz * edge.nModerators);
+      int cx(x + dx * (edge.nModerators + 1));
+      int cy(y + dy * (edge.nModerators + 1));
+      int cz(z + dz * (edge.nModerators + 1));
       Cell *to(std::get_if<Cell>(&tiles(cx, cy, cz)));
       if (!to)
         continue;
@@ -163,8 +164,9 @@ namespace OverhaulFission {
     for (auto &[x, y, z] : cells) {
       Cell &cell(*std::get_if<Cell>(&tiles(x, y, z)));
       cell.isActive = cell.flux >= cell.fuel->criticality;
-      if (cell.isActive)
-        ++nActiveCells;
+      if (!cell.isActive)
+        continue;
+      ++nActiveCells;
       for (int i{}; i < 6; ++i) {
         if (!cell.fluxEdges[i].has_value())
           continue;
@@ -599,6 +601,7 @@ namespace OverhaulFission {
         }
       }
     }
+    totalRawFlux = 0;
     for (auto &[x, y, z] : cells) {
       checkNeutronSource(x, y, z);
       computeFluxEdge(x, y, z);
@@ -626,5 +629,15 @@ namespace OverhaulFission {
       computeClusterStats(i);
     computeSparsity();
     computeStats();
+  }
+
+  void Evaluation::canonicalize(State &state) {
+    for (auto &[x, y, z] : cells) {
+      Cell &tile(*std::get_if<Cell>(&tiles(x, y, z)));
+      if (tile.isNeutronSourceBlocked)
+        state(x, y, z) -= settings->cellTypes[state(x, y, z) - Tiles::C0].second;
+    }
+    // TODO: remove redundant blocks
+    //  (careful with shields, conductors, clusters without casing connections and neutron source redirection)
   }
 }

@@ -13,9 +13,17 @@ int main() {
     {-1, 0, 0},
     OverhaulFission::GoalOutput,
     false,
-    false, false, false
+    true, true, true
   };
-  OverhaulFission::Opt opt(settings);
-  for (int i{}; i < 100'000; ++i)
-    opt.step();
+  settings.compute();
+  OverhaulFission::State state(xt::broadcast<int>(OverhaulFission::Tiles::Air, {5, 5, 5}));
+  state(0, 0, 0) = OverhaulFission::Tiles::C0 + 1;
+  state(1, 0, 0) = OverhaulFission::Tiles::M2;
+  state(2, 0, 0) = OverhaulFission::Tiles::M2;
+  state(3, 0, 0) = OverhaulFission::Tiles::M2;
+  state(4, 0, 0) = OverhaulFission::Tiles::C0 + 1;
+  OverhaulFission::Evaluation eval;
+  eval.initialize(settings, false);
+  eval.run(state);
+  std::cout << eval.nActiveCells << std::endl;
 }
