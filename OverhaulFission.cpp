@@ -496,7 +496,7 @@ namespace OverhaulFission {
         }
       }
     }
-    density = nFunctionalBlocks / (settings->sizeX * settings->sizeY * settings->sizeZ);
+    density = static_cast<double>(nFunctionalBlocks) / (settings->sizeX * settings->sizeY * settings->sizeZ);
     if (density >= sparsityPenaltyThreshold)
       sparsityPenalty = 1.0;
     else

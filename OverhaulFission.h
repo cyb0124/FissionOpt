@@ -7,7 +7,7 @@
 
 namespace OverhaulFission {
   constexpr double moderatorEfficiencies[] { 1.1, 1.05, 1.0 };
-  constexpr double sourceEfficiencies[] { 0.9, 0.95, 1.0 };
+  constexpr double sourceEfficiencies[] { 1.0, 0.95, 0.9 };
   constexpr double reflectorEfficiencies[] { 0.5, 0.25 };
   constexpr double reflectorFluxMults[] { 1.0, 0.5 };
   constexpr double sparsityPenaltyThreshold(0.75);
