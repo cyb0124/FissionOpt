@@ -200,11 +200,9 @@ namespace OverhaulFission {
             },
             [&](Shield &tile) {
               if (edge.isReflected || i & 1)
-                tile.heat += edge.flux * shieldHeatPerFlux;
-              tile.isFunctional = true;
+                tile.flux += edge.flux;
             },
             [&](Irradiator &tile) {
-              tile.isActive = true;
               tile.flux += edge.flux;
             },
             [&](Reflector &tile) {
@@ -439,9 +437,9 @@ namespace OverhaulFission {
     Tile &tile(tiles(x, y, z));
     std::visit(Overload {
       [&](Cell &tile) { valid = tile.isActive && tile.cluster < 0; },
-      [&](Shield &tile) { valid = !shieldOn && tile.isFunctional && tile.cluster < 0; },
+      [&](Shield &tile) { valid = !shieldOn && tile.flux && tile.cluster < 0; },
       [&](HeatSink &tile) { valid = tile.isActive && tile.cluster < 0; },
-      [&](Irradiator &tile) { valid = tile.isActive && tile.cluster < 0; },
+      [&](Irradiator &tile) { valid = tile.flux && tile.cluster < 0; },
       [&](Conductor &tile) { hasCasingConnection = conductorGroups[tile.group]; },
       [](...) {}
     }, tile);
@@ -482,7 +480,7 @@ namespace OverhaulFission {
           cluster.heat += tile.heatMult * tile.fuel->heat;
         },
         [&](Shield &tile) {
-          cluster.heat += tile.heat;
+          cluster.heat += tile.flux * shieldHeatPerFlux;
         },
         // Note: Irradiators are ignored as they're all currently zero heats.
         [](...) {}
@@ -503,8 +501,8 @@ namespace OverhaulFission {
             [&](Cell &tile) { nFunctionalBlocks += tile.isActive; },
             [&](Moderator &tile) { nFunctionalBlocks += tile.isFunctional; },
             [&](Reflector &tile) { nFunctionalBlocks += tile.isActive; },
-            [&](Shield &tile) { nFunctionalBlocks += tile.isFunctional; },
-            [&](Irradiator &tile) { nFunctionalBlocks += tile.isActive; },
+            [&](Shield &tile) { nFunctionalBlocks += !!tile.flux; },
+            [&](Irradiator &tile) { nFunctionalBlocks += !!tile.flux; },
             [&](HeatSink &tile) { nFunctionalBlocks += tile.isActive; },
             [](...) {}
           }, tiles(x, y, z));
@@ -539,8 +537,7 @@ namespace OverhaulFission {
     irradiatorFlux = 0;
     for (auto &[x, y, z] : irradiators) {
       Irradiator &tile(*std::get_if<Irradiator>(&tiles(x, y, z)));
-      if (tile.isActive)
-        irradiatorFlux += tile.flux;
+      irradiatorFlux += tile.flux;
     }
   }
 
@@ -666,7 +663,7 @@ namespace OverhaulFission {
       removeInactiveHeatSink(state, x, y, z);
     for (auto &[x, y, z] : irradiators) {
       Irradiator &tile(*std::get_if<Irradiator>(&tiles(x, y, z)));
-      if (!tile.isActive)
+      if (!tile.flux)
         state(x, y, z) = Tiles::Air;
     }
     // TODO: remove remaining redundant blocks

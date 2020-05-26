@@ -45,8 +45,6 @@ namespace OverhaulFission {
   Opt::Opt(Settings &settings)
     :settings(settings),
     nEpisode(), nStage(StageRollout), nIteration(), nConverge(),
-    maxConvergeInfer(settings.sizeX * settings.sizeY * settings.sizeZ * 32),
-    maxConvergeRollout(maxConvergeInfer * 10),
     infeasibilityPenalty(), bestChanged(true), redrawNagle(), lossHistory(nLossHistory), lossChanged() {
     settings.compute();
     for (int x(settings.symX ? settings.sizeX / 2 : 0); x < settings.sizeX; ++x)
@@ -272,9 +270,9 @@ namespace OverhaulFission {
             localBest = raw;
             nConverge = 0;
           }
-          infeasibilityPenalty *= 0.99;
+          infeasibilityPenalty *= 0.999;
         } else {
-          infeasibilityPenalty = std::max(0.01, infeasibilityPenalty / 0.99);
+          infeasibilityPenalty = std::max(0.001, infeasibilityPenalty / 0.999);
         }
         parentFitness = currentFitness(parent);
       }

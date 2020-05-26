@@ -70,8 +70,8 @@ namespace OverhaulFission {
           std::visit(Overload {
             [&](const Moderator &tile) { isFunctional = tile.isFunctional; },
             [&](const Reflector &tile) { isFunctional = tile.isActive; },
-            [&](const Shield &tile) { isFunctional = tile.isFunctional; },
-            [&](const Irradiator &tile) { isFunctional = tile.isActive; },
+            [&](const Shield &tile) { isFunctional = tile.flux; },
+            [&](const Irradiator &tile) { isFunctional = tile.flux; },
             [&](const HeatSink &tile) { isFunctional = tile.isActive; },
             [] (...) { throw; }
           }, sample.value.tiles(x, y, z));

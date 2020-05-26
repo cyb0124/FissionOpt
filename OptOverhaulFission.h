@@ -19,6 +19,7 @@ namespace OverhaulFission {
   };
 
   constexpr int interactiveMin(1024), interactiveScale(81920), interactiveNet(16), nLossHistory(256);
+  constexpr int maxConvergeInfer(10976), maxConvergeRollout(109760);
 
   class Net;
 
@@ -28,7 +29,7 @@ namespace OverhaulFission {
     std::vector<Coord> allowedCoords;
     std::vector<int> allowedTiles;
     int nEpisode, nStage, nIteration;
-    int nConverge, maxConvergeInfer, maxConvergeRollout;
+    int nConverge;
     double infeasibilityPenalty;
     double parentFitness, localBest;
     Sample parent, best;

@@ -109,13 +109,11 @@ namespace OverhaulFission {
   };
 
   struct Shield {
-    int heat{}, cluster{-1};
-    bool isFunctional{};
+    int flux{}, cluster{-1};
   };
 
   struct Irradiator {
     int flux{}, cluster{-1};
-    bool isActive{};
   };
 
   struct Conductor {
