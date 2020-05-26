@@ -70,9 +70,17 @@ namespace OverhaulFission {
     best.value.initialize(settings, false);
     best.value.run(best.state);
   }
+
+  bool Opt::feasible(const Sample &x) {
+    if (x.value.totalPositiveNetHeat)
+      return false;
+    if (settings.controllable && x.valueWithShield.nActiveCells)
+      return false;
+    return true;
+  }
   
-  int Opt::infeasibility(const Sample &x) {
-    int result(x.value.totalPositiveNetHeat);
+  double Opt::infeasibility(const Sample &x) {
+    double result(static_cast<double>(x.value.totalPositiveNetHeat) / settings.minHeat);
     if (settings.controllable)
       result += x.valueWithShield.nActiveCells;
     return result;
@@ -81,13 +89,13 @@ namespace OverhaulFission {
   double Opt::rawFitness(const Evaluation &x) {
     switch (settings.goal) {
       default: // GoalOutput
-        return x.output;
+        return x.output / settings.maxOutput;
       case GoalFuelUse:
         return x.nActiveCells;
       case GoalEfficiency:
         return x.efficiency;
       case GoalIrradiation:
-        return x.irradiatorFlux;
+        return static_cast<double>(x.irradiatorFlux) / settings.minCriticality;
     }
   }
 
@@ -177,7 +185,7 @@ namespace OverhaulFission {
     if (nConverge == maxConverge) {
       nIteration = 0;
       nConverge = 0;
-      if (!infeasibility(parent) || infeasibilityPenalty > 1e8) {
+      if (feasible(parent) || infeasibilityPenalty > 1e8) {
         infeasibilityPenalty = 0.0;
         nStage = 0;
         ++nEpisode;
@@ -192,7 +200,7 @@ namespace OverhaulFission {
       parentFitness = currentFitness(parent);
     }
 
-    bool bestChangedLocal(!nEpisode && !nStage && !nIteration && !infeasibility(parent));
+    bool bestChangedLocal(!nEpisode && !nStage && !nIteration && feasible(parent));
     if (bestChangedLocal)
       best = parent;
     std::uniform_int_distribution<>
@@ -213,7 +221,7 @@ namespace OverhaulFission {
         bestChild = i;
         bestFitness = fitness;
       }
-      if (!infeasibility(child) && rawFitness(child.value) > rawFitness(best.value)) {
+      if (feasible(child) && rawFitness(child.value) > rawFitness(best.value)) {
         bestChangedLocal = true;
         best = child;
       }

@@ -28,7 +28,8 @@ namespace OverhaulFission {
     bool bestChanged;
     int redrawNagle;
     void restart();
-    int infeasibility(const Sample &x);
+    bool feasible(const Sample &x);
+    double infeasibility(const Sample &x);
     double rawFitness(const Evaluation &x);
     double currentFitness(const Sample &x);
     int getNSym(int x, int y, int z);

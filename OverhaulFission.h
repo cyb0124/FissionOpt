@@ -59,6 +59,9 @@ namespace OverhaulFission {
     bool symX, symY, symZ;
     // Computed
     std::vector<std::pair<int, int>> cellTypes;
+    double maxOutput;
+    int minCriticality;
+    int minHeat;
     
     void compute();
   };

@@ -12,7 +12,13 @@ namespace OverhaulFission {
 
   void Settings::compute() {
     cellTypes.clear();
+    maxOutput = 0.0;
+    minCriticality = INT_MAX;
+    minHeat = INT_MAX;
     for (int i{}; i < static_cast<int>(fuels.size()); ++i) {
+      maxOutput = std::max(maxOutput, fuels[i].heat * fuels[i].efficiency);
+      minCriticality = std::min(minCriticality, fuels[i].criticality);
+      minHeat = std::min(minHeat, fuels[i].heat);
       cellTypes.emplace_back(i, 0);
       if (!fuels[i].selfPriming) {
         for (int j(1); j <= 3; ++j) {
@@ -106,10 +112,11 @@ namespace OverhaulFission {
         if (stop)
           break;
       }
-      if (!success)
+      if (!success) {
         cell.fluxEdges[i].reset();
-      else
+      } else {
         totalRawFlux += edge.flux;
+      }
     }
   }
 
