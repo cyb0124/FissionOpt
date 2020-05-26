@@ -129,6 +129,10 @@ namespace OverhaulFission {
       if (!cell.fluxEdges[i].has_value())
         continue;
       FluxEdge &edge(*cell.fluxEdges[i]);
+      if (edge.isReflected) {
+        cell.flux += edge.flux;
+        continue;
+      }
       auto &[dx, dy, dz] = directions[i];
       int cx(x + dx * (edge.nModerators + 1));
       int cy(y + dy * (edge.nModerators + 1));
