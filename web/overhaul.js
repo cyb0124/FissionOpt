@@ -168,6 +168,7 @@ $(() => { FissionOpt().then((FissionOpt) => {
   tileSaveNames[5] = 'NetherBrick';
   tileSaveNames[11] = 'EndStone';
   tileSaveNames[M0 + 2] = 'HeavyWater';
+  tileSaveNames[Irradiator] = "{\"HeatPerFlux\":0,\"EfficiencyMultiplier\":0.0}";
   const displayTile = (tile, pad) => {
     const name = tileNames[tile];
     const result = $('<span>' + name + '</span>').addClass(tileClasses[tile]);

@@ -28,7 +28,7 @@ namespace OverhaulFission {
     std::vector<Coord> allowedCoords;
     std::vector<int> allowedTiles;
     int nEpisode, nStage, nIteration;
-    int nConverge, maxConverge;
+    int nConverge, maxConvergeInfer, maxConvergeRollout;
     double infeasibilityPenalty;
     double parentFitness, localBest;
     Sample parent, best;
