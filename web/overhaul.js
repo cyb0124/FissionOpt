@@ -1,7 +1,7 @@
 $(() => { FissionOpt().then((FissionOpt) => {
   const run = $('#run'), pause = $('#pause'), stop = $('#stop');
   let opt = null, timeout = null;
-  
+
   const updateDisables = () => {
     $('#settings input').prop('disabled', opt !== null);
     $('#settings a')[opt === null ? 'removeClass' : 'addClass']('disabledLink');
@@ -135,6 +135,8 @@ $(() => { FissionOpt().then((FissionOpt) => {
   addFuelPreset("ZA", "HECf-249", 180, 2028, 25, true);
   addFuelPreset("ZA", "LECf-251", 180, 360, 60, true);
   addFuelPreset("ZA", "HECf-251", 185, 1080, 30, true);
+  const Air = 40, C0 = 41;
+  const cellSources = [];
   const tileNames = [
     'Wt', 'Fe', 'Rs', 'Qz', 'Ob', 'Nr', 'Gs', 'Lp', 'Au', 'Pm', 'Sm', 'En', 'Pr', 'Dm', 'Em', 'Cu',
     'Sn', 'Pb', 'B',  'Li', 'Mg', 'Mn', 'Al', 'Ag', 'Fl', 'Vi', 'Cb', 'As', 'N',  'He', 'Ed', 'Cr',
@@ -154,7 +156,7 @@ $(() => { FissionOpt().then((FissionOpt) => {
   tileClasses[37] = 'other';
   tileClasses[38] = 'other';
   tileClasses[39] = 'other';
-  tileClasses[40] = 'air';
+  tileClasses[Air] = 'air';
   const displayTile = (tile, pad) => {
     const name = tileNames[tile];
     const result = $('<span>' + name + '</span>').addClass(tileClasses[tile]);
@@ -198,6 +200,16 @@ $(() => { FissionOpt().then((FissionOpt) => {
       shapes.push(sample.getShape(i));
       strides.push(sample.getStride(i));
     }
+
+    let resourceMap = {};
+    resourceMap[-1] = (shapes[0] * shapes[1] + shapes[1] * shapes[2] + shapes[2] * shapes[0]) * 2 + (shapes[0] + shapes[1] + shapes[2]) * 4 + 8;
+    const increaseResource = (key) => {
+      if (!resourceMap.hasOwnProperty(key))
+        resourceMap[key] = 1;
+      else
+        ++resourceMap[key];
+    };
+
     for (let x = 0; x < shapes[0]; ++x) {
       block = $('<div></div>');
       block.append('<div>Layer ' + (x + 1) + '</div>');
@@ -207,12 +219,42 @@ $(() => { FissionOpt().then((FissionOpt) => {
           if (z)
             row.append(' ');
           const tile = data[x * strides[0] + y * strides[1] + z * strides[2]];
+          if (tile < Air) {
+            increaseResource(tile);
+          } else if (tile >= C0) {
+            increaseResource(-2);
+            const source = cellSources[tile - C0];
+            if (source)
+              increaseResource(-2 - source);
+          }
           row.append(displayTile(tile, true));
         }
         block.append(row);
       }
       design.append(block);
     }
+
+    block = $('<div></div>');
+    block.append('<div>Total number of blocks used</div>')
+    resourceMap = Object.entries(resourceMap);
+    resourceMap.sort((x, y) => y[1] - x[1]);
+    for (resource of resourceMap) {
+      const row = $('<div></div>');
+      if (resource[0] == -1)
+        row.append('Casing');
+      else if (resource[0] == -2)
+        row.append('Cell');
+      else if (resource[0] == -3)
+        row.append('Cf-252');
+      else if (resource[0] == -4)
+        row.append('Po-Be');
+      else if (resource[0] == -5)
+        row.append('Ra-Be');
+      else
+        row.append(displayTile(resource[0], false).addClass('row'));
+      block.append(row.append(' &times; ' + resource[1]));
+    }
+    design.append(block);
   };
 
   const progress = $('#progress');
@@ -250,10 +292,11 @@ $(() => { FissionOpt().then((FissionOpt) => {
         settings.sizeY = parsePositiveInt('Interior', $('#sizeY').val());
         settings.sizeZ = parsePositiveInt('Interior', $('#sizeZ').val());
         settings.clearFuels();
-        while (tileNames.length != 41) {
+        while (cellSources.length) {
           tileNames.pop();
           tileTitles.pop();
           tileClasses.pop();
+          cellSources.pop();
         }
         const fuels = fuelTable.children();
         if (fuels.length == 1)
@@ -268,6 +311,7 @@ $(() => { FissionOpt().then((FissionOpt) => {
             parsePositiveInt('Heat', fuel.find('.heat').val()),
             selfPriming);
           tileClasses.push('cell');
+          cellSources.push(0);
           if (selfPriming) {
             tileNames.push(i + 1 + 'S');
             tileTitles.push('Cell for Fuel #' + (i + 1) + ', Self-Primed');
@@ -275,12 +319,15 @@ $(() => { FissionOpt().then((FissionOpt) => {
             tileNames.push((i + 1).toString());
             tileTitles.push('Cell for Fuel #' + (i + 1));
             tileClasses.push('cell');
+            cellSources.push(1);
             tileNames.push(i + 1 + 'A');
             tileTitles.push('Cell for Fuel #' + (i + 1) + ', Primed by Cf-252');
             tileClasses.push('cell');
+            cellSources.push(2);
             tileNames.push(i + 1 + 'B');
             tileTitles.push('Cell for Fuel #' + (i + 1) + ', Primed by Po-Be');
             tileClasses.push('cell');
+            cellSources.push(3);
             tileNames.push(i + 1 + 'C');
             tileTitles.push('Cell for Fuel #' + (i + 1) + ', Primed by Ra-Be');
           }
