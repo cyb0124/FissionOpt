@@ -142,18 +142,18 @@ $(() => { FissionOpt().then((FissionOpt) => {
   addFuelPreset("ZA", "HECf-249", 180, 2028, 25, true);
   addFuelPreset("ZA", "LECf-251", 180, 360, 60, true);
   addFuelPreset("ZA", "HECf-251", 185, 1080, 30, true);
-  const Air = 40, C0 = 41, M0 = 32, R0 = 35, Shield = 37, Conductor = 38, Irradiator = 39;
+  const Air = 40, C0 = 41, M0 = 32, R0 = 35, Shield = 37, Irradiator = 38, Conductor = 39;
   const cellSources = [];
   const tileNames = [
     'Wt', 'Fe', 'Rs', 'Qz', 'Ob', 'Nr', 'Gs', 'Lp', 'Au', 'Pm', 'Sm', 'En', 'Pr', 'Dm', 'Em', 'Cu',
     'Sn', 'Pb', 'B',  'Li', 'Mg', 'Mn', 'Al', 'Ag', 'Fl', 'Vi', 'Cb', 'As', 'N',  'He', 'Ed', 'Cr',
-    '##', '==', '--', '=)', '-)', '<>', '[]', '><', '..'];
+    '##', '==', '--', '=)', '-)', '<>', '><', '[]', '..'];
   const tileTitles = [
     'Water', 'Iron', 'Redstone', 'Quartz', 'Obsidian', 'Nether Bricks', 'Glowstone', 'Lapis', 'Gold', 'Prismarine',
     'Slime', 'End Stone', 'Purpur', 'Diamond', 'Emerald', 'Copper', 'Tin', 'Lead', 'Boron', 'Lithium', 'Magnesium',
     'Manganese', 'Aluminum', 'Silver', 'Fluorite', 'Villiaumite', 'Carobbiite', 'Arsenic', 'Nitrogen', 'Helium',
     'Enderium', 'Cryotheum', 'Graphite', 'Beryllium', 'Heavy Water', 'Beryllium-Carbon', 'Lead-Steel', 'Boron-Silver',
-    'Conductor', 'Irradiator', 'Air'];
+    'Irradiator', 'Conductor', 'Air'];
   const tileClasses = tileNames.slice();
   tileClasses[M0] = 'M0';
   tileClasses[M0 + 1] = 'M1';
@@ -161,8 +161,8 @@ $(() => { FissionOpt().then((FissionOpt) => {
   tileClasses[R0] = 'R0';
   tileClasses[R0 + 1] = 'R1';
   tileClasses[Shield] = 'other';
-  tileClasses[Conductor] = 'other';
   tileClasses[Irradiator] = 'other';
+  tileClasses[Conductor] = 'other';
   tileClasses[Air] = 'air';
   const tileSaveNames = tileTitles.slice();
   tileSaveNames[5] = 'NetherBrick';
@@ -231,8 +231,8 @@ $(() => { FissionOpt().then((FissionOpt) => {
         Moderators: {},
         Reflectors: {},
         NeutronShields: {},
-        Conductors: [],
         Irradiators: {},
+        Conductors: [],
         FuelCells: {}
       }
     };
@@ -246,10 +246,10 @@ $(() => { FissionOpt().then((FissionOpt) => {
         category = saved.Data.Reflectors;
       } else if (tile == Shield) {
         category = saved.Data.NeutronShields;
-      } else if (tile == Conductor) {
-        category = saved.Data.Conductors;
       } else if (tile == Irradiator) {
         category = saved.Data.Irradiators;
+      } else if (tile == Conductor) {
+        category = saved.Data.Conductors;
       } else if (tile == Air) {
         return;
       } else {
@@ -323,13 +323,26 @@ $(() => { FissionOpt().then((FissionOpt) => {
   };
 
   const progress = $('#progress');
+  let lossElement, lossPlot;
   function step() {
     schedule();
     opt.stepInteractive();
     const nStage = opt.getNStage();
-    progress.text('Episode ' + opt.getNEpisode() + ', stage ' + nStage + ', iteration ' + opt.getNIteration());
+    if (nStage == -2)
+      progress.text('Episode ' + opt.getNEpisode() + ', training iteration ' + opt.getNIteration());
+    else if (nStage == -1)
+      progress.text('Episode ' + opt.getNEpisode() + ', inference iteration ' + opt.getNIteration());
+    else
+      progress.text('Episode ' + opt.getNEpisode() + ', stage ' + nStage + ', iteration ' + opt.getNIteration());
     if (opt.needsRedrawBest())
       displaySample(opt.getBest());
+    if (opt.needsReplotLoss()) {
+      const data = opt.getLossHistory();
+      while (lossPlot.data.labels.length < data.length)
+        lossPlot.data.labels.push(lossPlot.data.labels.length);
+      lossPlot.data.datasets[0].data = data;
+      lossPlot.update({duration: 0});
+    }
   };
 
   run.click(() => {
@@ -424,6 +437,14 @@ $(() => { FissionOpt().then((FissionOpt) => {
       design.empty();
       save.off('click');
       save.addClass('disabledLink');
+      if (lossElement !== undefined)
+        lossElement.remove();
+      lossElement = $('<canvas></canvas>').attr('width', 1024).attr('height', 128).insertAfter(progress);
+      lossPlot = new Chart(lossElement[0].getContext('2d'), {
+        type: 'bar',
+        options: {responsive: false, animation: {duration: 0}, hover: {animationDuration: 0}, scales: {xAxes: [{display: false}]}, legend: {display: false}},
+        data: {labels: [], datasets: [{label: 'Loss', backgroundColor: 'red', data: [], categoryPercentage: 1.0, barPercentage: 1.0}]}
+      });
       opt = new FissionOpt.OverhaulFissionOpt(settings);
     }
     schedule();

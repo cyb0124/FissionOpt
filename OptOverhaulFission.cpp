@@ -1,4 +1,4 @@
-#include "OptOverhaulFission.h"
+#include "OverhaulFissionNet.h"
 
 namespace OverhaulFission {
   void Opt::restart() {
@@ -46,7 +46,7 @@ namespace OverhaulFission {
     :settings(settings),
     nEpisode(), nStage(), nIteration(), nConverge(),
     maxConverge(std::min(7 * 7 * 7, settings.sizeX * settings.sizeY * settings.sizeZ) * 32),
-    infeasibilityPenalty(), bestChanged(true), redrawNagle() {
+    infeasibilityPenalty(), bestChanged(true), redrawNagle(), lossHistory(nLossHistory), lossChanged() {
     settings.compute();
     for (int x(settings.symX ? settings.sizeX / 2 : 0); x < settings.sizeX; ++x)
       for (int y(settings.symY ? settings.sizeY / 2 : 0); y < settings.sizeY; ++y)
@@ -57,6 +57,8 @@ namespace OverhaulFission {
     if (settings.controllable)
       parent.valueWithShield.initialize(settings, true);
     restart();
+    net = std::make_unique<Net>(*this);
+    net->appendTrajectory(parent);
     parentFitness = currentFitness(parent);
 
     for (auto &child : children) {
@@ -100,7 +102,14 @@ namespace OverhaulFission {
   }
 
   double Opt::currentFitness(const Sample &x) {
-    return rawFitness(x.value) - infeasibility(x) * infeasibilityPenalty;
+    if (nStage == StageInfer) {
+      return net->infer(x);
+    } else if (nStage == StageTrain) {
+      return 0.0;
+    } else {
+      return rawFitness(x.value) - infeasibility(x) * infeasibilityPenalty
+        - std::exp(-static_cast<double>(x.value.totalRawFlux) / settings.minCriticality);
+    }
   }
 
   int Opt::getNSym(int x, int y, int z) {
@@ -182,14 +191,37 @@ namespace OverhaulFission {
   }
 
   void Opt::step() {
+    if (nStage == StageTrain) {
+      if (!nIteration) {
+        nStage = StageInfer;
+        parentFitness = net->infer(parent);
+        inferenceFailed = true;
+      } else {
+        for (int i{}; i < nLossHistory - 1; ++i)
+          lossHistory[i] = lossHistory[i + 1];
+        lossHistory[nLossHistory - 1] = net->train();
+        lossChanged = true;
+        --nIteration;
+        return;
+      }
+    }
+
     if (nConverge == maxConverge) {
       nIteration = 0;
       nConverge = 0;
-      if (feasible(parent) || infeasibilityPenalty > 1e8) {
-        infeasibilityPenalty = 0.0;
+      if (nStage == StageInfer) {
         nStage = 0;
         ++nEpisode;
-        restart();
+        if (inferenceFailed)
+          restart();
+        net->newTrajectory();
+        net->appendTrajectory(parent);
+      } else if (feasible(parent) || infeasibilityPenalty > 1e8) {
+        infeasibilityPenalty = 0.0;
+        nStage = StageTrain;
+        net->finishTrajectory(feasible(parent) ? rawFitness(parent.value) : 0.0);
+        nIteration = (net->getTrajectoryLength() * nEpoch + nMiniBatch - 1) / nMiniBatch;
+        return;
       } else {
         ++nStage;
         if (infeasibilityPenalty)
@@ -231,8 +263,12 @@ namespace OverhaulFission {
       if (bestFitness > parentFitness) {
         parentFitness = bestFitness;
         nConverge = 0;
+        if (nStage == StageInfer)
+          inferenceFailed = false;
       }
       std::swap(parent, child);
+      if (nStage != StageInfer)
+        net->appendTrajectory(parent);
     }
     ++nConverge;
     ++nIteration;
@@ -245,7 +281,7 @@ namespace OverhaulFission {
   void Opt::stepInteractive() {
     int dim(settings.sizeX * settings.sizeY * settings.sizeZ);
     int n(std::min(interactiveMin, (interactiveScale + dim - 1) / dim));
-    for (int i{}; i < n; ++i) {
+    for (int i{}; i < (nStage == StageTrain ? interactiveNet : nStage == StageInfer ? interactiveNet * nMiniBatch / 4 : n); ++i) {
       step();
       ++redrawNagle;
     }
@@ -257,6 +293,13 @@ namespace OverhaulFission {
       bestChanged = false;
       redrawNagle = 0;
     }
+    return result;
+  }
+
+  bool Opt::needsReplotLoss() {
+    bool result(lossChanged);
+    if (result)
+      lossChanged = false;
     return result;
   }
 }

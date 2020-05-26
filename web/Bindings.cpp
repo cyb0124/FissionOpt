@@ -1,6 +1,6 @@
 #include <emscripten/bind.h>
 #include "../FissionNet.h"
-#include "../OptOverhaulFission.h"
+#include "../OverhaulFissionNet.h"
 
 static void setLimit(Fission::Settings &x, int index, int limit) {
   x.limit[index] = limit;
@@ -108,6 +108,11 @@ static int getIrradiatorFlux(const OverhaulFission::Sample &x) {
   return x.value.irradiatorFlux;
 }
 
+static emscripten::val overhaulGetLossHistory(const OverhaulFission::Opt &opt) {
+  auto &data(opt.getLossHistory());
+  return emscripten::val(emscripten::typed_memory_view(data.size(), data.data()));
+}
+
 EMSCRIPTEN_BINDINGS(FissionOpt) {
   emscripten::class_<Fission::Settings>("FissionSettings")
     .constructor<>()
@@ -172,6 +177,8 @@ EMSCRIPTEN_BINDINGS(FissionOpt) {
     .constructor<OverhaulFission::Settings&>()
     .function("stepInteractive", &OverhaulFission::Opt::stepInteractive)
     .function("needsRedrawBest", &OverhaulFission::Opt::needsRedrawBest)
+    .function("needsReplotLoss", &OverhaulFission::Opt::needsReplotLoss)
+    .function("getLossHistory", &overhaulGetLossHistory)
     .function("getBest", &OverhaulFission::Opt::getBest)
     .function("getNEpisode", &OverhaulFission::Opt::getNEpisode)
     .function("getNStage", &OverhaulFission::Opt::getNStage)

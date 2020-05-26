@@ -14,6 +14,8 @@ add_executable(FissionOpt
   OverhaulFission.cpp
   OptOverhaulFission.h
   OptOverhaulFission.cpp
+  OverhaulFissionNet.h
+  OverhaulFissionNet.cpp
 )
 
 target_include_directories(FissionOpt PRIVATE

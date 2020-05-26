@@ -12,9 +12,17 @@ namespace OverhaulFission {
     Evaluation value, valueWithShield;
   };
 
-  constexpr int interactiveMin(1024), interactiveScale(81920);
+  enum {
+    StageTrain = -2,
+    StageInfer
+  };
+
+  constexpr int interactiveMin(1024), interactiveScale(81920), interactiveNet(16), nLossHistory(256);
+
+  class Net;
 
   class Opt {
+    friend Net;
     const Settings &settings;
     std::vector<Coord> allowedCoords;
     std::vector<int> allowedTiles;
@@ -25,8 +33,12 @@ namespace OverhaulFission {
     Sample parent, best;
     std::array<Sample, 4> children;
     std::mt19937 rng;
+    std::unique_ptr<Net> net;
+    bool inferenceFailed;
     bool bestChanged;
     int redrawNagle;
+    std::vector<double> lossHistory;
+    bool lossChanged;
     void restart();
     bool feasible(const Sample &x);
     double infeasibility(const Sample &x);
@@ -40,6 +52,8 @@ namespace OverhaulFission {
     void step();
     void stepInteractive();
     bool needsRedrawBest();
+    bool needsReplotLoss();
+    const std::vector<double> &getLossHistory() const { return lossHistory; }
     const Sample &getBest() const { return best; }
     int getNEpisode() const { return nEpisode; }
     int getNStage() const { return nStage; }

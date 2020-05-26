@@ -31,7 +31,7 @@ namespace OverhaulFission {
     // Reflector
     R0, R1,
     // Other
-    Shield, Conductor, Irradiator, Air, C0
+    Shield, Irradiator, Conductor, Air, C0
   }; }
 
   enum {

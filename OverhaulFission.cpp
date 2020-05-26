@@ -597,13 +597,13 @@ namespace OverhaulFission {
               tile.emplace<Shield>();
               shields.emplace_back(x, y, z);
               break;
-            case Tiles::Conductor:
-              tile.emplace<Conductor>();
-              conductors.emplace_back(x, y, z);
-              break;
             case Tiles::Irradiator:
               tile.emplace<Irradiator>();
               irradiators.emplace_back(x, y, z);
+              break;
+            case Tiles::Conductor:
+              tile.emplace<Conductor>();
+              conductors.emplace_back(x, y, z);
               break;
             case Tiles::Air:
               tile.emplace<Air>();
