@@ -178,9 +178,17 @@ namespace OverhaulFission {
         if (!cell.fluxEdges[i].has_value())
           continue;
         FluxEdge &edge(*cell.fluxEdges[i]);
+        auto &[dx, dy, dz] = directions[i];
+        /* Check if edge ends at inactive cell */ {
+          int cx(x + dx * (edge.nModerators + 1));
+          int cy(y + dy * (edge.nModerators + 1));
+          int cz(z + dz * (edge.nModerators + 1));
+          Cell *to(std::get_if<Cell>(&tiles(cx, cy, cz)));
+          if (to && to->flux < to->fuel->criticality)
+            continue;
+        }
         ++cell.heatMult;
         cell.positionalEfficiency += edge.efficiency;
-        auto &[dx, dy, dz] = directions[i];
         int cx(x), cy(y), cz(z);
         for (int j{}; j <= edge.nModerators; ++j) {
           cx += dx; cy += dy; cz += dz;
