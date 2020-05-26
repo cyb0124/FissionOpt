@@ -189,7 +189,7 @@ $(() => { FissionOpt().then((FissionOpt) => {
       row.append(Math.round(value * 100) / 100);
       block.append(row);
     };
-    appendInfo('Output', sample.getOutput() / 16, 'mb/t');
+    appendInfo('Output', sample.getOutput() / 16, 'mB/t');
     appendInfo('Efficiency', sample.getEfficiency() * 100, '%');
     appendInfo('Fuel Use', sample.getFuelUse(), '&times;');
     appendInfo('Irr. Flux', sample.getIrradiatorFlux(), 'N');

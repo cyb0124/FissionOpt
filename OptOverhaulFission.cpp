@@ -45,7 +45,7 @@ namespace OverhaulFission {
   Opt::Opt(Settings &settings)
     :settings(settings),
     nEpisode(), nStage(), nIteration(), nConverge(),
-    maxConverge(std::min(7 * 7 * 7, settings.sizeX * settings.sizeY * settings.sizeZ) * 16),
+    maxConverge(std::min(7 * 7 * 7, settings.sizeX * settings.sizeY * settings.sizeZ) * 32),
     infeasibilityPenalty(), bestChanged(true), redrawNagle() {
     settings.compute();
     for (int x(settings.symX ? settings.sizeX / 2 : 0); x < settings.sizeX; ++x)
@@ -92,11 +92,7 @@ namespace OverhaulFission {
   }
 
   double Opt::currentFitness(const Sample &x) {
-    double raw(rawFitness(x.value));
-    if (!nStage)
-      return raw + x.value.totalRawFlux;
-    else
-      return raw - infeasibility(x) * infeasibilityPenalty;
+    return rawFitness(x.value) - infeasibility(x) * infeasibilityPenalty;
   }
 
   int Opt::getNSym(int x, int y, int z) {
@@ -181,9 +177,7 @@ namespace OverhaulFission {
     if (nConverge == maxConverge) {
       nIteration = 0;
       nConverge = 0;
-      if (!nStage) {
-        nStage = 1;
-      } else if (!infeasibility(parent) || infeasibilityPenalty > 1e8) {
+      if (!infeasibility(parent) || infeasibilityPenalty > 1e8) {
         infeasibilityPenalty = 0.0;
         nStage = 0;
         ++nEpisode;

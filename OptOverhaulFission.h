@@ -12,7 +12,7 @@ namespace OverhaulFission {
     Evaluation value, valueWithShield;
   };
 
-  constexpr int interactiveMin(1024), interactiveScale(327680);
+  constexpr int interactiveMin(1024), interactiveScale(81920);
 
   class Opt {
     const Settings &settings;
