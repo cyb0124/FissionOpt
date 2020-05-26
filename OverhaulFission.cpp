@@ -631,13 +631,30 @@ namespace OverhaulFission {
     computeStats();
   }
 
+  void Evaluation::removeInactiveHeatSink(State &state, int x, int y, int z) {
+    HeatSink &tile(*std::get_if<HeatSink>(&tiles(x, y, z)));
+    if (!tile.isActive)
+      state(x, y, z) = Tiles::Air;
+  }
+
   void Evaluation::canonicalize(State &state) {
     for (auto &[x, y, z] : cells) {
       Cell &tile(*std::get_if<Cell>(&tiles(x, y, z)));
       if (tile.isNeutronSourceBlocked)
         state(x, y, z) -= settings->cellTypes[state(x, y, z) - Tiles::C0].second;
     }
-    // TODO: remove redundant blocks
+    for (auto &[x, y, z] : tier1s)
+      removeInactiveHeatSink(state, x, y, z);
+    for (auto &[x, y, z] : tier2s)
+      removeInactiveHeatSink(state, x, y, z);
+    for (auto &[x, y, z] : tier3s)
+      removeInactiveHeatSink(state, x, y, z);
+    for (auto &[x, y, z] : irradiators) {
+      Irradiator &tile(*std::get_if<Irradiator>(&tiles(x, y, z)));
+      if (!tile.isActive)
+        state(x, y, z) = Tiles::Air;
+    }
+    // TODO: remove remaining redundant blocks
     //  (careful with shields, conductors, clusters without casing connections and neutron source redirection)
   }
 }

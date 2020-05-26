@@ -310,7 +310,7 @@ $(() => { FissionOpt().then((FissionOpt) => {
             parsePositiveInt('Criticality', fuel.find('.criticality').val()),
             parsePositiveInt('Heat', fuel.find('.heat').val()),
             selfPriming);
-          tileClasses.push('cell');
+          tileClasses.push('other');
           cellSources.push(0);
           if (selfPriming) {
             tileNames.push(i + 1 + 'S');
@@ -318,15 +318,15 @@ $(() => { FissionOpt().then((FissionOpt) => {
           } else {
             tileNames.push((i + 1).toString());
             tileTitles.push('Cell for Fuel #' + (i + 1));
-            tileClasses.push('cell');
+            tileClasses.push('other');
             cellSources.push(1);
             tileNames.push(i + 1 + 'A');
             tileTitles.push('Cell for Fuel #' + (i + 1) + ', Primed by Cf-252');
-            tileClasses.push('cell');
+            tileClasses.push('other');
             cellSources.push(2);
             tileNames.push(i + 1 + 'B');
             tileTitles.push('Cell for Fuel #' + (i + 1) + ', Primed by Po-Be');
-            tileClasses.push('cell');
+            tileClasses.push('other');
             cellSources.push(3);
             tileNames.push(i + 1 + 'C');
             tileTitles.push('Cell for Fuel #' + (i + 1) + ', Primed by Ra-Be');

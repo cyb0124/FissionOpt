@@ -79,7 +79,7 @@ namespace OverhaulFission {
     const Fuel *fuel;
     std::optional<FluxEdge> fluxEdges[6];
     double positionalEfficiency{}, fluxEfficiency, efficiency;
-    int neutronSource, flux, heatMult{}, cluster{-1};
+    int neutronSource, flux{}, heatMult{}, cluster{-1};
     bool isNeutronSourceBlocked{};
     bool isExcludedFromFluxRoots{};
     bool hasAlreadyPropagatedFlux;
@@ -167,6 +167,7 @@ namespace OverhaulFission {
     void computeClusterStats(Cluster &cluster);
     void computeSparsity();
     void computeStats();
+    void removeInactiveHeatSink(State &state, int x, int y, int z);
   public:
     void initialize(const Settings &settings, bool shieldOn);
     void run(const State &state);
