@@ -353,9 +353,9 @@ $(() => { FissionOpt().then((FissionOpt) => {
         return x >= 0 ? x : -1;
       }
       try {
-        settings.sizeX = parsePositiveInt('Interior', $('#sizeX').val());
-        settings.sizeY = parsePositiveInt('Interior', $('#sizeY').val());
-        settings.sizeZ = parsePositiveInt('Interior', $('#sizeZ').val());
+        settings.sizeX = parsePositiveInt('Interior size', $('#sizeX').val());
+        settings.sizeY = parsePositiveInt('Interior size', $('#sizeY').val());
+        settings.sizeZ = parsePositiveInt('Interior size', $('#sizeZ').val());
         settings.clearFuels();
         while (cellSources.length) {
           cellSources.pop();

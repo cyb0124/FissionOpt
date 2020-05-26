@@ -439,7 +439,7 @@ namespace OverhaulFission {
     Tile &tile(tiles(x, y, z));
     std::visit(Overload {
       [&](Cell &tile) { valid = tile.isActive && tile.cluster < 0; },
-      [&](Shield &tile) { valid = shieldOn && tile.isFunctional && tile.cluster < 0; },
+      [&](Shield &tile) { valid = !shieldOn && tile.isFunctional && tile.cluster < 0; },
       [&](HeatSink &tile) { valid = tile.isActive && tile.cluster < 0; },
       [&](Irradiator &tile) { valid = tile.isActive && tile.cluster < 0; },
       [&](Conductor &tile) { hasCasingConnection = conductorGroups[tile.group]; },
@@ -635,7 +635,7 @@ namespace OverhaulFission {
     clusters.clear();
     for (auto &[x, y, z] : cells)
       propagateCluster(-1, x, y, z);
-    if (shieldOn)
+    if (!shieldOn)
       for (auto &[x, y, z] : shields)
         propagateCluster(-1, x, y, z);
     for (auto &[x, y, z] : irradiators)
