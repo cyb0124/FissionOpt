@@ -21,6 +21,7 @@ $(() => { FissionOpt().then((FissionOpt) => {
   const addFuel = () => {
     const row = $('<tr></tr>');
     row.append('<td>' + fuelTable.children().length + '</td>');
+    row.append('<td><input type="text" class="name"></td>');
     row.append('<td><input type="text" class="efficiency"></td>');
     row.append('<td><input type="text" class="heat"></td>');
     row.append('<td><input type="text" class="criticality"></td>');
@@ -38,11 +39,17 @@ $(() => { FissionOpt().then((FissionOpt) => {
   const addFuelPreset = (type, fuel, efficiency, heat, criticality, selfPriming) => {
     const link = $('<a href="javascript:;">' + type + '</a>');
     link.click(() => {
-      const fuel = addFuel();
-      fuel.find('.efficiency').val(efficiency);
-      fuel.find('.heat').val(heat);
-      fuel.find('.criticality').val(criticality);
-      fuel.find('.selfPriming').prop('checked', selfPriming);
+      let name = '[' + type + ']';
+      if (fuel.substr(0, 3) == "MIX")
+        name += 'M' + type + fuel.substr(3);
+      else
+        name += fuel;
+      const row = addFuel();
+      row.find('.name').val(name);
+      row.find('.efficiency').val(efficiency);
+      row.find('.heat').val(heat);
+      row.find('.criticality').val(criticality);
+      row.find('.selfPriming').prop('checked', selfPriming);
     });
     if (!fuelPresets.hasOwnProperty(fuel)) {
       fuelPresetHead.append('<td>' + fuel + '</td>')
@@ -135,7 +142,7 @@ $(() => { FissionOpt().then((FissionOpt) => {
   addFuelPreset("ZA", "HECf-249", 180, 2028, 25, true);
   addFuelPreset("ZA", "LECf-251", 180, 360, 60, true);
   addFuelPreset("ZA", "HECf-251", 185, 1080, 30, true);
-  const Air = 40, C0 = 41;
+  const Air = 40, C0 = 41, M0 = 32, R0 = 35, Shield = 37, Conductor = 38, Irradiator = 39;
   const cellSources = [];
   const tileNames = [
     'Wt', 'Fe', 'Rs', 'Qz', 'Ob', 'Nr', 'Gs', 'Lp', 'Au', 'Pm', 'Sm', 'En', 'Pr', 'Dm', 'Em', 'Cu',
@@ -148,15 +155,19 @@ $(() => { FissionOpt().then((FissionOpt) => {
     'Enderium', 'Cryotheum', 'Graphite', 'Beryllium', 'Heavy Water', 'Beryllium-Carbon', 'Lead-Steel', 'Boron-Silver',
     'Conductor', 'Irradiator', 'Air'];
   const tileClasses = tileNames.slice();
-  tileClasses[32] = 'M0';
-  tileClasses[33] = 'M1';
-  tileClasses[34] = 'M2';
-  tileClasses[35] = 'R0';
-  tileClasses[36] = 'R1';
-  tileClasses[37] = 'other';
-  tileClasses[38] = 'other';
-  tileClasses[39] = 'other';
+  tileClasses[M0] = 'M0';
+  tileClasses[M0 + 1] = 'M1';
+  tileClasses[M0 + 2] = 'M2';
+  tileClasses[R0] = 'R0';
+  tileClasses[R0 + 1] = 'R1';
+  tileClasses[Shield] = 'other';
+  tileClasses[Conductor] = 'other';
+  tileClasses[Irradiator] = 'other';
   tileClasses[Air] = 'air';
+  const tileSaveNames = tileTitles.slice();
+  tileSaveNames[5] = 'NetherBrick';
+  tileSaveNames[11] = 'EndStone';
+  tileSaveNames[M0 + 2] = 'HeavyWater';
   const displayTile = (tile, pad) => {
     const name = tileNames[tile];
     const result = $('<span>' + name + '</span>').addClass(tileClasses[tile]);
@@ -178,6 +189,7 @@ $(() => { FissionOpt().then((FissionOpt) => {
 
   const settings = new FissionOpt.OverhaulFissionSettings();
   const design = $('#design');
+  const save = $('#save');
 
   const displaySample = (sample) => {
     design.empty();
@@ -210,6 +222,48 @@ $(() => { FissionOpt().then((FissionOpt) => {
         ++resourceMap[key];
     };
 
+    const saved = {
+      SaveVersion: {Major: 2, Minor: 1, Build: 4, Revision: 0, MajorRevision: 0, MinorRevision: 0},
+      Data: {
+        InteriorDimensions: {X: shapes[2], Y: shapes[0], Z: shapes[1]},
+        CoolantRecipeName: "Water to High Pressure Steam",
+        HeatSinks: {},
+        Moderators: {},
+        Reflectors: {},
+        NeutronShields: {},
+        Conductors: [],
+        Irradiators: {},
+        FuelCells: {}
+      }
+    };
+    const saveTile = (tile, x, y, z) => {
+      let category;
+      if (tile < M0) {
+        category = saved.Data.HeatSinks;
+      } else if (tile < R0) {
+        category = saved.Data.Moderators;
+      } else if (tile < Shield) {
+        category = saved.Data.Reflectors;
+      } else if (tile == Shield) {
+        category = saved.Data.NeutronShields;
+      } else if (tile == Conductor) {
+        category = saved.Data.Conductors;
+      } else if (tile == Irradiator) {
+        category = saved.Data.Irradiators;
+      } else if (tile == Air) {
+        return;
+      } else {
+        category = saved.Data.FuelCells;
+      }
+      if (tile != Conductor) {
+        const name = tileSaveNames[tile];
+        if (!category.hasOwnProperty(name))
+          category[name] = [];
+        category = category[name];
+      }
+      category.push({X: z + 1, Y: x + 1, Z: y + 1});
+    };
+
     for (let x = 0; x < shapes[0]; ++x) {
       block = $('<div></div>');
       block.append('<div>Layer ' + (x + 1) + '</div>');
@@ -219,6 +273,7 @@ $(() => { FissionOpt().then((FissionOpt) => {
           if (z)
             row.append(' ');
           const tile = data[x * strides[0] + y * strides[1] + z * strides[2]];
+          row.append(displayTile(tile, true));
           if (tile < Air) {
             increaseResource(tile);
           } else if (tile >= C0) {
@@ -227,12 +282,22 @@ $(() => { FissionOpt().then((FissionOpt) => {
             if (source)
               increaseResource(-2 - source);
           }
-          row.append(displayTile(tile, true));
+          saveTile(tile, x, y, z);
         }
         block.append(row);
       }
       design.append(block);
     }
+
+    save.removeClass('disabledLink');
+    save.off('click').click(() => {
+      const elem = document.createElement('a');
+      const url = window.URL.createObjectURL(new Blob([JSON.stringify(saved)], {type: 'text/json'}));
+      elem.setAttribute('href', url);
+      elem.setAttribute('download', 'reactor.json');
+      elem.click();
+      window.URL.revokeObjectURL(url);
+    });
 
     block = $('<div></div>');
     block.append('<div>Total number of blocks used</div>')
@@ -293,10 +358,11 @@ $(() => { FissionOpt().then((FissionOpt) => {
         settings.sizeZ = parsePositiveInt('Interior', $('#sizeZ').val());
         settings.clearFuels();
         while (cellSources.length) {
+          cellSources.pop();
           tileNames.pop();
           tileTitles.pop();
           tileClasses.pop();
-          cellSources.pop();
+          tileSaveNames.pop();
         }
         const fuels = fuelTable.children();
         if (fuels.length == 1)
@@ -304,32 +370,41 @@ $(() => { FissionOpt().then((FissionOpt) => {
         for (let i = 0; i < fuels.length - 1; ++i) {
           const fuel = fuels.eq(i);
           const selfPriming = fuel.find('.selfPriming').is(':checked');
+          const name = fuel.find('.name').val();
           settings.addFuel(
             parsePositiveFloat('Efficiency', fuel.find('.efficiency').val()) / 100,
             parseLimit(fuel.find('.limit').val()),
             parsePositiveInt('Criticality', fuel.find('.criticality').val()),
             parsePositiveInt('Heat', fuel.find('.heat').val()),
             selfPriming);
-          tileClasses.push('other');
           cellSources.push(0);
+          tileClasses.push('other');
           if (selfPriming) {
             tileNames.push(i + 1 + 'S');
             tileTitles.push('Cell for Fuel #' + (i + 1) + ', Self-Primed');
+            tileSaveNames.push(name + ';True;Self');
           } else {
             tileNames.push((i + 1).toString());
             tileTitles.push('Cell for Fuel #' + (i + 1));
+            tileSaveNames.push(name + ';False;None');
+
             tileClasses.push('other');
             cellSources.push(1);
             tileNames.push(i + 1 + 'A');
             tileTitles.push('Cell for Fuel #' + (i + 1) + ', Primed by Cf-252');
+            tileSaveNames.push(name + ';True;Cf-252');
+
             tileClasses.push('other');
             cellSources.push(2);
             tileNames.push(i + 1 + 'B');
             tileTitles.push('Cell for Fuel #' + (i + 1) + ', Primed by Po-Be');
+            tileSaveNames.push(name + ';True;Po-Be');
+
             tileClasses.push('other');
             cellSources.push(3);
             tileNames.push(i + 1 + 'C');
             tileTitles.push('Cell for Fuel #' + (i + 1) + ', Primed by Ra-Be');
+            tileSaveNames.push(name + ';True;Ra-Be');
           }
         }
         blockLimits.find('input').each(function(i) {
@@ -347,6 +422,8 @@ $(() => { FissionOpt().then((FissionOpt) => {
         return;
       }
       design.empty();
+      save.off('click');
+      save.addClass('disabledLink');
       opt = new FissionOpt.OverhaulFissionOpt(settings);
     }
     schedule();

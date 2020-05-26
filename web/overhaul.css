@@ -41,7 +41,11 @@ input {
   overflow-x: auto;
 }
 
-#fuelTable input[type=text], .limit {
+.name {
+  width: 12.5ch;
+}
+
+.efficiency, .heat, .criticality, .limit {
   width: 5.5ch;
 }
 
