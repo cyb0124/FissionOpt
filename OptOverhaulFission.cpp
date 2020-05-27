@@ -109,6 +109,8 @@ namespace OverhaulFission {
     } else {
       double result(rawFitness(x.value));
       result += 1 - std::exp(-static_cast<double>(x.value.totalRawFlux) / settings.minCriticality);
+      if (x.value.nActiveCells)
+        ++result;
       result -= infeasibility(x) * infeasibilityPenalty;
       return result;
     }
