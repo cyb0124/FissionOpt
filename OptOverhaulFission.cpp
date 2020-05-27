@@ -277,9 +277,9 @@ namespace OverhaulFission {
           localBest = raw;
           nConverge = 0;
         }
-        infeasibilityPenalty *= 0.99;
+        infeasibilityPenalty *= 0.999;
       } else {
-        infeasibilityPenalty = std::max(0.01, infeasibilityPenalty / 0.99);
+        infeasibilityPenalty = std::max(0.001, infeasibilityPenalty / 0.999);
       }
       parentFitness = currentFitness(parent);
     }
