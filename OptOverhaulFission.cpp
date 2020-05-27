@@ -107,7 +107,10 @@ namespace OverhaulFission {
     } else if (nStage == StageTrain) {
       return 0.0;
     } else {
-      return rawFitness(x.value) - infeasibility(x) * infeasibilityPenalty;
+      double result(rawFitness(x.value));
+      result += 1 - std::exp(-static_cast<double>(x.value.totalRawFlux) / settings.minCriticality);
+      result -= infeasibility(x) * infeasibilityPenalty;
+      return result;
     }
   }
 
@@ -263,19 +266,20 @@ namespace OverhaulFission {
         }
       }
       std::swap(parent, child);
-      if (nStage != StageInfer) {
-        if (feasible(parent)) {
-          double raw(rawFitness(parent.value));
-          if (raw > localBest) {
-            localBest = raw;
-            nConverge = 0;
-          }
-          infeasibilityPenalty *= 0.999;
-        } else {
-          infeasibilityPenalty = std::max(0.001, infeasibilityPenalty / 0.999);
+    }
+
+    if (nStage != StageInfer) {
+      if (feasible(parent)) {
+        double raw(rawFitness(parent.value));
+        if (raw > localBest) {
+          localBest = raw;
+          nConverge = 0;
         }
-        parentFitness = currentFitness(parent);
+        infeasibilityPenalty *= 0.99;
+      } else {
+        infeasibilityPenalty = std::max(0.01, infeasibilityPenalty / 0.99);
       }
+      parentFitness = currentFitness(parent);
     }
 
     ++nConverge;
