@@ -263,10 +263,10 @@ namespace OverhaulFission {
           parentFitness = bestFitness;
           nConverge = 0;
           inferenceFailed = false;
-        } else {
-          net->appendTrajectory(child);
         }
       }
+      if (nStage != StageInfer && !std::uniform_int_distribution<>(0, 9)(rng))
+        net->appendTrajectory(child);
       std::swap(parent, child);
     }
 
