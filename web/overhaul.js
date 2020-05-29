@@ -13,12 +13,16 @@ $(() => { FissionOpt().then((FissionOpt) => {
   const fuelTable = $('#fuelTable');
   const newFuelRow = $('#newFuelRow');
   const removeFuel = (index) => {
+    if (opt !== null)
+      return;
     fuelTable.children().eq(index).remove();
     const rows = fuelTable.children();
     for (let i = index; i < rows.length - 1; ++i)
       rows.eq(i).children().first().text(i + 1);
   };
   const addFuel = () => {
+    if (opt !== null)
+      return;
     const row = $('<tr></tr>');
     row.append('<td>' + fuelTable.children().length + '</td>');
     row.append('<td><input type="text" class="name"></td>');
@@ -39,6 +43,8 @@ $(() => { FissionOpt().then((FissionOpt) => {
   const addFuelPreset = (type, fuel, efficiency, heat, criticality, selfPriming) => {
     const link = $('<a href="javascript:;">' + type + '</a>');
     link.click(() => {
+      if (opt !== null)
+        return;
       let name = '[' + type + ']';
       if (fuel.substr(0, 3) == "MIX")
         name += 'M' + type + fuel.substr(3);
