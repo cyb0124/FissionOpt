@@ -8,8 +8,6 @@ namespace OverhaulFission {
         tileMap.emplace(i, tileMap.size());
     tileMap.emplace(Tiles::Air, tileMap.size());
     nFeatures = static_cast<int>(tileMap.size() * 2 - 1 + nStatisticalFeatures);
-    if (opt.settings.limits[Tiles::Conductor])
-      --nFeatures;
     batchInput = xt::empty<double>({nMiniBatch, nFeatures});
     batchTarget = xt::empty<double>({nMiniBatch});
 
@@ -60,11 +58,11 @@ namespace OverhaulFission {
       for (int y{}; y < opt.settings.sizeY; ++y) {
         for (int z{}; z < opt.settings.sizeZ; ++z) {
           int tile(sample.state(x, y, z));
-          if (tile >= Tiles::C0)
+          if (tile > Tiles::Air)
             continue;
           int index(tileMap[tile]);
           ++vInput[index];
-          if (tile >= Tiles::Conductor)
+          if (tile == Tiles::Air)
             continue;
           bool isFunctional;
           std::visit(Overload {
@@ -73,6 +71,7 @@ namespace OverhaulFission {
             [&](const Shield &tile) { isFunctional = tile.flux; },
             [&](const Irradiator &tile) { isFunctional = tile.flux; },
             [&](const HeatSink &tile) { isFunctional = tile.isActive; },
+            [&](const Conductor &tile) { isFunctional = sample.value.conductorGroups[tile.group]; },
             [] (...) { throw; }
           }, sample.value.tiles(x, y, z));
           vInput[tileMap.size() + index] += isFunctional;
@@ -82,6 +81,7 @@ namespace OverhaulFission {
     vInput.periodic(-1) = sample.value.cells.size();
     vInput.periodic(-2) = sample.value.nActiveCells;
     vInput.periodic(-3) = sample.value.clusters.size();
+    vInput /= opt.settings.sizeX * opt.settings.sizeY * opt.settings.sizeZ;
     vInput.periodic(-4) = static_cast<double>(sample.value.totalRawFlux) / opt.settings.minCriticality;
     vInput.periodic(-5) = static_cast<double>(sample.value.totalPositiveNetHeat) / opt.settings.minHeat;
     vInput.periodic(-6) = sample.value.output / opt.settings.maxOutput;
