@@ -30,7 +30,7 @@ namespace OverhaulFission {
     std::vector<int> allowedTiles;
     int nEpisode, nStage, nIteration;
     int nConverge;
-    double infeasibilityPenalty;
+    xt::xtensor<double, 1> infeasibilityPenalty;
     double parentFitness, localBest;
     Sample parent, best;
     std::array<Sample, 4> children;
@@ -42,8 +42,8 @@ namespace OverhaulFission {
     std::vector<double> lossHistory;
     bool lossChanged;
     void restart();
-    bool feasible(const Sample &x);
-    double infeasibility(const Sample &x);
+    xt::xtensor<bool, 1> feasible(const Sample &x);
+    xt::xtensor<double, 1> infeasibility(const Sample &x);
     double rawFitness(const Evaluation &x);
     double currentFitness(const Sample &x);
     int getNSym(int x, int y, int z);

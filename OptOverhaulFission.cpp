@@ -45,7 +45,7 @@ namespace OverhaulFission {
   Opt::Opt(Settings &settings)
     :settings(settings),
     nEpisode(), nStage(StageRollout), nIteration(), nConverge(),
-    infeasibilityPenalty(), bestChanged(true), redrawNagle(), lossHistory(nLossHistory), lossChanged() {
+    infeasibilityPenalty(xt::zeros<double>({2})), bestChanged(true), redrawNagle(), lossHistory(nLossHistory), lossChanged() {
     settings.compute();
     for (int x(settings.symX ? settings.sizeX / 2 : 0); x < settings.sizeX; ++x)
       for (int y(settings.symY ? settings.sizeY / 2 : 0); y < settings.sizeY; ++y)
@@ -58,7 +58,7 @@ namespace OverhaulFission {
     restart();
     net = std::make_unique<Net>(*this);
     net->appendTrajectory(parent);
-    localBest = feasible(parent) ? rawFitness(parent.value) : 0.0;
+    localBest = xt::all(feasible(parent)) ? rawFitness(parent.value) : 0.0;
     parentFitness = currentFitness(parent);
 
     for (auto &child : children) {
@@ -73,19 +73,18 @@ namespace OverhaulFission {
     best.value.run(best.state);
   }
 
-  bool Opt::feasible(const Sample &x) {
-    if (x.value.totalPositiveNetHeat)
-      return false;
-    if (settings.controllable && x.valueWithShield.nActiveCells)
-      return false;
-    return true;
+  xt::xtensor<bool, 1> Opt::feasible(const Sample &x) {
+    return {
+      !x.value.totalPositiveNetHeat,
+      !settings.controllable || !x.valueWithShield.nActiveCells
+    };
   }
   
-  double Opt::infeasibility(const Sample &x) {
-    double result(static_cast<double>(x.value.totalPositiveNetHeat) / settings.minHeat);
-    if (settings.controllable)
-      result += x.valueWithShield.nActiveCells;
-    return result;
+  xt::xtensor<double, 1> Opt::infeasibility(const Sample &x) {
+    return {
+      static_cast<double>(x.value.totalPositiveNetHeat) / settings.minHeat,
+      settings.controllable ? x.valueWithShield.nActiveCells : 0.0
+    };
   }
 
   double Opt::rawFitness(const Evaluation &x) {
@@ -111,7 +110,7 @@ namespace OverhaulFission {
       result += 1 - std::exp(-static_cast<double>(x.value.totalRawFlux) / settings.minCriticality);
       if (x.value.nActiveCells)
         ++result;
-      result -= infeasibility(x) * infeasibilityPenalty;
+      result -= xt::sum(infeasibility(x) * infeasibilityPenalty)();
       return result;
     }
   }
@@ -217,12 +216,12 @@ namespace OverhaulFission {
         net->newTrajectory();
         net->appendTrajectory(parent);
         parentFitness = currentFitness(parent);
-        localBest = feasible(parent) ? rawFitness(parent.value) : 0.0;
+        localBest = xt::all(feasible(parent)) ? rawFitness(parent.value) : 0.0;
         nConverge = 0;
         nIteration = 0;
       }
     } else if (nConverge == maxConvergeRollout) {
-      infeasibilityPenalty = 0.0;
+      infeasibilityPenalty.fill(0.0);
       nStage = StageTrain;
       net->finishTrajectory(localBest);
       nConverge = 0;
@@ -230,7 +229,7 @@ namespace OverhaulFission {
       return;
     }
 
-    bool bestChangedLocal(!nEpisode && nStage == StageRollout && !nIteration && feasible(parent));
+    bool bestChangedLocal(!nEpisode && nStage == StageRollout && !nIteration && xt::all(feasible(parent)));
     if (bestChangedLocal)
       best = parent;
     std::uniform_int_distribution<>
@@ -251,7 +250,7 @@ namespace OverhaulFission {
         bestChild = i;
         bestFitness = fitness;
       }
-      if (feasible(child) && rawFitness(child.value) > rawFitness(best.value)) {
+      if (xt::all(feasible(child)) && rawFitness(child.value) > rawFitness(best.value)) {
         bestChangedLocal = true;
         best = child;
       }
@@ -271,16 +270,19 @@ namespace OverhaulFission {
     }
 
     if (nStage != StageInfer) {
-      if (feasible(parent)) {
+      auto feasible(this->feasible(parent));
+      if (xt::all(feasible)) {
         double raw(rawFitness(parent.value));
         if (raw > localBest) {
           localBest = raw;
           nConverge = 0;
         }
-        infeasibilityPenalty *= 0.999;
-      } else {
-        infeasibilityPenalty = std::max(0.001, infeasibilityPenalty / 0.999);
       }
+      for (int i{}; i < static_cast<int>(feasible.shape(0)); ++i)
+        if (feasible(i))
+          infeasibilityPenalty(i) *= 0.999;
+        else
+          infeasibilityPenalty(i) = std::max(0.001, infeasibilityPenalty(i) / 0.999);
       parentFitness = currentFitness(parent);
     }
 
