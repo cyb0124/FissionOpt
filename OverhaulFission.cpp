@@ -152,7 +152,8 @@ namespace OverhaulFission {
       fluxRoots.clear();
       for (auto &[x, y, z] : cells) {
         Cell &cell(*std::get_if<Cell>(&tiles(x, y, z)));
-        if (!cell.isExcludedFromFluxRoots && (cell.fuel->selfPriming || cell.neutronSource || cell.flux >= cell.fuel->criticality))
+        // TODO: Handle neutron source indirection while keeping canonicalization valid.
+        if (!cell.isExcludedFromFluxRoots && (cell.fuel->selfPriming || cell.neutronSource))
           fluxRoots.emplace_back(x, y, z);
         cell.hasAlreadyPropagatedFlux = false;
         cell.flux = 0;
@@ -654,23 +655,46 @@ namespace OverhaulFission {
   }
 
   void Evaluation::canonicalize(State &state) {
-    for (auto &[x, y, z] : cells) {
-      Cell &tile(*std::get_if<Cell>(&tiles(x, y, z)));
-      if (tile.isNeutronSourceBlocked)
-        state(x, y, z) -= settings->cellTypes[state(x, y, z) - Tiles::C0].second;
+    for (int x{}; x < settings->sizeX; ++x) {
+      for (int y{}; y < settings->sizeY; ++y) {
+        for (int z{}; z < settings->sizeZ; ++z) {
+          std::visit(Overload {
+            [&](Cell &tile) {
+              if (!tile.isActive)
+                state(x, y, z) = Tiles::Air;
+              else if (tile.isNeutronSourceBlocked)
+                state(x, y, z) -= settings->cellTypes[state(x, y, z) - Tiles::C0].second;
+            },
+            [&](HeatSink &tile) {
+              // Note: according to planner, heat sinks without cluster still count as functional blocks.
+              if (!tile.isActive)
+                state(x, y, z) = Tiles::Air;
+            },
+            [&](Irradiator &tile) {
+              if (!tile.flux)
+                state(x, y, z) = Tiles::Air;
+            },
+            [&](Moderator &tile) {
+              if (!tile.isFunctional)
+                state(x, y, z) = Tiles::Air;
+            },
+            [&](Shield &tile) {
+              if (tile.cluster < 0)
+                state(x, y, z) = Tiles::Air;
+            },
+            [&](Reflector &tile) {
+              if (!tile.isActive)
+                state(x, y, z) = Tiles::Air;
+            },
+            [&](Conductor &tile) {
+              // TODO: remove redundant conductors.
+              if (!conductorGroups[tile.group])
+                state(x, y, z) = Tiles::Air;
+            },
+            [&](Air &) {}
+          }, tiles(x, y, z));
+        }
+      }
     }
-    for (auto &[x, y, z] : tier1s)
-      removeInactiveHeatSink(state, x, y, z);
-    for (auto &[x, y, z] : tier2s)
-      removeInactiveHeatSink(state, x, y, z);
-    for (auto &[x, y, z] : tier3s)
-      removeInactiveHeatSink(state, x, y, z);
-    for (auto &[x, y, z] : irradiators) {
-      Irradiator &tile(*std::get_if<Irradiator>(&tiles(x, y, z)));
-      if (!tile.flux)
-        state(x, y, z) = Tiles::Air;
-    }
-    // TODO: remove remaining redundant blocks
-    //  (careful with shields, conductors, clusters without casing connections and neutron source redirection)
   }
 }
