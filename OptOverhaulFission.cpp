@@ -79,7 +79,7 @@ namespace OverhaulFission {
       !settings.controllable || !x.valueWithShield.nActiveCells
     };
   }
-  
+
   xt::xtensor<double, 1> Opt::infeasibility(const Sample &x) {
     return {
       static_cast<double>(x.value.totalPositiveNetHeat) / settings.minHeat,
@@ -220,7 +220,7 @@ namespace OverhaulFission {
         nConverge = 0;
         nIteration = 0;
       }
-    } else if (nConverge == maxConvergeRollout) {
+    } else if (nConverge == maxConvergeRollout && localBest) {
       infeasibilityPenalty.fill(0.0);
       nStage = StageTrain;
       net->finishTrajectory(localBest);
@@ -293,7 +293,7 @@ namespace OverhaulFission {
       bestChanged = true;
     }
   }
-  
+
   void Opt::stepInteractive() {
     int dim(settings.sizeX * settings.sizeY * settings.sizeZ);
     int n(std::min(interactiveMin, (interactiveScale + dim - 1) / dim));
