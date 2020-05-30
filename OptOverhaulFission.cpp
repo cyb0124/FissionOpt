@@ -220,7 +220,7 @@ namespace OverhaulFission {
         nConverge = 0;
         nIteration = 0;
       }
-    } else if (nConverge == maxConvergeRollout && localBest) {
+    } else if (nConverge == maxConvergeRollout) {
       infeasibilityPenalty.fill(0.0);
       nStage = StageTrain;
       net->finishTrajectory(localBest);
