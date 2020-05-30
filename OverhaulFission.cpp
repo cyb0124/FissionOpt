@@ -153,7 +153,9 @@ namespace OverhaulFission {
       for (auto &[x, y, z] : cells) {
         Cell &cell(*std::get_if<Cell>(&tiles(x, y, z)));
         // TODO: Handle neutron source indirection while keeping canonicalization valid.
-        if (!cell.isExcludedFromFluxRoots && (cell.fuel->selfPriming || cell.neutronSource))
+        if (!cell.isExcludedFromFluxRoots && (
+            cell.fuel->selfPriming || cell.neutronSource
+            || shieldOn && cell.flux >= cell.fuel->criticality))
           fluxRoots.emplace_back(x, y, z);
         cell.hasAlreadyPropagatedFlux = false;
         cell.flux = 0;

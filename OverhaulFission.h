@@ -82,7 +82,7 @@ namespace OverhaulFission {
     const Fuel *fuel;
     std::optional<FluxEdge> fluxEdges[6];
     double positionalEfficiency{}, fluxEfficiency, efficiency;
-    int neutronSource, flux, heatMult{}, cluster{-1};
+    int neutronSource, flux{}, heatMult{}, cluster{-1};
     bool isNeutronSourceBlocked{};
     bool isExcludedFromFluxRoots{};
     bool hasAlreadyPropagatedFlux;
