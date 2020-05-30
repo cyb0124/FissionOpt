@@ -26,12 +26,12 @@ namespace OverhaulFission {
     xt::xtensor<double, 1> wOutput, mwOutput, rwOutput;
     double bOutput, mbOutput, rbOutput;
 
-    xt::xtensor<double, 1> extractFeatures(const Sample &sample);
+    xt::xtensor<double, 1> extractFeatures(const Sample &sample, const xt::xtensor<double, 1> &penalties);
   public:
     Net(Opt &opt);
-    double infer(const Sample &sample);
+    double infer(const Sample &sample, const xt::xtensor<double, 1> &penalties);
     void newTrajectory() { trajectoryLength = 0; }
-    void appendTrajectory(const Sample &sample);
+    void appendTrajectory(const Sample &sample, const xt::xtensor<double, 1> &penalties);
     void finishTrajectory(double target);
     int getTrajectoryLength() const { return trajectoryLength; }
     double train();

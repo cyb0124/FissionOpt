@@ -7,7 +7,7 @@ namespace OverhaulFission {
       if (opt.settings.limits[i])
         tileMap.emplace(i, tileMap.size());
     tileMap.emplace(Tiles::Air, tileMap.size());
-    nFeatures = static_cast<int>(tileMap.size() * 2 - 1 + nStatisticalFeatures);
+    nFeatures = static_cast<int>(tileMap.size()) * 2 - 1 + nConstraints + nStatisticalFeatures;
     batchInput = xt::empty<double>({nMiniBatch, nFeatures});
     batchTarget = xt::empty<double>({nMiniBatch});
 
@@ -33,12 +33,12 @@ namespace OverhaulFission {
     rbOutput = 0.0;
   }
 
-  void Net::appendTrajectory(const Sample &sample) {
+  void Net::appendTrajectory(const Sample &sample, const xt::xtensor<double, 1> &penalties) {
     ++trajectoryLength;
     if (pool.size() == nPool)
-      pool[writePos].first = extractFeatures(sample);
+      pool[writePos].first = extractFeatures(sample, penalties);
     else
-      pool.emplace_back(extractFeatures(sample), 0.0);
+      pool.emplace_back(extractFeatures(sample, penalties), 0.0);
     if (++writePos == nPool)
       writePos = 0;
   }
@@ -52,7 +52,7 @@ namespace OverhaulFission {
     }
   }
 
-  xt::xtensor<double, 1> Net::extractFeatures(const Sample &sample) {
+  xt::xtensor<double, 1> Net::extractFeatures(const Sample &sample, const xt::xtensor<double, 1> &penalties) {
     xt::xtensor<double, 1> vInput(xt::zeros<double>({nFeatures}));
     for (int x{}; x < opt.settings.sizeX; ++x) {
       for (int y{}; y < opt.settings.sizeY; ++y) {
@@ -78,20 +78,23 @@ namespace OverhaulFission {
         }
       }
     }
-    vInput.periodic(-1) = sample.value.cells.size();
-    vInput.periodic(-2) = sample.value.nActiveCells;
-    vInput.periodic(-3) = sample.value.clusters.size();
+    xt::view(vInput, xt::range(
+      nFeatures - nStatisticalFeatures - static_cast<int>(penalties.shape(0)),
+      nFeatures - nStatisticalFeatures)) = penalties;
+    vInput.periodic(-8) = sample.value.cells.size();
+    vInput.periodic(-7) = sample.value.nActiveCells;
+    vInput.periodic(-6) = sample.value.clusters.size();
     vInput /= opt.settings.sizeX * opt.settings.sizeY * opt.settings.sizeZ;
-    vInput.periodic(-4) = static_cast<double>(sample.value.totalRawFlux) / opt.settings.minCriticality;
-    vInput.periodic(-5) = static_cast<double>(sample.value.totalPositiveNetHeat) / opt.settings.minHeat;
-    vInput.periodic(-6) = sample.value.output / opt.settings.maxOutput;
-    vInput.periodic(-7) = sample.value.efficiency;
-    vInput.periodic(-8) = static_cast<double>(sample.value.irradiatorFlux) / opt.settings.minCriticality;
+    vInput.periodic(-5) = static_cast<double>(sample.value.totalRawFlux) / opt.settings.minCriticality;
+    vInput.periodic(-4) = static_cast<double>(sample.value.totalPositiveNetHeat) / opt.settings.minHeat;
+    vInput.periodic(-3) = sample.value.output / opt.settings.maxOutput;
+    vInput.periodic(-2) = sample.value.efficiency;
+    vInput.periodic(-1) = static_cast<double>(sample.value.irradiatorFlux) / opt.settings.minCriticality;
     return vInput;
   }
 
-  double Net::infer(const Sample &sample) {
-    auto vInput(extractFeatures(sample));
+  double Net::infer(const Sample &sample, const xt::xtensor<double, 1> &penalties) {
+    auto vInput(extractFeatures(sample, penalties));
     xt::xtensor<double, 1> vLayer1(bLayer1 + xt::sum(wLayer1 * vInput, -1));
     xt::xtensor<double, 1> vPwlLayer1(vLayer1 * leak + xt::clip(vLayer1, -1.0, 1.0));
     xt::xtensor<double, 1> vLayer2(bLayer2 + xt::sum(wLayer2 * vPwlLayer1, -1));
