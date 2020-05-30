@@ -258,8 +258,8 @@ namespace OverhaulFission {
     auto &child(children[bestChild]);
     if (bestFitness >= parentFitness) {
       if (bestFitness > parentFitness) {
+        parentFitness = bestFitness;
         if (nStage == StageInfer) {
-          parentFitness = bestFitness;
           nConverge = 0;
           inferenceFailed = false;
         }
@@ -273,9 +273,8 @@ namespace OverhaulFission {
       auto feasible(this->feasible(parent));
       xt::xtensor<double, 1> infeasibility;
       if (xt::all(feasible)) {
-        double raw(rawFitness(parent.value));
-        if (raw > localBest) {
-          localBest = raw;
+        if (parentFitness > localBest) {
+          localBest = parentFitness;
           nConverge = 0;
         }
       } else
