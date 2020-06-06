@@ -175,8 +175,10 @@ namespace OverhaulFission {
 
   void Evaluation::computeFluxActivation() {
     nActiveCells = 0;
+    maxCellFlux = 0;
     for (auto &[x, y, z] : cells) {
       Cell &cell(*std::get_if<Cell>(&tiles(x, y, z)));
+      maxCellFlux = std::max(maxCellFlux, cell.flux);
       cell.isActive = cell.flux >= cell.fuel->criticality;
       if (!cell.isActive)
         continue;

@@ -7,7 +7,7 @@ namespace OverhaulFission {
       if (opt.settings.limits[i])
         tileMap.emplace(i, tileMap.size());
     tileMap.emplace(Tiles::Air, tileMap.size());
-    nFeatures = static_cast<int>(tileMap.size()) * 2 - 1 + nConstraints + nStatisticalFeatures;
+    nFeatures = static_cast<int>(tileMap.size()) * 2 - 1 + nStatisticalFeatures;
     batchInput = xt::empty<double>({nMiniBatch, nFeatures});
     batchTarget = xt::empty<double>({nMiniBatch});
 
@@ -33,12 +33,12 @@ namespace OverhaulFission {
     rbOutput = 0.0;
   }
 
-  void Net::appendTrajectory(const Sample &sample, const xt::xtensor<double, 1> &penalties) {
+  void Net::appendTrajectory(const Sample &sample) {
     ++trajectoryLength;
     if (pool.size() == nPool)
-      pool[writePos].first = extractFeatures(sample, penalties);
+      pool[writePos].first = extractFeatures(sample);
     else
-      pool.emplace_back(extractFeatures(sample, penalties), 0.0);
+      pool.emplace_back(extractFeatures(sample), 0.0);
     if (++writePos == nPool)
       writePos = 0;
   }
@@ -52,7 +52,7 @@ namespace OverhaulFission {
     }
   }
 
-  xt::xtensor<double, 1> Net::extractFeatures(const Sample &sample, const xt::xtensor<double, 1> &penalties) {
+  xt::xtensor<double, 1> Net::extractFeatures(const Sample &sample) {
     xt::xtensor<double, 1> vInput(xt::zeros<double>({nFeatures}));
     for (int x{}; x < opt.settings.sizeX; ++x) {
       for (int y{}; y < opt.settings.sizeY; ++y) {
@@ -78,9 +78,6 @@ namespace OverhaulFission {
         }
       }
     }
-    xt::view(vInput, xt::range(
-      nFeatures - nStatisticalFeatures - static_cast<int>(penalties.shape(0)),
-      nFeatures - nStatisticalFeatures)) = penalties;
     vInput.periodic(-8) = sample.value.cells.size();
     vInput.periodic(-7) = sample.value.nActiveCells;
     vInput.periodic(-6) = sample.value.clusters.size();
@@ -93,8 +90,8 @@ namespace OverhaulFission {
     return vInput;
   }
 
-  double Net::infer(const Sample &sample, const xt::xtensor<double, 1> &penalties) {
-    auto vInput(extractFeatures(sample, penalties));
+  double Net::infer(const Sample &sample) {
+    auto vInput(extractFeatures(sample));
     xt::xtensor<double, 1> vLayer1(bLayer1 + xt::sum(wLayer1 * vInput, -1));
     xt::xtensor<double, 1> vPwlLayer1(vLayer1 * leak + xt::clip(vLayer1, -1.0, 1.0));
     xt::xtensor<double, 1> vLayer2(bLayer2 + xt::sum(wLayer2 * vPwlLayer1, -1));

@@ -11,8 +11,8 @@ namespace OverhaulFission {
   constexpr double reflectorEfficiencies[] { 0.5, 0.25 };
   constexpr double reflectorFluxMults[] { 1.0, 0.5 };
   constexpr double sparsityPenaltyThreshold(0.75);
-  constexpr double maxSparsityPenaltyMult(0.5);
   constexpr int moderatorFluxes[] { 10, 22, 36 };
+  constexpr double maxSparsityPenaltyMult(0.5);
   constexpr int coolingEfficiencyLeniency(10);
   constexpr double shieldEfficiency(0.5);
   constexpr int shieldHeatPerFlux(5);
@@ -147,7 +147,7 @@ namespace OverhaulFission {
     std::vector<Cluster> clusters;
     const Settings *settings;
     double rawEfficiency, efficiency, rawOutput, output, density, sparsityPenalty;
-    int nFunctionalBlocks, totalPositiveNetHeat, irradiatorFlux, nActiveCells, totalRawFlux;
+    int nFunctionalBlocks, totalPositiveNetHeat, irradiatorFlux, nActiveCells, totalRawFlux, maxCellFlux;
     bool shieldOn;
   private:
     void checkNeutronSource(int x, int y, int z);

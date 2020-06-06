@@ -45,7 +45,8 @@ namespace OverhaulFission {
   Opt::Opt(Settings &settings)
     :settings(settings),
     nEpisode(), nStage(StageRollout), nIteration(), nConverge(),
-    infeasibilityPenalty(xt::zeros<double>({nConstraints})), bestChanged(true), redrawNagle(), lossHistory(nLossHistory), lossChanged() {
+    infeasibilityPenalty(xt::zeros<double>({nConstraints})),
+    bestChanged(true), redrawNagle(), lossHistory(nLossHistory), lossChanged() {
     settings.compute();
     for (int x(settings.symX ? settings.sizeX / 2 : 0); x < settings.sizeX; ++x)
       for (int y(settings.symY ? settings.sizeY / 2 : 0); y < settings.sizeY; ++y)
@@ -57,7 +58,7 @@ namespace OverhaulFission {
       parent.valueWithShield.initialize(settings, true);
     restart();
     net = std::make_unique<Net>(*this);
-    net->appendTrajectory(parent, infeasibilityPenalty);
+    net->appendTrajectory(parent);
     parentFitness = currentFitness(parent);
     localBest = xt::all(feasible(parent)) ? parentFitness : 0.0;
 
@@ -102,14 +103,13 @@ namespace OverhaulFission {
 
   double Opt::currentFitness(const Sample &x) {
     if (nStage == StageInfer) {
-      return net->infer(x, infeasibilityPenalty);
+      return net->infer(x);
     } else if (nStage == StageTrain) {
       return 0.0;
     } else {
       double result(rawFitness(x.value));
-      result += 1 - std::exp(-static_cast<double>(x.value.totalRawFlux) / settings.minCriticality);
-      if (x.value.nActiveCells)
-        ++result;
+      result += std::min(x.value.totalRawFlux, settings.minCriticality);
+      result += std::min(x.value.maxCellFlux, settings.minCriticality);
       result -= xt::sum(infeasibility(x) * infeasibilityPenalty)();
       return result;
     }
@@ -214,7 +214,7 @@ namespace OverhaulFission {
         if (inferenceFailed)
           restart();
         net->newTrajectory();
-        net->appendTrajectory(parent, infeasibilityPenalty);
+        net->appendTrajectory(parent);
         parentFitness = currentFitness(parent);
         localBest = xt::all(feasible(parent)) ? parentFitness : 0.0;
         nConverge = 0;
@@ -265,7 +265,7 @@ namespace OverhaulFission {
         }
       }
       if (nStage != StageInfer && !std::uniform_int_distribution<>(0, 9)(rng))
-        net->appendTrajectory(child, infeasibilityPenalty);
+        net->appendTrajectory(child);
       std::swap(parent, child);
     }
 
@@ -281,9 +281,9 @@ namespace OverhaulFission {
         infeasibility = this->infeasibility(parent);
       for (int i{}; i < nConstraints; ++i)
         if (feasible(i))
-          infeasibilityPenalty(i) *= 0.999;
+          infeasibilityPenalty(i) *= 0.9999;
         else
-          infeasibilityPenalty(i) += 0.001 * infeasibility(i);
+          infeasibilityPenalty(i) += 0.0001 * infeasibility(i);
       parentFitness = currentFitness(parent);
     }
 
