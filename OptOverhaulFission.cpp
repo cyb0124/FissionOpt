@@ -89,6 +89,8 @@ namespace OverhaulFission {
   }
 
   double Opt::rawFitness(const Evaluation &x) {
+    return x.output / settings.maxOutput + std::min(500, x.irradiatorFlux);
+
     switch (settings.goal) {
       default: // GoalOutput
         return x.output / settings.maxOutput;
@@ -108,8 +110,8 @@ namespace OverhaulFission {
       return 0.0;
     } else {
       double result(rawFitness(x.value));
-      result += std::min(x.value.totalRawFlux, settings.minCriticality);
-      result += std::min(x.value.maxCellFlux, settings.minCriticality);
+      result += std::min(x.value.totalRawFlux, settings.minCriticality) / static_cast<double>(settings.minCriticality);
+      result += std::min(x.value.maxCellFlux, settings.minCriticality) / static_cast<double>(settings.minCriticality);
       result -= xt::sum(infeasibility(x) * infeasibilityPenalty)();
       return result;
     }
@@ -168,13 +170,13 @@ namespace OverhaulFission {
     allowedTiles.clear();
     allowedTiles.emplace_back(Tiles::Air);
     for (int tile{}; tile < Tiles::Air; ++tile)
-      if (parent.limits[tile] < 0 || parent.limits[tile] >= nSym)
+      if (sample.limits[tile] < 0 || sample.limits[tile] >= nSym)
         allowedTiles.emplace_back(tile);
     for (int cell{}; cell < static_cast<int>(settings.cellTypes.size()); ++cell) {
       auto &[fuel, source](settings.cellTypes[cell]);
-      if (parent.cellLimits[fuel] >= 0 && parent.cellLimits[fuel] < nSym)
+      if (sample.cellLimits[fuel] >= 0 && sample.cellLimits[fuel] < nSym)
         continue;
-      if (source && parent.sourceLimits[source - 1] >= 0 && parent.sourceLimits[source - 1] < nSym)
+      if (source && sample.sourceLimits[source - 1] >= 0 && sample.sourceLimits[source - 1] < nSym)
         continue;
       allowedTiles.emplace_back(Tiles::C0 + cell);
     }
