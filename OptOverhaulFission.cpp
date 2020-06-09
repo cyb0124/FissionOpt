@@ -227,7 +227,6 @@ namespace OverhaulFission {
         nIteration = 0;
       }
     } else if (nConverge == maxConvergeRollout) {
-      std::cout << "finalPenalty: " << penalty << std::endl;
       nStage = StageTrain;
       trajectoryBuffer.clear();
       net->finishTrajectory(localBest);
@@ -287,13 +286,13 @@ namespace OverhaulFission {
       if (!(nIteration % penaltyUpdatePeriod)) {
         for (int i{}; i < nConstraints; ++i) {
           if (hasFeasible(i) && !hasInfeasible(i))
-            penalty(i) *= 0.9;
+            penalty(i) *= 0.99;
           else if (!hasFeasible(i) && hasInfeasible(i))
             penalty(i) = std::max(0.1, penalty(i) / 0.9);
           hasFeasible(i) = false;
           hasInfeasible(i) = false;
         }
-        std::cout << penalty << std::endl;
+        std::cout << "penalty: " << penalty << std::endl;
       }
       parentFitness = currentFitness(parent);
     }
