@@ -225,9 +225,9 @@ namespace OverhaulFission {
         nIteration = 0;
       }
     } else if (nConverge == maxConvergeRollout) {
+      std::cout << "finalPenalty: " << infeasibilityPenalty << std::endl;
       infeasibilityPenalty.fill(0.0);
       infeasibilityPenaltySample.fill(0.0);
-      std::cout << "finalPenalty: " << infeasibilityPenalty << std::endl;
       nStage = StageTrain;
       trajectoryBuffer.clear();
       net->finishTrajectory(localBest);
@@ -260,9 +260,9 @@ namespace OverhaulFission {
           nConverge = 0;
           inferenceFailed = false;
         }
-        if (nStage != StageInfer && !std::uniform_int_distribution<>(0, 9)(rng))
--        trajectoryBuffer.emplace_back(net->extractFeatures(child));
       }
+      if (nStage != StageInfer && !std::uniform_int_distribution<>(0, 9)(rng))
+-        trajectoryBuffer.emplace_back(net->extractFeatures(child));
       std::swap(parent, child);
     }
 

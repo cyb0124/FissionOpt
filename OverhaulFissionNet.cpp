@@ -34,7 +34,8 @@ namespace OverhaulFission {
   }
 
   void Net::appendTrajectory(xt::xtensor<double, 1> features) {
-    ++trajectoryLength;
+    if (trajectoryLength < nPool)
+      ++trajectoryLength;
     if (pool.size() == nPool)
       pool[writePos].first = std::move(features);
     else
