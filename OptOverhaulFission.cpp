@@ -63,11 +63,9 @@ namespace OverhaulFission {
     parentFitness = currentFitness(parent);
     localBest = xt::all(feasible(parent)) ? parentFitness : 0.0;
 
-    for (auto &child : children) {
-      child.value.initialize(settings, false);
-      if (settings.controllable)
-        child.valueWithShield.initialize(settings, true);
-    }
+    child.value.initialize(settings, false);
+    if (settings.controllable)
+      child.valueWithShield.initialize(settings, true);
 
     best.state = xt::broadcast<int>(Tiles::Air,
       {settings.sizeX, settings.sizeY, settings.sizeZ});
@@ -90,7 +88,7 @@ namespace OverhaulFission {
   }
 
   double Opt::rawFitness(const Evaluation &x) {
-    return x.output / settings.maxOutput + std::min(500, x.irradiatorFlux);
+    return x.output / settings.maxOutput + std::min(500, x.irradiatorFlux) / static_cast<double>(settings.minCriticality);
 
     switch (settings.goal) {
       default: // GoalOutput
@@ -214,6 +212,7 @@ namespace OverhaulFission {
       if (nConverge == maxConvergeInfer) {
         nStage = StageRollout;
         ++nEpisode;
+        std::cout << "episode " << nEpisode << std::endl;
         if (inferenceFailed)
           restart();
         net->newTrajectory();
@@ -224,8 +223,8 @@ namespace OverhaulFission {
         nIteration = 0;
       }
     } else if (nConverge == maxConvergeRollout) {
-      // infeasibilityPenalty.fill(0.0);
-      // infeasibilityPenaltySample.fill(0.0);
+      infeasibilityPenalty.fill(0.0);
+      infeasibilityPenaltySample.fill(0.0);
       nStage = StageTrain;
       net->finishTrajectory(localBest);
       nConverge = 0;
@@ -240,35 +239,25 @@ namespace OverhaulFission {
       xDist(0, settings.sizeX - 1),
       yDist(0, settings.sizeY - 1),
       zDist(0, settings.sizeZ - 1);
-    int bestChild;
-    double bestFitness;
-    for (int i{}; i < children.size(); ++i) {
-      auto &child(children[i]);
-      child.state = parent.state;
-      std::copy(parent.limits, parent.limits + Tiles::Air, child.limits);
-      std::copy(parent.sourceLimits, parent.sourceLimits + 3, child.sourceLimits);
-      child.cellLimits = parent.cellLimits;
-      mutateAndEvaluate(child, xDist(rng), yDist(rng), zDist(rng));
-      double fitness(currentFitness(child));
-      if (!i || fitness > bestFitness) {
-        bestChild = i;
-        bestFitness = fitness;
-      }
-      if (xt::all(feasible(child)) && rawFitness(child.value) > rawFitness(best.value)) {
-        bestChangedLocal = true;
-        best = child;
-      }
+    child.state = parent.state;
+    std::copy(parent.limits, parent.limits + Tiles::Air, child.limits);
+    std::copy(parent.sourceLimits, parent.sourceLimits + 3, child.sourceLimits);
+    child.cellLimits = parent.cellLimits;
+    mutateAndEvaluate(child, xDist(rng), yDist(rng), zDist(rng));
+    double childFitness(currentFitness(child));
+    if (xt::all(feasible(child)) && rawFitness(child.value) > rawFitness(best.value)) {
+      bestChangedLocal = true;
+      best = child;
     }
-    auto &child(children[bestChild]);
-    if (bestFitness >= parentFitness) {
-      if (bestFitness > parentFitness) {
-        parentFitness = bestFitness;
+    if (childFitness >= parentFitness) {
+      if (childFitness > parentFitness) {
+        parentFitness = childFitness;
         if (nStage == StageInfer) {
           nConverge = 0;
           inferenceFailed = false;
         }
       }
-      if (nStage != StageInfer && !std::uniform_int_distribution<>(0, 9)(rng))
+      if (nStage != StageInfer && !std::uniform_int_distribution<>(0, 99)(rng))
         net->appendTrajectory(child);
       std::swap(parent, child);
     }
@@ -278,14 +267,15 @@ namespace OverhaulFission {
       if (xt::all(feasible)) {
         if (parentFitness > localBest) {
           localBest = parentFitness;
+          std::cout << "localBest: " << localBest << std::endl;
           nConverge = 0;
         }
       }
       for (int i{}; i < nConstraints; ++i)
         if (feasible(i))
-          infeasibilityPenalty(i) *= 0.999;
+          infeasibilityPenalty(i) *= 0.9999;
         else
-          infeasibilityPenalty(i) = std::max(0.001, infeasibilityPenalty(i) / 0.999);
+          infeasibilityPenalty(i) = std::max(0.0001, infeasibilityPenalty(i) / 0.9999);
       infeasibilityPenaltySample = xt::random::rand<double>(infeasibilityPenalty.shape(), 0, 1, rng) * infeasibilityPenalty;
       parentFitness = currentFitness(parent);
     }
@@ -301,7 +291,7 @@ namespace OverhaulFission {
   void Opt::stepInteractive() {
     int dim(settings.sizeX * settings.sizeY * settings.sizeZ);
     int n(std::min(interactiveMin, (interactiveScale + dim - 1) / dim));
-    for (int i{}; i < (nStage == StageTrain ? interactiveNet : nStage == StageInfer ? interactiveNet * nMiniBatch / 4 : n); ++i) {
+    for (int i{}; i < (nStage == StageTrain ? interactiveNet : nStage == StageInfer ? interactiveNet * nMiniBatch : n); ++i) {
       step();
       ++redrawNagle;
     }

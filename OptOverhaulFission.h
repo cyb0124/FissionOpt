@@ -18,8 +18,8 @@ namespace OverhaulFission {
     StageInfer
   };
 
-  constexpr int interactiveMin(1024), interactiveScale(81920), interactiveNet(16), nLossHistory(256);
-  constexpr int maxConvergeInfer(10976), maxConvergeRollout(maxConvergeInfer * 20), nConstraints(2);
+  constexpr int interactiveMin(4096), interactiveScale(327680), interactiveNet(4), nLossHistory(256);
+  constexpr int maxConvergeInfer(10976), maxConvergeRollout(maxConvergeInfer * 80), nConstraints(2);
 
   class Net;
 
@@ -32,8 +32,7 @@ namespace OverhaulFission {
     int nConverge;
     xt::xtensor<double, 1> infeasibilityPenalty, infeasibilityPenaltySample;
     double parentFitness, localBest;
-    Sample parent, best;
-    std::array<Sample, 4> children;
+    Sample parent, child, best;
     std::mt19937 rng;
     std::unique_ptr<Net> net;
     bool inferenceFailed;
