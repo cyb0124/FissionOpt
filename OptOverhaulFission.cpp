@@ -47,7 +47,9 @@ namespace OverhaulFission {
   Opt::Opt(Settings &settings)
     :settings(settings),
     nEpisode(), nStage(StageRollout), nIteration(), nConverge(),
-    infeasibilityPenalty(xt::zeros<double>({nConstraints})), infeasibilityPenaltySample(infeasibilityPenalty),
+    penalty(xt::zeros<double>({nConstraints})),
+    hasFeasible(xt::zeros<bool>({nConstraints})),
+    hasInfeasible(xt::zeros<bool>({nConstraints})),
     bestChanged(true), redrawNagle(), lossHistory(nLossHistory), lossChanged() {
     settings.compute();
     for (int x(settings.symX ? settings.sizeX / 2 : 0); x < settings.sizeX; ++x)
@@ -112,7 +114,7 @@ namespace OverhaulFission {
       double result(rawFitness(x.value));
       result += std::min(x.value.totalRawFlux, settings.minCriticality) / static_cast<double>(settings.minCriticality);
       result += std::min(x.value.maxCellFlux, settings.minCriticality) / static_cast<double>(settings.minCriticality);
-      result -= xt::sum(infeasibility(x) * infeasibilityPenaltySample)();
+      result -= xt::sum(infeasibility(x) * penalty)();
       return result;
     }
   }
@@ -225,9 +227,7 @@ namespace OverhaulFission {
         nIteration = 0;
       }
     } else if (nConverge == maxConvergeRollout) {
-      std::cout << "finalPenalty: " << infeasibilityPenalty << std::endl;
-      infeasibilityPenalty.fill(0.0);
-      infeasibilityPenaltySample.fill(0.0);
+      std::cout << "finalPenalty: " << penalty << std::endl;
       nStage = StageTrain;
       trajectoryBuffer.clear();
       net->finishTrajectory(localBest);
@@ -281,10 +281,20 @@ namespace OverhaulFission {
       }
       for (int i{}; i < nConstraints; ++i)
         if (feasible(i))
-          infeasibilityPenalty(i) *= 0.9999;
+          hasFeasible(i) = true;
         else
-          infeasibilityPenalty(i) = std::max(0.0001, infeasibilityPenalty(i) / 0.9999);
-      infeasibilityPenaltySample = xt::random::rand<double>(infeasibilityPenalty.shape(), 0, 1, rng) * infeasibilityPenalty;
+          hasInfeasible(i) = true;
+      if (!(nIteration % penaltyUpdatePeriod)) {
+        for (int i{}; i < nConstraints; ++i) {
+          if (hasFeasible(i) && !hasInfeasible(i))
+            penalty(i) *= 0.9;
+          else if (!hasFeasible(i) && hasInfeasible(i))
+            penalty(i) = std::max(0.1, penalty(i) / 0.9);
+          hasFeasible(i) = false;
+          hasInfeasible(i) = false;
+        }
+        std::cout << penalty << std::endl;
+      }
       parentFitness = currentFitness(parent);
     }
 
