@@ -1,4 +1,4 @@
-#include <iostream>
+#include <xtensor/xnpy.hpp>
 #include "OverhaulFissionNet.h"
 
 int main() {
@@ -23,6 +23,7 @@ int main() {
     if (opt.needsRedrawBest()) {
       std::cout << "output: " << opt.getBest().value.output / 16 << std::endl;
       std::cout << "irrFlux: " << opt.getBest().value.irradiatorFlux << std::endl;
+      xt::dump_npy("best.npy", opt.getBest().state);
     }
   }
 }

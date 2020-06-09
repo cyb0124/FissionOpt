@@ -33,12 +33,12 @@ namespace OverhaulFission {
     rbOutput = 0.0;
   }
 
-  void Net::appendTrajectory(const Sample &sample) {
+  void Net::appendTrajectory(xt::xtensor<double, 1> features) {
     ++trajectoryLength;
     if (pool.size() == nPool)
-      pool[writePos].first = extractFeatures(sample);
+      pool[writePos].first = std::move(features);
     else
-      pool.emplace_back(extractFeatures(sample), 0.0);
+      pool.emplace_back(std::move(features), 0.0);
     if (++writePos == nPool)
       writePos = 0;
   }
@@ -50,6 +50,8 @@ namespace OverhaulFission {
         pos = nPool - 1;
       pool[pos].second = target;
     }
+    std::cout << "trajectoryLength: " << trajectoryLength << std::endl;
+    std::cout << "pool: " << pool.size() << std::endl;
   }
 
   xt::xtensor<double, 1> Net::extractFeatures(const Sample &sample) {

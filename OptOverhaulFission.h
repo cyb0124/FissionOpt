@@ -25,15 +25,16 @@ namespace OverhaulFission {
 
   class Opt {
     friend Net;
+    std::mt19937 rng;
     const Settings &settings;
     std::vector<Coord> allowedCoords;
     std::vector<int> allowedTiles;
     int nEpisode, nStage, nIteration;
     int nConverge;
     xt::xtensor<double, 1> infeasibilityPenalty, infeasibilityPenaltySample;
+    std::vector<xt::xtensor<double, 1>> trajectoryBuffer;
     double parentFitness, localBest;
     Sample parent, child, best;
-    std::mt19937 rng;
     std::unique_ptr<Net> net;
     bool inferenceFailed;
     bool bestChanged;

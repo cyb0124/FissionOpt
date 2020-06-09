@@ -1,3 +1,4 @@
+#include <xtensor/xio.hpp>
 #include <xtensor/xrandom.hpp>
 #include "OverhaulFissionNet.h"
 
@@ -59,7 +60,7 @@ namespace OverhaulFission {
       parent.valueWithShield.initialize(settings, true);
     restart();
     net = std::make_unique<Net>(*this);
-    net->appendTrajectory(parent);
+    net->appendTrajectory(net->extractFeatures(parent));
     parentFitness = currentFitness(parent);
     localBest = xt::all(feasible(parent)) ? parentFitness : 0.0;
 
@@ -198,6 +199,7 @@ namespace OverhaulFission {
     if (nStage == StageTrain) {
       if (!nIteration) {
         nStage = StageInfer;
+        restart();
         parentFitness = currentFitness(parent);
         inferenceFailed = true;
       } else {
@@ -216,7 +218,7 @@ namespace OverhaulFission {
         if (inferenceFailed)
           restart();
         net->newTrajectory();
-        net->appendTrajectory(parent);
+        net->appendTrajectory(net->extractFeatures(parent));
         parentFitness = currentFitness(parent);
         localBest = xt::all(feasible(parent)) ? parentFitness : 0.0;
         nConverge = 0;
@@ -225,7 +227,9 @@ namespace OverhaulFission {
     } else if (nConverge == maxConvergeRollout) {
       infeasibilityPenalty.fill(0.0);
       infeasibilityPenaltySample.fill(0.0);
+      std::cout << "finalPenalty: " << infeasibilityPenalty << std::endl;
       nStage = StageTrain;
+      trajectoryBuffer.clear();
       net->finishTrajectory(localBest);
       nConverge = 0;
       nIteration = (net->getTrajectoryLength() * nEpoch + nMiniBatch - 1) / nMiniBatch;
@@ -256,9 +260,9 @@ namespace OverhaulFission {
           nConverge = 0;
           inferenceFailed = false;
         }
+        if (nStage != StageInfer && !std::uniform_int_distribution<>(0, 9)(rng))
+-        trajectoryBuffer.emplace_back(net->extractFeatures(child));
       }
-      if (nStage != StageInfer && !std::uniform_int_distribution<>(0, 99)(rng))
-        net->appendTrajectory(child);
       std::swap(parent, child);
     }
 
@@ -269,6 +273,10 @@ namespace OverhaulFission {
           localBest = parentFitness;
           std::cout << "localBest: " << localBest << std::endl;
           nConverge = 0;
+          while (!trajectoryBuffer.empty()) {
+            net->appendTrajectory(std::move(trajectoryBuffer.back()));
+            trajectoryBuffer.pop_back();
+          }
         }
       }
       for (int i{}; i < nConstraints; ++i)
