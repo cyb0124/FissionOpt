@@ -4,7 +4,7 @@
 #include "OptOverhaulFission.h"
 
 namespace OverhaulFission {
-  constexpr int nStatisticalFeatures(8), nLayer1(128), nLayer2(64), nMiniBatch(64), nEpoch(2), nPool(1'000'000);
+  constexpr int nStatisticalFeatures(8), nLayer1(128), nLayer2(64), nMiniBatch(64), nEpoch(2), nPool(10'000'000);
   constexpr double lRate(0.01), mRate(0.9), rRate(0.999), leak(0.1);
 
   class Net {

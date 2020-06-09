@@ -30,8 +30,7 @@ namespace OverhaulFission {
     std::vector<int> allowedTiles;
     int nEpisode, nStage, nIteration;
     int nConverge;
-    xt::xtensor<double, 1> infeasibilityPenalty;
-    double penaltyAdaptionRate;
+    xt::xtensor<double, 1> infeasibilityPenalty, infeasibilityPenaltySample;
     double parentFitness, localBest;
     Sample parent, best;
     std::array<Sample, 4> children;

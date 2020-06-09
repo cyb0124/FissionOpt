@@ -1,3 +1,4 @@
+#include <xtensor/xrandom.hpp>
 #include "OverhaulFissionNet.h"
 
 namespace OverhaulFission {
@@ -45,7 +46,7 @@ namespace OverhaulFission {
   Opt::Opt(Settings &settings)
     :settings(settings),
     nEpisode(), nStage(StageRollout), nIteration(), nConverge(),
-    infeasibilityPenalty(xt::zeros<double>({nConstraints})),
+    infeasibilityPenalty(xt::zeros<double>({nConstraints})), infeasibilityPenaltySample(infeasibilityPenalty),
     bestChanged(true), redrawNagle(), lossHistory(nLossHistory), lossChanged() {
     settings.compute();
     for (int x(settings.symX ? settings.sizeX / 2 : 0); x < settings.sizeX; ++x)
@@ -112,7 +113,7 @@ namespace OverhaulFission {
       double result(rawFitness(x.value));
       result += std::min(x.value.totalRawFlux, settings.minCriticality) / static_cast<double>(settings.minCriticality);
       result += std::min(x.value.maxCellFlux, settings.minCriticality) / static_cast<double>(settings.minCriticality);
-      result -= xt::sum(infeasibility(x) * infeasibilityPenalty)();
+      result -= xt::sum(infeasibility(x) * infeasibilityPenaltySample)();
       return result;
     }
   }
@@ -223,7 +224,8 @@ namespace OverhaulFission {
         nIteration = 0;
       }
     } else if (nConverge == maxConvergeRollout) {
-      infeasibilityPenalty.fill(0.0);
+      // infeasibilityPenalty.fill(0.0);
+      // infeasibilityPenaltySample.fill(0.0);
       nStage = StageTrain;
       net->finishTrajectory(localBest);
       nConverge = 0;
@@ -273,19 +275,18 @@ namespace OverhaulFission {
 
     if (nStage != StageInfer) {
       auto feasible(this->feasible(parent));
-      xt::xtensor<double, 1> infeasibility;
       if (xt::all(feasible)) {
         if (parentFitness > localBest) {
           localBest = parentFitness;
           nConverge = 0;
         }
-      } else
-        infeasibility = this->infeasibility(parent);
+      }
       for (int i{}; i < nConstraints; ++i)
         if (feasible(i))
-          infeasibilityPenalty(i) *= 0.9999;
+          infeasibilityPenalty(i) *= 0.999;
         else
-          infeasibilityPenalty(i) += 0.0001 * infeasibility(i);
+          infeasibilityPenalty(i) = std::max(0.001, infeasibilityPenalty(i) / 0.999);
+      infeasibilityPenaltySample = xt::random::rand<double>(infeasibilityPenalty.shape(), 0, 1, rng) * infeasibilityPenalty;
       parentFitness = currentFitness(parent);
     }
 
