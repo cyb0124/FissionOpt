@@ -74,7 +74,7 @@ namespace OverhaulFission {
             [&](const Shield &tile) { isFunctional = tile.flux; },
             [&](const Irradiator &tile) { isFunctional = tile.flux; },
             [&](const HeatSink &tile) { isFunctional = tile.isActive; },
-            [&](const Conductor &tile) { isFunctional = sample.value.conductorGroups[tile.group]; },
+            [&](const Conductor &tile) { isFunctional = tile.cluster >= 0; },
             [] (...) { throw; }
           }, sample.value.tiles(x, y, z));
           vInput[tileMap.size() + index] += isFunctional;

@@ -47,7 +47,7 @@ namespace OverhaulFission {
   Opt::Opt(Settings &settings)
     :settings(settings),
     nEpisode(), nStage(StageRollout), nIteration(), nConverge(),
-    penalty(xt::zeros<double>({nConstraints})),
+    penalty(xt::ones<double>({nConstraints})),
     hasFeasible(xt::zeros<bool>({nConstraints})),
     hasInfeasible(xt::zeros<bool>({nConstraints})),
     bestChanged(true), redrawNagle(), lossHistory(nLossHistory), lossChanged() {
@@ -91,8 +91,6 @@ namespace OverhaulFission {
   }
 
   double Opt::rawFitness(const Evaluation &x) {
-    return x.output / settings.maxOutput + std::min(500, x.irradiatorFlux) / static_cast<double>(settings.minCriticality);
-
     switch (settings.goal) {
       default: // GoalOutput
         return x.output / settings.maxOutput;
@@ -286,13 +284,12 @@ namespace OverhaulFission {
       if (!(nIteration % penaltyUpdatePeriod)) {
         for (int i{}; i < nConstraints; ++i) {
           if (hasFeasible(i) && !hasInfeasible(i))
-            penalty(i) *= 0.99;
+            penalty(i) *= 0.9;
           else if (!hasFeasible(i) && hasInfeasible(i))
-            penalty(i) = std::max(0.1, penalty(i) / 0.9);
+            penalty(i) = std::max(0.1, penalty(i) * 2);
           hasFeasible(i) = false;
           hasInfeasible(i) = false;
         }
-        std::cout << "penalty: " << penalty << std::endl;
       }
       parentFitness = currentFitness(parent);
     }

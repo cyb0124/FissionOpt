@@ -3,17 +3,27 @@
 
 int main() {
   OverhaulFission::Settings settings {
-    6, 7, 8,
+    7, 7, 7,
     {
-      {1.35, 10, 65, 390, false},
-      {1.40, -1, 32, 1170, false}
+      {1.75, -1, 60, 540, true},
+      {1.75, -1, 75, 432, true},
+      {1.75, -1, 51, 676, true},
+      {1.80, -1, 30, 1620, true},
+      {1.80, -1, 37, 1296, true},
+      {1.80, -1, 25, 2028, true},
+      {1.80, -1, 71, 288, true},
+      {1.80, -1, 89, 230, true},
+      {1.80, -1, 60, 360, true},
+      {1.85, -1, 35, 864, true},
+      {1.85, -1, 44, 690, true},
+      {1.85, -1, 30, 1080, true}
     },
     {
       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
       -1, -1, -1, -1, -1, -1, -1, -1
     },
-    {-1, 0, 0},
+    {0, 0, 0},
     OverhaulFission::GoalOutput,
     false, false, false, false
   };
@@ -22,7 +32,6 @@ int main() {
     opt.stepInteractive();
     if (opt.needsRedrawBest()) {
       std::cout << "output: " << opt.getBest().value.output / 16 << std::endl;
-      std::cout << "irrFlux: " << opt.getBest().value.irradiatorFlux << std::endl;
       xt::dump_npy("best.npy", opt.getBest().state);
     }
   }

@@ -347,7 +347,7 @@ namespace OverhaulFission {
         tile.isActive = countAdjacentCells(x, y, z) && countAdjacentCasings(x, y, z);
         break;
       case Tiles::Au:
-        tile.isActive = countAdjacentHeatSinks(Tiles::Fe, x, y, z) >= 2;
+        tile.isActive = countAdjacentHeatSinks(Tiles::Fe, x, y, z) == 2;
         break;
       case Tiles::Pm:
         tile.isActive = countAdjacentHeatSinks(Tiles::Wt, x, y, z) >= 2;
@@ -359,7 +359,7 @@ namespace OverhaulFission {
         tile.isActive = countAdjacentReflectors(x, y, z);
         break;
       case Tiles::Pr:
-        tile.isActive = countAdjacentHeatSinks(Tiles::Fe, x, y, z) == 1 && countAdjacentHeatSinks(Tiles::En, x, y, z);
+        tile.isActive = countAdjacentHeatSinks(Tiles::Fe, x, y, z) && countAdjacentReflectors(x, y, z);
         break;
       case Tiles::Dm:
         tile.isActive = countAdjacentHeatSinks(Tiles::Au, x, y, z) && countAdjacentCells(x, y, z);
@@ -411,7 +411,7 @@ namespace OverhaulFission {
         tile.isActive = countAdjacentHeatSinks(Tiles::Cu, x, y, z) >= 2 && countAdjacentHeatSinks(Tiles::Pr, x, y, z);
         break;
       case Tiles::He:
-        tile.isActive = countAdjacentHeatSinks(Tiles::Rs, x, y, z) == 2 && countAdjacentCasings(x, y, z);
+        tile.isActive = countAdjacentHeatSinks(Tiles::Rs, x, y, z) == 2;
         break;
       case Tiles::Ed:
         tile.isActive = countAdjacentModerators(x, y, z) >= 3;
@@ -421,39 +421,21 @@ namespace OverhaulFission {
     }
   }
 
-  bool Evaluation::propagateConductorGroup(int id, int x, int y, int z) {
-    if (!tiles.in_bounds(x, y, z))
-      return true;
-    Conductor *tile(std::get_if<Conductor>(&tiles(x, y, z)));
-    if (!tile || tile->group >= 0)
-      return false;
-    if (id < 0) {
-      id = conductorGroups.size();
-      conductorGroups.emplace_back();
-    }
-    tile->group = id;
-    std::vector<bool>::reference group(conductorGroups[tile->group]);
-    for (auto &[dx, dy, dz] : directions)
-      if (propagateConductorGroup(id, x + dx, y + dy, z + dz))
-        group = true;
-    return false;
-  }
-
   bool Evaluation::propagateCluster(int id, int x, int y, int z) {
     if (!tiles.in_bounds(x, y, z))
       return true;
-    bool valid{}, hasCasingConnection{};
+    bool valid{};
     Tile &tile(tiles(x, y, z));
     std::visit(Overload {
       [&](Cell &tile) { valid = tile.isActive && tile.cluster < 0; },
       [&](Shield &tile) { valid = !shieldOn && tile.flux && tile.cluster < 0; },
       [&](HeatSink &tile) { valid = tile.isActive && tile.cluster < 0; },
       [&](Irradiator &tile) { valid = tile.flux && tile.cluster < 0; },
-      [&](Conductor &tile) { hasCasingConnection = conductorGroups[tile.group]; },
+      [&](Conductor &tile) { valid = tile.cluster < 0; },
       [](...) {}
     }, tile);
     if (!valid)
-      return hasCasingConnection;
+      return false;
     if (id < 0) {
       id = clusters.size();
       clusters.emplace_back();
@@ -463,6 +445,7 @@ namespace OverhaulFission {
       [&](Shield &tile) { tile.cluster = id; },
       [&](HeatSink &tile) { tile.cluster = id; },
       [&](Irradiator &tile) { tile.cluster = id; },
+      [&](Conductor &tile) { tile.cluster = id; },
       [](...) { throw; }
     }, tile);
     Cluster &cluster(clusters[id]);
@@ -635,9 +618,6 @@ namespace OverhaulFission {
       computeHeatSinkActivation(x, y, z);
     for (auto &[x, y, z] : tier3s)
       computeHeatSinkActivation(x, y, z);
-    conductorGroups.clear();
-    for (auto &[x, y, z] : conductors)
-      propagateConductorGroup(-1, x, y, z);
     clusters.clear();
     for (auto &[x, y, z] : cells)
       propagateCluster(-1, x, y, z);
@@ -692,7 +672,7 @@ namespace OverhaulFission {
             },
             [&](Conductor &tile) {
               // TODO: remove redundant conductors.
-              if (!conductorGroups[tile.group])
+              if (tile.cluster < 0)
                 state(x, y, z) = Tiles::Air;
             },
             [&](Air &) {}

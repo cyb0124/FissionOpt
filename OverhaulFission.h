@@ -18,8 +18,8 @@ namespace OverhaulFission {
   constexpr int shieldHeatPerFlux(5);
   constexpr int neutronReach(4);
   constexpr int coolingRates[] {
-    55, 50, 85, 75, 70, 105, 100, 95, 110, 115, 145, 65, 90, 195, 190, 80, 120,
-    60, 165, 130, 125, 150, 185, 170, 175, 160, 140, 135, 180, 200, 155, 205
+    55, 50, 85, 80, 70, 105, 90, 100, 110, 115, 145, 65, 95, 200, 195, 75, 120,
+    60, 160, 130, 125, 150, 175, 170, 165, 180, 140, 135, 185, 190, 155, 205
   };
 
   namespace Tiles { enum {
@@ -117,7 +117,7 @@ namespace OverhaulFission {
   };
 
   struct Conductor {
-    int group{-1};
+    int cluster{-1};
   };
 
   struct HeatSink {
@@ -143,7 +143,6 @@ namespace OverhaulFission {
   struct Evaluation {
     xt::xtensor<Tile, 3> tiles;
     std::vector<Coord> cells, tier1s, tier2s, tier3s, shields, irradiators, conductors, fluxRoots;
-    std::vector<bool> conductorGroups;
     std::vector<Cluster> clusters;
     const Settings *settings;
     double rawEfficiency, efficiency, rawOutput, output, density, sparsityPenalty;
@@ -163,7 +162,6 @@ namespace OverhaulFission {
     bool hasAxialAdjacentHeatSinks(int type, int x, int y, int z);
     bool hasAxialAdjacentReflectors(int x, int y, int z);
     void computeHeatSinkActivation(int x, int y, int z);
-    bool propagateConductorGroup(int id, int x, int y, int z);
     bool propagateCluster(int id, int x, int y, int z);
     void computeClusterStats(Cluster &cluster);
     void computeSparsity();
