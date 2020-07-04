@@ -25,7 +25,7 @@ int main() {
     },
     {0, 0, 0},
     OverhaulFission::GoalOutput,
-    false, false, false, false
+    false, false, true, true
   };
   OverhaulFission::Opt opt(settings);
   while (true) {

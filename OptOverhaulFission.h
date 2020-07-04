@@ -19,7 +19,7 @@ namespace OverhaulFission {
   };
 
   constexpr int interactiveMin(4096), interactiveScale(327680), interactiveNet(4), nLossHistory(256);
-  constexpr int maxConvergeInfer(10976), maxConvergeRollout(maxConvergeInfer * 800), nConstraints(2), penaltyUpdatePeriod(1000);
+  constexpr int maxConvergeInfer(10976), maxConvergeRollout(maxConvergeInfer * 100), nConstraints(2), penaltyUpdatePeriod(maxConvergeInfer);
 
   class Net;
 

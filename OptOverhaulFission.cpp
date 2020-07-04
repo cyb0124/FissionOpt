@@ -282,11 +282,12 @@ namespace OverhaulFission {
         else
           hasInfeasible(i) = true;
       if (!(nIteration % penaltyUpdatePeriod)) {
+        std::cout << penalty(0) << std::endl;
         for (int i{}; i < nConstraints; ++i) {
           if (hasFeasible(i) && !hasInfeasible(i))
-            penalty(i) *= 0.9;
+            penalty(i) *= 0.5;
           else if (!hasFeasible(i) && hasInfeasible(i))
-            penalty(i) = std::max(0.1, penalty(i) * 2);
+            penalty(i) = std::max(0.1, penalty(i) * 1.5);
           hasFeasible(i) = false;
           hasInfeasible(i) = false;
         }
