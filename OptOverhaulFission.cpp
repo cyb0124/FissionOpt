@@ -287,7 +287,7 @@ namespace OverhaulFission {
           if (hasFeasible(i) && !hasInfeasible(i))
             penalty(i) *= 0.5;
           else if (!hasFeasible(i) && hasInfeasible(i))
-            penalty(i) = std::max(0.1, penalty(i) * 1.5);
+            penalty(i) = std::max(0.001, penalty(i) * 1.5);
           hasFeasible(i) = false;
           hasInfeasible(i) = false;
         }
