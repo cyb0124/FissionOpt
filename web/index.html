@@ -15,23 +15,29 @@
         <h2>NuclearCraft Fission Reactor Design Generator</h2>
         by cyb0124, <a href="https://github.com/cyb0124/FissionOpt">source</a>
       </div>
-      <div>This tool generates a fission reactor design that maximizes effective power output, breeding speed or efficiency. Click <a href="/overhaul.html">here</a> for NuclearCraft: Overhauled version.</div>
+      <div>
+        This tool generates a fission reactor design that maximizes effective power output, breeding speed or efficiency.
+        This page is for the pre-overhaul NuclearCraft version used by many popular modpacks.
+        For the post-overhaul version of NuclearCraft, click <a href="/overhaul.html">here</a>.
+      </div>
     </header>
     <section id="settings">
       <div>
-        Core Size:
+        <b>Step 1</b>: Input the core (interior) size of the reactor:
         <input type="text" id="sizeZ"> &times;
         <input type="text" id="sizeX"> &times;
         <input type="text" id="sizeY">
       </div>
+      <div>
+        <b>Step 2</b>: Click on the fuel you want to use in the table below. Most modpacks use the default config, except for E2E and PO3.
+        Alternatively, you can manually enter the fuel data in the textboxes below.
+        The fuel data can be found in the tooltip of the fuel item. Do not use the data shown in JEI, they may be incorrect.
+        You can also use IC2 and ExtremeReactors' fuels. See below the table for more details.
+      </div>
       <div>Fuel Base Power: <input type="text" id="fuelBasePower"> RF/t</div>
       <div>Fuel Base Heat: <input text="text" id="fuelBaseHeat"> H/t</div>
-      <div>
-        Note that these numbers should already have the multipliers at the top of the fission config applied.<br>
-        The numbers from tooltip (not JEI) have the correct value. Or, you can load one of the common values below.
-      </div>
       <div class="fuelPresets"><table>
-        <thead><tr><td>Fuel</td>
+        <thead><tr><td>Config</td>
           <td>Uranium Ingot</td>
           <td>TBU</td>
           <td>LEU-235</td>
@@ -228,9 +234,14 @@
         </tr>
       </table></div>
       <div>
-        For ExtremeReactors' Yellorium or Blutonium, enter the numbers for LEU-235 and click <a href="javascript:;" id="br">here</a> once.<br>
-        For IC2's Enriched Uranium Nuclear Fuel, enter the numbers for LEU-235 and click <a href="javascript:;" id="ic2">here</a> once.<br>
-        For IC2's MOX Nuclear Fuel, enter the numbers for MOX-239 and click <a href="javascript:;" id="ic2mox">here</a> once.
+        For ExtremeReactors' Yellorium or Blutonium, click LEU-235 Normal and then click <a href="javascript:;" id="br">here</a> once.<br>
+        For IC2's Enriched Uranium Nuclear Fuel, click LEU-235 Normal and then click <a href="javascript:;" id="ic2">here</a> once.<br>
+        For IC2's MOX Nuclear Fuel, click MOX-239 and then click <a href="javascript:;" id="ic2mox">here</a> once.
+      </div>
+      <div>
+        <b>Step 3</b>: If you want to limit the usage of a type of block, enter the maximum number allowed in the table below.
+        Enter zero to completely disable that block. You can hover over the acronym to see the full name of each block.
+        Active coolers are disabled by default. You can enable them by removing the zeros.
       </div>
       <table>
         <thead><tr id="blockType"><th>Block Type</th>
@@ -277,11 +288,14 @@
         </tbody>
       </table>
       <div>
-        Note that active cooling rate should account for fluid input rate. JEI has the correct value.<br>
-        Load common cooling rate values:
+        <b>Step 4</b>: Load the cooling rate data by clicking on one of the following modpack configs:
         <a href="javascript:;" id="DefRate">Default</a>
         <a href="javascript:;" id="E2ERate">E2E</a>
-        <a href="javascript:;" id="PO3Rate">PO3</a><br>
+        <a href="javascript:;" id="PO3Rate">PO3</a>. Alternatively, you can enter the data yourself.
+        Passive cooling rates are in the tooltip of each cooler item. Active cooling rates are in JEI.
+      </div>
+      <div>
+        <b>Step 5</b>: Adjust the options below and click &ldquo;Run&rdquo; to start the optimization.<br>
         <label><input type="checkbox" id="ensureActiveCoolerAccessible" checked>Ensure active coolers are accessible by piping.</label><br>
         <label><input type="checkbox" id="ensureHeatNeutral" checked>Only generate heat neutral reactor.</label><br>
         <label><input type="radio" name="goal" value="0" checked>Optimize for power.</label><br>
@@ -294,8 +308,11 @@
         The most efficient reactor doesn't produce the most power. To get a efficient reactor that can still generate lots of power,
         you should optimize for power while limiting the cell count using the &ldquo;Max Allowed&rdquo; box for <span class="row cell" title="Reactor Cell">[]</span>.
         To get the ideal cell count, divide the fuel's base processing time by the time you want a fuel to last.
-        Enabling symmetry and/or limiting block counts often yields better results.
-        The algorithm uses fixed seed: different runs will always yield the same results unless there is an update to the algorithm. Last update: 5/19/2020<br>
+        Enabling symmetry and/or limiting block counts often speeds up the algorithm.
+        The algorithm uses fixed seed: different runs will always yield the same results unless there is an update to the algorithm (last update: 5/19/2020).
+        You can use <a href="https://www.curseforge.com/minecraft/mc-mods/building-gadgets">Building Gadgets</a> to automate the building of your reactor.
+        To do so, save the JSON of your design, load it up in <a href="https://github.com/hellrage/NC-Reactor-Planner/releases/tag/v1.2.25">Hellrage's Reactor Planner</a>,
+        and then click &ldquo;Generate BG string&rdquo;. Then you can paste it in the <a href="https://github.com/Direwolf20-MC/BuildingGadgets/wiki/Template-Manager">Template Manager</a>.<br>
         <span style="color:red;">Note: in Chrome, this tab won't run in background! If you want to switch to other tabs, drag this tab out as a dedicated window and don't minimize it.</span>
       </div>
     </section>
