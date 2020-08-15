@@ -159,7 +159,7 @@ namespace OverhaulFission {
     int countAdjacentReflectors(int x, int y, int z);
     int countAdjacentModerators(int x, int y, int z);
     int countAdjacentHeatSinks(int type, int x, int y, int z);
-    bool hasAxialAdjacentHeatSinks(int type, int x, int y, int z);
+    int countAxialAdjacentHeatSinks(int type, int x, int y, int z);
     bool hasAxialAdjacentReflectors(int x, int y, int z);
     void computeHeatSinkActivation(int x, int y, int z);
     bool propagateCluster(int id, int x, int y, int z);

@@ -279,7 +279,8 @@ namespace OverhaulFission {
     return result;
   }
 
-  bool Evaluation::hasAxialAdjacentHeatSinks(int type, int x, int y, int z) {
+  int Evaluation::countAxialAdjacentHeatSinks(int type, int x, int y, int z) {
+    int result{};
     for (int i{}; i < 6; ++i) {
       bool valid{};
       auto &[dx, dy, dz](directions[i]);
@@ -289,14 +290,12 @@ namespace OverhaulFission {
         valid = tile && tile->isActive && tile->type == type;
       }
       if (i & 1) {
-        if (valid) {
-          return true;
-        }
+        result += valid;
       } else {
         i |= !valid;
       }
     }
-    return false;
+    return result;
   }
 
   bool Evaluation::hasAxialAdjacentReflectors(int x, int y, int z) {
@@ -335,7 +334,7 @@ namespace OverhaulFission {
         tile.isActive = countAdjacentHeatSinks(Tiles::Rs, x, y, z);
         break;
       case Tiles::Ob:
-        tile.isActive = hasAxialAdjacentHeatSinks(Tiles::Gs, x, y, z);
+        tile.isActive = countAxialAdjacentHeatSinks(Tiles::Gs, x, y, z);
         break;
       case Tiles::Nr:
         tile.isActive = countAdjacentHeatSinks(Tiles::Ob, x, y, z);
@@ -371,7 +370,7 @@ namespace OverhaulFission {
         tile.isActive = countAdjacentHeatSinks(Tiles::Wt, x, y, z);
         break;
       case Tiles::Sn:
-        tile.isActive = hasAxialAdjacentHeatSinks(Tiles::Lp, x, y, z);
+        tile.isActive = countAxialAdjacentHeatSinks(Tiles::Lp, x, y, z);
         break;
       case Tiles::Pb:
         tile.isActive = countAdjacentHeatSinks(Tiles::Fe, x, y, z);
@@ -380,8 +379,7 @@ namespace OverhaulFission {
         tile.isActive = countAdjacentHeatSinks(Tiles::Qz, x, y, z) == 1 && countAdjacentCasings(x, y, z);
         break;
       case Tiles::Li:
-        tile.isActive = hasAxialAdjacentHeatSinks(Tiles::Pb, x, y, z)
-          && countAdjacentHeatSinks(Tiles::Pb, x, y, z) == 2 && countAdjacentCasings(x, y, z);
+        tile.isActive = countAxialAdjacentHeatSinks(Tiles::Pb, x, y, z) == 1 && countAdjacentCasings(x, y, z);
         break;
       case Tiles::Mg:
         tile.isActive = countAdjacentModerators(x, y, z) == 1 && countAdjacentCasings(x, y, z);
