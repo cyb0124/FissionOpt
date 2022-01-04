@@ -53,6 +53,7 @@ namespace Fission {
       default: // GoalPower
         return x.avgMult;
       case GoalBreeder:
+        // reward excess heat because it makes it easier to add more cells
         return x.avgBreed + (x.netHeat < 0 ? - x.netHeat / (settings.fuelBaseHeat - x.netHeat) : 0);
       case GoalEfficiency:
         return settings.ensureHeatNeutral ? (x.efficiency - 1) * x.dutyCycle : x.efficiency - 1;
@@ -118,8 +119,13 @@ namespace Fission {
     allowedTiles.clear();
     allowedTiles.emplace_back(Air);
     for (int tile{}; tile < Air; ++tile)
-      if (sample.limit[tile] < 0 || sample.limit[tile] >= nSym)
+      if (sample.limit[tile] < 0 || sample.limit[tile] >= nSym) {
         allowedTiles.emplace_back(tile);
+//        bias cells being added in order to prevent shear lines in cell patterns
+        if (tile == Cell && ((x + y + z) % 2 == 1)) {
+          allowedTiles.emplace_back(tile);
+        }
+      }
     int newTile(allowedTiles[std::uniform_int_distribution<>(0, static_cast<int>(allowedTiles.size() - 1))(rng)]);
     if (newTile != Air)
       sample.limit[newTile] -= nSym;
