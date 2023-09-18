@@ -19,7 +19,8 @@ namespace Fission {
     rules(xt::empty<int>({settings.sizeX, settings.sizeY, settings.sizeZ})),
     isActive(xt::empty<bool>({settings.sizeX, settings.sizeY, settings.sizeZ})),
     isModeratorInLine(xt::empty<bool>({settings.sizeX, settings.sizeY, settings.sizeZ})),
-    visited(xt::empty<bool>({settings.sizeX, settings.sizeY, settings.sizeZ})) {}
+    visited(xt::empty<bool>({settings.sizeX, settings.sizeY, settings.sizeZ})),
+    accessible(xt::empty<bool>({settings.sizeX, settings.sizeY, settings.sizeZ})) {}
 
   int Evaluator::getTileSafe(int x, int y, int z) const {
     if (!state->in_bounds(x, y, z))
@@ -105,25 +106,51 @@ namespace Fission {
   bool Evaluator::checkAccessibility(int compatibleTile, int x, int y, int z) {
     visited.fill(false);
     this->compatibleTile = compatibleTile;
-    return checkAccessibility(x, y, z);
+    // Active cooler can only touch other active cooler if they are the same type.
+    // If it touches a cooler of another type, it's an invalid placement, don't bother checking accessbility
+    return
+      checkCompatible(compatibleTile, x - 1, y, z) &&
+      checkCompatible(compatibleTile, x + 1, y, z) &&
+      checkCompatible(compatibleTile, x, y - 1, z) &&
+      checkCompatible(compatibleTile, x, y + 1, z) &&
+      checkCompatible(compatibleTile, x, y, z - 1) &&
+      checkCompatible(compatibleTile, x, y, z + 1) &&
+      checkAccessibility(x, y, z);
   }
 
-  bool Evaluator::checkAccessibility(int x, int y, int z) {
+  bool Evaluator::checkCompatible(int compatibleTile, int x, int y, int z) {
     if (!state->in_bounds(x, y, z))
       return true;
+    int tile((*state)(x, y, z));
+    return tile < Active || tile == compatibleTile || tile >= Cell;
+  }
+
+  // Ensure there is a path from a casing (technically Buffer) to this cooler, via cooler of the same type or air
+  // Recursive check
+  bool Evaluator::checkAccessibility(int x, int y, int z) {
+    // If current tile is casing, then we reached a path to a potential buffer, so it's accessible.
+    if (!state->in_bounds(x, y, z))
+      return true;
+    // If already visited tile during current recursion, it went in a loop. Not accessible through this path
     if (visited(x, y, z))
       return false;
     visited(x, y, z) = true;
     int tile((*state)(x, y, z));
+    // Only accessible through air or another active cooler of the same type
     if (tile != Air && tile != compatibleTile)
       return false;
-    return
+    // The current recursion reached an active cooler of the same type that was already deemed accessible
+    if(accessible(x, y, z))
+      return true;
+    bool accessibility =
       checkAccessibility(x - 1, y, z) ||
       checkAccessibility(x + 1, y, z) ||
       checkAccessibility(x, y - 1, z) ||
       checkAccessibility(x, y + 1, z) ||
       checkAccessibility(x, y, z - 1) ||
       checkAccessibility(x, y, z + 1);
+    accessible(x, y, z) = accessibility;
+    return accessibility;
   }
 
   void Evaluator::run(const xt::xtensor<int, 3> &state, Evaluation &result) {
@@ -134,6 +161,7 @@ namespace Fission {
     result.breed = 0;
     isActive.fill(false);
     isModeratorInLine.fill(false);
+    accessible.fill(false);
     this->state = &state;
     for (int x{}; x < settings.sizeX; ++x) {
       for (int y{}; y < settings.sizeY; ++y) {
@@ -153,7 +181,7 @@ namespace Fission {
             } else if (tile < Cell) {
               if (settings.ensureActiveCoolerAccessible && !checkAccessibility(tile, x, y, z)) {
                 rules(x, y, z) = -1;
-              } else {
+              } else  {
                 rules(x, y, z) = tile - Active;
               }
             } else {
