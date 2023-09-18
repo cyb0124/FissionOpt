@@ -49,7 +49,7 @@ namespace Fission {
   class Evaluator {
     const Settings &settings;
     xt::xtensor<int, 3> mults, rules;
-    xt::xtensor<bool, 3> isActive, isModeratorInLine, visited;
+    xt::xtensor<bool, 3> isActive, isModeratorInLine, visited, accessible;
     const xt::xtensor<int, 3> *state;
     int compatibleTile;
 
@@ -63,6 +63,7 @@ namespace Fission {
     int countNeighbors(int tile, int x, int y, int z) const;
     int countCasingNeighbors(int x, int y, int z) const;
     bool checkAccessibility(int compatibleTile, int x, int y, int z);
+    bool checkCompatible(int compatibleTile, int x, int y, int z);
     bool checkAccessibility(int x, int y, int z);
   public:
     Evaluator(const Settings &settings);
